@@ -123,4 +123,17 @@ export function parseQuick(raw, now = new Date()) {
   return { title: text || String(raw).trim(), due, time };
 }
 
+// Неделя начинается с понедельника.
+export function weekStart(s) {
+  const d = fromYmd(s);
+  return addDays(s, -((d.getDay() + 6) % 7));
+}
+
+// Верхняя или нижняя неделя: якорь по решению Артёма, 12.10.2026 (понедельник) = верхняя, дальше чередование.
+const WEEK_ANCHOR = '2026-10-12';
+export function weekType(s) {
+  const diff = Math.round((fromYmd(weekStart(s)) - fromYmd(WEEK_ANCHOR)) / (7 * 24 * 3600 * 1000));
+  return Math.abs(diff) % 2 === 0 ? 'верхняя' : 'нижняя';
+}
+
 export { WEEKDAYS };

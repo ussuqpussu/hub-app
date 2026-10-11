@@ -5,16 +5,16 @@ import { createGithub } from './data/github.js';
 import { load } from './storage.js';
 import { el, ICONS, fmtTime } from './ui.js';
 import { tasksView } from './tasks-view.js';
-import { calendarView } from './calendar-view.js';
+import { scheduleView } from './schedule-view.js';
 
 export { ICONS, fmtTime };
 
-export const VERSION = '0.4.0 (этап 3, часть 2: календарь)';
+export const VERSION = '0.5.0 (этап 3: расписание вместо календаря)';
 
 // Вкладки. group: main (в нижней панели телефона), more (внутри «Ещё»).
 export const TABS = [
   { id: 'today', name: 'Сегодня', icon: 'today', group: 'main' },
-  { id: 'calendar', name: 'Календарь', icon: 'calendar', group: 'main' },
+  { id: 'schedule', name: 'Расписание', icon: 'calendar', group: 'main' },
   { id: 'tasks', name: 'Задачи', icon: 'tasks', group: 'main' },
   { id: 'projects', name: 'Проекты', icon: 'projects', group: 'main' },
   { id: 'smart-home', name: 'Умный дом', icon: 'home', group: 'more' },
@@ -25,7 +25,6 @@ export const TABS = [
 
 const PLACEHOLDERS = {
   today: ['Сегодня', 'Здесь появятся расписание на день, главные задачи и ближайшие списания.', 'Данных пока нет: чтение и запись данных будут на этапе 2, «Сегодня» наполнится на этапе 3.'],
-  calendar: ['Календарь', 'Месяц, неделя и день, свои события и расписание колледжа.', 'Данных пока нет: календарь наполнится на этапах 3 и 4.'],
   tasks: ['Задачи и цели', 'Задачи со сроками, привычки и цели, а также «Входящие».', 'Задач, привычек и целей пока нет: они появятся на этапе 3.'],
   projects: ['Проекты', 'Карточки проектов, лента событий и открытые вопросы.', 'Данных пока нет: проекты из Obsidian подключатся на этапе 6.'],
   'smart-home': ['Умный дом', 'Управление устройствами, комнатами и сценариями.', 'Нет связи с сервером умного дома: он ещё не подключён (этап 14).'],
@@ -261,7 +260,7 @@ function settingsView({ onLockNow, store, subscribe }) {
 export function renderRoute(route, ctx) {
   if (route === 'settings') return settingsView(ctx);
   if (route === 'tasks') return tasksView(ctx);
-  if (route === 'calendar') return calendarView(ctx);
+  if (route === 'schedule') return scheduleView(ctx);
   if (route === 'more') return moreView();
   if (PLACEHOLDERS[route]) return placeholderView(route);
   return el('section', { class: 'view' }, [

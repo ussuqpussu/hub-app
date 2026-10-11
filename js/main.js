@@ -65,6 +65,7 @@ function renderStatus(st) {
 
 function currentRoute() {
   const r = location.hash.replace(/^#\/?/, '');
+  if (r === 'calendar') return 'schedule'; // старое имя вкладки
   return r || 'today';
 }
 
