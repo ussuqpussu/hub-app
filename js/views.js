@@ -14,7 +14,7 @@ import { todayView } from './today-view.js';
 
 export { ICONS, fmtTime };
 
-export const VERSION = '0.11.0 (этап 8: доска открытых вопросов)';
+export const VERSION = '0.11.1 (этап 8: плитки вопросов)';
 
 // Вкладки. group: main (в нижней панели телефона), more (внутри «Ещё»).
 export const TABS = [

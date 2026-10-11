@@ -193,7 +193,7 @@ export function projectsView({ store, subscribe }) {
 
   function render() {
     const list = all();
-    if (ui.tab === 'questions') return void body.replaceChildren(el('div', { class: 'stack' }, [tabs(list), questionsBoard({ store, projects: list, ui, setUi: set })]));
+    if (ui.tab === 'questions') return void body.replaceChildren(el('div', { class: 'stack' }, [tabs(list), questionsBoard({ store, projects: list, ui, setUi: set, mark })]));
     const cs = companies(list);
     const ts = typeOptions(list).filter((t) => list.some((p) => p.types.includes(t)));
     const shown = sortProjects(filterProjects(list, { company: ui.company, type: ui.type, status: ui.status, query }), ui.sort);

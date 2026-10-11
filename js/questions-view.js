@@ -1,6 +1,7 @@
 // Доска «Открытые вопросы»: все вопросы по всем проектам в одном списке.
 import { el } from './ui.js';
 import { dateText } from './subs-parts.js';
+import { STATUS_LABEL } from './projects-calc.js';
 import { Q_STATUS, Q_WHO, NO_PROJECT, collectQuestions, filterQuestions, groupQuestions, customerQuestions, customerMessage, keyOf } from './questions-calc.js';
 
 const sel = (label, value, options, onChange) => {
@@ -29,7 +30,7 @@ async function copyText(text) {
 export const allQuestions = (store, projects) => collectQuestions(projects, store.list('questions'));
 
 // ui: { qStatus, qGroup, qProject }, setUi(patch)
-export function questionsBoard({ store, projects, ui, setUi }) {
+export function questionsBoard({ store, projects, ui, setUi, mark }) {
   const items = allQuestions(store, projects);
   const wrap = el('div', { class: 'stack' });
   const status = ui.qStatus || 'open';
@@ -78,32 +79,46 @@ export function questionsBoard({ store, projects, ui, setUi }) {
     return wrap;
   }
   const msgNote = el('p', { class: 'sched-note', role: 'status' });
+  const WHO_ORDER = Object.keys(Q_WHO);
+  const tile = (q, by) => {
+    const st = sel('Статус', q.status, Object.entries(Q_STATUS), (v) => patch(q, { status: v }));
+    st.classList.add('qtile__sel');
+    st.disabled = q.auto;
+    // «У кого спросить» переключается нажатием по кругу, чтобы плитка оставалась маленькой.
+    const who = el('button', { type: 'button', class: 'qtile__who', 'aria-label': `У кого спросить: ${Q_WHO[q.who]}. Нажми, чтобы сменить`, text: Q_WHO[q.who] });
+    who.addEventListener('click', () => patch(q, { who: WHO_ORDER[(WHO_ORDER.indexOf(q.who) + 1) % WHO_ORDER.length] }));
+    const body = el('p', { class: 'qtile__text', text: q.text, title: q.text });
+    body.addEventListener('click', () => body.closest('.qtile').classList.toggle('qtile--open'));
+    const kids = [body];
+    if (by === 'who') kids.push(el('span', { class: 'qtile__proj', text: q.project }));
+    if (q.auto) kids.push(el('span', { class: 'qtile__proj', text: 'Строки больше нет в заметке, закрыт сам' }));
+    kids.push(el('div', { class: 'qtile__foot' }, [who, st]));
+    const li = el('li', { class: 'qtile', 'data-status': q.status, 'data-origin': q.origin }, kids);
+    if (q.origin === 'manual') {
+      const del = el('button', { type: 'button', class: 'qtile__del', 'aria-label': 'Удалить вопрос', text: '×' });
+      del.addEventListener('click', () => store.remove('questions', q.id));
+      li.append(del);
+    }
+    return li;
+  };
   groupQuestions(shown, by).forEach((g) => {
-    const head = el('h3', { class: 'dayt pgroup' }, [el('span', { text: g.label }), el('span', { class: 'muted', text: String(g.items.length) })]);
-    const sec = el('section', { class: 'stack stack--tight' }, [head]);
+    const p = by === 'project' && g.projectId ? projects.find((x) => x.id === g.projectId) : null;
+    const sec = el('section', { class: 'qgroup stack stack--tight' });
+    sec.append(el('div', { class: 'qhead' }, [
+      p && mark ? mark(p) : '',
+      el('div', { class: 'qhead__text' }, [el('h3', { class: 'qhead__title', text: g.label }), p ? el('span', { class: 'muted', text: [p.company, STATUS_LABEL[p.status]].filter(Boolean).join(' · ') }) : el('span', { class: 'muted', text: by === 'who' ? 'У кого спросить' : 'Вопросы не привязаны к проекту' })]),
+      el('span', { class: 'qhead__count', text: String(g.items.length) }),
+    ]));
+    sec.append(el('ul', { class: 'qgrid' }, g.items.map((q) => tile(q, by))));
     if (by === 'project' && g.projectId) {
       const qs = customerQuestions(items, g.projectId);
-      const proj0 = projects.find((p) => p.id === g.projectId);
       const copy = el('button', { type: 'button', class: 'btn btn--ghost btn--s', text: 'Скопировать вопросы заказчику', ...(qs.length ? {} : { disabled: '' }) });
       copy.addEventListener('click', async () => {
-        const ok = await copyText(customerMessage(proj0 ? proj0.name : g.label, qs));
+        const ok = await copyText(customerMessage(p ? p.name : g.label, qs));
         msgNote.textContent = ok ? `Скопировано: ${qs.length} в сообщении по проекту «${g.label}».` : 'Не удалось скопировать. Выдели текст вручную.';
       });
       sec.append(copy);
     }
-    sec.append(el('ul', { class: 'qlist' }, g.items.map((q) => {
-      const st = sel('Статус', q.status, Object.entries(Q_STATUS), (v) => patch(q, { status: v }));
-      st.disabled = q.auto;
-      const wh = sel('У кого спросить', q.who, Object.entries(Q_WHO), (v) => patch(q, { who: v }));
-      const meta = [by === 'who' ? q.project : '', q.origin === 'card' ? 'из заметки' : 'вручную', q.origin === 'manual' && q.created ? `с ${dateText(new Date(q.created).toISOString().slice(0, 10))}` : '', q.auto ? 'строки больше нет в заметке, закрыт сам' : ''].filter(Boolean).join(' · ');
-      const kids = [el('span', { class: 'qrow__text', text: q.text }), el('span', { class: 'muted qrow__meta', text: meta }), el('div', { class: 'task-form__row' }, [st, wh])];
-      if (q.origin === 'manual') {
-        const del = el('button', { type: 'button', class: 'btn btn--ghost btn--s', text: 'Удалить' });
-        del.addEventListener('click', () => store.remove('questions', q.id));
-        kids.push(del);
-      }
-      return el('li', { class: 'card qrow', 'data-status': q.status }, kids);
-    })));
     wrap.append(sec);
   });
   wrap.append(msgNote, form);
