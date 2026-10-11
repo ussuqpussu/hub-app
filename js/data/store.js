@@ -4,7 +4,7 @@ import { encryptJSON, decryptJSON } from './crypto.js';
 import { dbGet, dbSet, dbDelete, dbAll, dbClear } from './db.js';
 import { createGithub, GhError } from './github.js';
 
-export const MODULES = ['inbox'];
+export const MODULES = ['inbox', 'tasks'];
 export const TOMBSTONE_TTL = 30 * 24 * 3600 * 1000;
 const path = (m) => `data/${m}.json`;
 
@@ -18,13 +18,21 @@ export function mergeItems(a, b, now = Date.now()) {
   return [...map.values()].filter((it) => !(it.deleted && now - it.updatedAt > TOMBSTONE_TTL));
 }
 
-function validItem(it) {
+const isStr = (v) => typeof v === 'string';
+
+// Проверка записи при чтении из репозитория: битые записи пропускаем, а не ломаем весь файл.
+const VALID = {
+  inbox: (it) => isStr(it.text) && isStr(it.type),
+  tasks: (it) => isStr(it.title) && typeof it.done === 'boolean',
+};
+
+function validItem(it, m) {
   return (
     it &&
     typeof it.id === 'string' &&
     it.id.length > 0 &&
     typeof it.updatedAt === 'number' &&
-    (it.deleted === true || (typeof it.text === 'string' && typeof it.type === 'string'))
+    (it.deleted === true || (VALID[m] ? VALID[m](it) : true))
   );
 }
 
@@ -147,7 +155,7 @@ export function createStore({ getKey, getAccess, debounceMs = 15000, retryMs = [
       if (remote) {
         try {
           const parsed = await decryptJSON(key, remote.text);
-          remoteItems = Array.isArray(parsed.items) ? parsed.items.filter(validItem) : [];
+          remoteItems = Array.isArray(parsed.items) ? parsed.items.filter((it) => validItem(it, m)) : [];
         } catch (_) {
           // Не затираем чужое: если файл не расшифровывается, ничего не пишем.
           throw new GhError('key', 'Файл в репозитории не расшифровывается этим ключом. Введи код восстановления.');
@@ -234,7 +242,7 @@ export function createStore({ getKey, getAccess, debounceMs = 15000, retryMs = [
     if (!obj || obj.app !== 'hub' || obj.schema !== 1 || typeof obj.modules !== 'object') throw new Error('Это не файл экспорта хаба');
     let count = 0;
     for (const m of MODULES) {
-      const items = (obj.modules[m] || []).filter((it) => validItem(it) && !it.deleted);
+      const items = (obj.modules[m] || []).filter((it) => validItem(it, m) && !it.deleted);
       for (const it of items) {
         const cur = view(m).find((x) => x.id === it.id);
         if (cur && cur.updatedAt >= it.updatedAt) continue;

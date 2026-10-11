@@ -176,6 +176,53 @@
 .inbox__meta { grid-column: 1 / -1; font-size: var(--fs-xs); color: var(--c-dim); }
 .inbox__text { overflow-wrap: anywhere; }
 
+/* Задачи и Входящие */
+.btn--s { min-height: var(--tap); padding: var(--sp-1) var(--sp-3); font-size: var(--fs-s); }
+.stack--tight { gap: var(--sp-2); }
+.err { color: var(--c-danger); font-size: var(--fs-s); min-height: calc(var(--lh) * 1em); }
+.inbox__acts { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: var(--sp-2); }
+.inbox__item--old { border-color: var(--c-accent); }
+.inline-form { grid-column: 1 / -1; display: grid; gap: var(--sp-2); }
+.task-form { display: grid; gap: var(--sp-2); }
+.task-form__row { display: flex; flex-wrap: wrap; gap: var(--sp-2); }
+.task-form__row .field { flex: 1 1 8rem; width: auto; }
+.tasks { display: grid; gap: var(--sp-2); margin: 0; padding: 0; list-style: none; }
+.task {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: var(--sp-3);
+  align-items: center;
+  padding: var(--sp-2) var(--sp-3);
+  background: var(--c-surface);
+  border: var(--border) var(--border-style) var(--c-line);
+  border-radius: var(--radius-m);
+}
+.task__check {
+  width: var(--icon);
+  height: var(--icon);
+  border: calc(var(--border) * 2) solid var(--c-accent);
+  border-radius: var(--radius-s);
+  position: relative;
+}
+.task__check[aria-checked="true"] { background: var(--c-accent); }
+.task__check[aria-checked="true"]::after {
+  content: "";
+  position: absolute;
+  inset: 25% 30% 35%;
+  border: solid var(--c-on-accent);
+  border-width: 0 var(--sp-1) var(--sp-1) 0;
+  transform: rotate(45deg);
+}
+.task__text { display: grid; gap: var(--sp-1); min-width: 0; }
+.task__title { overflow-wrap: anywhere; }
+.task__meta { font-size: var(--fs-xs); color: var(--c-dim); }
+.task--done .task__title { text-decoration: line-through; color: var(--c-dim); }
+.task__tools { display: flex; }
+.task__star[aria-pressed="true"] svg { fill: currentColor; }
+.group--overdue h3 { color: var(--c-danger); }
+.done-box { display: grid; gap: var(--sp-2); }
+.done-box summary { cursor: pointer; min-height: var(--tap); display: flex; align-items: center; color: var(--c-dim); }
+
 /* Блокировка по PIN */
 .lock {
   position: fixed;

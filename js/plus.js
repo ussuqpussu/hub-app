@@ -1,7 +1,8 @@
 import { load, save } from './storage.js';
+import { parseQuick, dueLabel } from './dates.js';
 
-// Типы записей по разделу 6F плана. С этапа 2 запись сохраняется во «Входящие»
-// (зашифрованно, с отправкой в репозиторий данных).
+// Типы записей по разделу 6F плана. «Задача» создаёт настоящую задачу, остальные типы
+// сохраняются во «Входящие» (зашифрованно, с отправкой в репозиторий данных).
 export const TYPES = [
   { id: 'task', name: 'Задача' },
   { id: 'note', name: 'Заметка' },
@@ -55,15 +56,27 @@ export function initPlus({ button, dialog, store }) {
       note.textContent = 'Напиши хотя бы одну строку.';
       return;
     }
+    let created = null;
     try {
-      await store.add('inbox', { type: active, text });
+      if (active === 'task') {
+        // «з завтра 15:00 сдать лабу» превращается в задачу со сроком
+        const q = parseQuick(text);
+        created = await store.add('tasks', { title: q.title, due: q.due, time: q.time, project: '', done: false, main: false });
+      } else {
+        await store.add('inbox', { type: active, text });
+      }
     } catch (_) {
       note.textContent = 'Не удалось сохранить: приложение заблокировано.';
       return;
     }
     input.value = '';
     const st = store.getStatus();
-    if (st.state === 'notoken') {
+    if (created) {
+      const when = created.due ? `, срок: ${dueLabel(created.due)}${created.time ? ` ${created.time}` : ''}` : '';
+      note.textContent = `Задача добавлена${when}.`;
+    } else if (active === 'event') {
+      note.textContent = 'Календарь появится в следующей части этапа 3, пока событие лежит во «Входящих».';
+    } else if (st.state === 'notoken') {
       note.textContent = 'Сохранено на этом устройстве. Токен GitHub не подключён, в репозиторий запись пока не уходит (Настройки → Данные).';
     } else {
       note.textContent = 'Сохранено. Отправится в репозиторий в ближайшие секунды.';
