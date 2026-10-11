@@ -35,6 +35,8 @@ export function normalizeArch(raw) {
       deploy: str(n.deploy),
       keys: str(n.keys),
       note: str(n.note, 400),
+      ...(Number.isFinite(Number(n.x)) && Number.isFinite(Number(n.y)) && n.x !== null && n.y !== null && n.x !== '' && n.y !== ''
+        ? { x: Math.min(5000, Math.max(0, Math.round(Number(n.x)))), y: Math.min(5000, Math.max(0, Math.round(Number(n.y)))) } : {}),
       questions: (Array.isArray(n.questions) ? n.questions : []).map((q) => str(q, 200)).filter(Boolean),
     });
   });
@@ -104,6 +106,35 @@ export function layers(arch) {
   return { level, back, idx };
 }
 
+// Стрелка между двумя плашками, когда они стоят где угодно: выходит из ближней стороны, идёт плавной кривой.
+function sideRoute(a, b) {
+  const ac = { x: a.x + a.w / 2, y: a.y + a.h / 2 };
+  const bc = { x: b.x + b.w / 2, y: b.y + b.h / 2 };
+  const dx = bc.x - ac.x;
+  const dy = bc.y - ac.y;
+  let p1;
+  let p2;
+  let c1;
+  let c2;
+  if (Math.abs(dx) * a.h >= Math.abs(dy) * a.w) {
+    const sg = dx >= 0 ? 1 : -1;
+    p1 = { x: sg > 0 ? a.x + a.w : a.x, y: ac.y };
+    p2 = { x: sg > 0 ? b.x : b.x + b.w, y: bc.y };
+    const k = Math.max(30, Math.abs(p2.x - p1.x) / 2);
+    c1 = { x: p1.x + sg * k, y: p1.y };
+    c2 = { x: p2.x - sg * k, y: p2.y };
+  } else {
+    const sg = dy >= 0 ? 1 : -1;
+    p1 = { x: ac.x, y: sg > 0 ? a.y + a.h : a.y };
+    p2 = { x: bc.x, y: sg > 0 ? b.y : b.y + b.h };
+    const k = Math.max(30, Math.abs(p2.y - p1.y) / 2);
+    c1 = { x: p1.x, y: p1.y + sg * k };
+    c2 = { x: p2.x, y: p2.y - sg * k };
+  }
+  const mid = (k) => 0.125 * p1[k] + 0.375 * c1[k] + 0.375 * c2[k] + 0.125 * p2[k];
+  return { d: `M${p1.x},${p1.y} C${c1.x},${c1.y} ${c2.x},${c2.y} ${p2.x},${p2.y}`, lx: mid('x'), ly: mid('y') };
+}
+
 // Раскладка: колонки по слоям, внутри колонки узлы одной группы идут подряд. Возвращает размеры в условных пикселях.
 export function computeLayout(arch) {
   const { level, back, idx } = layers(arch);
@@ -130,7 +161,9 @@ export function computeLayout(arch) {
     });
     height = Math.max(height, y);
   });
-  const width = PAD * 2 + Math.max(1, cols.length) * NODE_W + Math.max(0, cols.length - 1) * GAP_X;
+  arch.nodes.forEach((n) => { if (n.x !== undefined) pos.set(n.id, { id: n.id, x: n.x, y: n.y, w: NODE_W, h: NODE_H }); });
+  const manual = new Set(arch.nodes.filter((n) => n.x !== undefined).map((n) => n.id));
+  const width0 = PAD * 2 + Math.max(1, cols.length) * NODE_W + Math.max(0, cols.length - 1) * GAP_X;
   const groups = [];
   arch.groups.forEach((g) => {
     const ps = g.nodes.map((id) => pos.get(id)).filter(Boolean);
@@ -144,6 +177,7 @@ export function computeLayout(arch) {
   const edges = arch.edges.map((e) => {
     const a = pos.get(e.from);
     const b = pos.get(e.to);
+    if (manual.has(e.from) || manual.has(e.to)) return { from: e.from, to: e.to, label: e.label, ...sideRoute(a, b) };
     const isBack = back.has(`${e.from}>${e.to}`) || level.get(e.to) <= level.get(e.from);
     let d;
     let lx;
@@ -169,9 +203,42 @@ export function computeLayout(arch) {
     }
     return { from: e.from, to: e.to, label: e.label, d, lx, ly };
   });
+  const all = [...pos.values()];
   const maxBack = edges.length ? Math.max(height, ...edges.map((e) => e.ly + 20)) : height;
-  return { nodes: [...pos.values()], groups, edges, width, height: maxBack + PAD };
+  const width = Math.max(width0, ...all.map((p) => p.x + p.w + PAD), ...groups.map((g) => g.x + g.w + PAD));
+  const bottom = Math.max(maxBack + PAD, ...all.map((p) => p.y + p.h + PAD), ...groups.map((g) => g.y + g.h + PAD));
+  return { nodes: all, groups, edges, width, height: manual.size ? bottom : maxBack + PAD };
 }
 
 // Путь файла схемы для карточки из Obsidian: architecture/<имя заметки>.json
 export const schemaPath = (cardPath) => `architecture/${String(cardPath).split('/').pop().replace(/\.md$/i, '')}.json`;
+
+// Закрепляет текущие автоматические места всех плашек, чтобы они не прыгали, когда одну передвинули.
+export function freezeLayout(arch) {
+  const L = computeLayout(arch);
+  const at = new Map(L.nodes.map((p) => [p.id, p]));
+  return { ...arch, nodes: arch.nodes.map((n) => (n.x !== undefined ? n : { ...n, x: at.get(n.id).x, y: at.get(n.id).y })) };
+}
+
+// Новая плашка внизу схемы (все места при этом закрепляются).
+export function addNode(arch, name = 'Новая плашка') {
+  const frozen = freezeLayout(arch);
+  const L = computeLayout(frozen);
+  const node = { id: newId(frozen, name), type: 'site', name, status: 'unknown', url: '', host: '', repo: '', deploy: '', keys: '', note: '', questions: [], x: 20, y: Math.round(L.height - 20 + 20) };
+  return { arch: { ...frozen, nodes: [...frozen.nodes, node] }, node };
+}
+
+// Задать группу (общую рамку) плашке по названию; пустое название убирает из группы.
+export function setGroup(arch, id, name) {
+  const title = str(name, 60);
+  let groups = arch.groups.map((g) => ({ ...g, nodes: g.nodes.filter((x) => x !== id) }));
+  if (title) {
+    const g = groups.find((x) => x.name.toLowerCase() === title.toLowerCase());
+    if (g) g.nodes.push(id);
+    else groups.push({ id: newId({ nodes: arch.nodes, groups }, title), name: title, nodes: [id] });
+  }
+  groups = groups.filter((g) => g.nodes.length);
+  return { ...arch, groups };
+}
+
+export const groupNameOf = (arch, id) => (arch.groups.find((g) => g.nodes.includes(id)) || {}).name || '';

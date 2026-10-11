@@ -1,7 +1,6 @@
 // Схема проекта: рисунок (SVG), панель узла и окно правки. Рисуется нашим кодом, без внешних сервисов.
 import { el } from './ui.js';
-import { openSheet } from './subs-form.js';
-import { NODE_TYPES, NODE_STATUS, normalizeArch, computeLayout, newId, removeNode, emptyArch } from './arch-calc.js';
+import { NODE_TYPES, NODE_STATUS, computeLayout, groupNameOf } from './arch-calc.js';
 
 const NS = 'http://www.w3.org/2000/svg';
 const svg = (tag, attrs = {}, kids = []) => {
@@ -29,9 +28,10 @@ const ICON = {
 const typeColor = (t) => `var(--chart-${(Object.keys(NODE_TYPES).indexOf(t) % 7) + 1})`;
 const cut = (s, n) => (s.length > n ? `${s.slice(0, n - 1)}…` : s);
 
-export function renderDiagram(arch, { onNode, selected } = {}) {
+// opts: selected, selectedEdge, linkFrom, draggable, onNode(n), onEdge(i), onMove(id, x, y, done)
+export function renderDiagram(arch, { onNode, onEdge, onMove, selected, selectedEdge, linkFrom, draggable } = {}) {
   const L = computeLayout(arch);
-  const root = svg('svg', { class: 'arch', viewBox: `0 0 ${L.width} ${L.height}`, width: L.width, height: L.height, role: 'group', 'aria-label': 'Схема проекта' });
+  const root = svg('svg', { class: `arch${draggable ? ' arch--drag' : ''}`, viewBox: `0 0 ${L.width} ${L.height}`, width: L.width, height: L.height, role: 'group', 'aria-label': 'Схема проекта' });
   root.append(svg('defs', {}, [svg('marker', { id: 'arch-arrow', viewBox: '0 0 10 10', refX: '9', refY: '5', markerWidth: '8', markerHeight: '8', orient: 'auto-start-reverse' }, [svg('path', { d: 'M0,0 L10,5 L0,10 z', class: 'arch__arrowhead' })])]));
   L.groups.forEach((g) => {
     root.append(svg('g', { class: 'arch__group' }, [
@@ -39,18 +39,23 @@ export function renderDiagram(arch, { onNode, selected } = {}) {
       Object.assign(svg('text', { x: g.x + 10, y: g.y + 17 }), { textContent: cut(g.name, 40) }),
     ]));
   });
-  L.edges.forEach((e) => {
-    const g = svg('g', { class: 'arch__edge' }, [svg('path', { d: e.d, 'marker-end': 'url(#arch-arrow)' })]);
+  L.edges.forEach((e, i) => {
+    const g = svg('g', { class: 'arch__edge', 'data-sel': String(selectedEdge === i) }, [svg('path', { d: e.d, 'marker-end': 'url(#arch-arrow)' })]);
     if (e.label) {
       const t = Object.assign(svg('text', { x: e.lx, y: e.ly, 'text-anchor': 'middle' }), { textContent: cut(e.label, 26) });
       g.append(svg('rect', { class: 'arch__labelbg', x: e.lx - Math.min(e.label.length, 26) * 3.4 - 4, y: e.ly - 12, width: Math.min(e.label.length, 26) * 6.8 + 8, height: 16, rx: '3' }), t);
+    }
+    if (onEdge) {
+      const hit = svg('path', { class: 'arch__hit', d: e.d });
+      hit.addEventListener('click', () => onEdge(i));
+      g.append(hit);
     }
     root.append(g);
   });
   const byId = new Map(arch.nodes.map((n) => [n.id, n]));
   L.nodes.forEach((p) => {
     const n = byId.get(p.id);
-    const g = svg('g', { class: 'arch__node', 'data-status': n.status, 'data-id': n.id, 'aria-pressed': String(selected === n.id), role: 'button', tabindex: '0', 'aria-label': `${n.name}. ${NODE_TYPES[n.type]}. ${NODE_STATUS[n.status]}` });
+    const g = svg('g', { class: 'arch__node', 'data-status': n.status, 'data-id': n.id, 'data-link': String(linkFrom === n.id), 'aria-pressed': String(selected === n.id), role: 'button', tabindex: '0', 'aria-label': `${n.name}. ${NODE_TYPES[n.type]}. ${NODE_STATUS[n.status]}` });
     g.style.setProperty('--node-color', typeColor(n.type));
     g.append(
       svg('title', {}, [document.createTextNode(`${n.name} (${NODE_TYPES[n.type]}, ${NODE_STATUS[n.status].toLowerCase()})`)]),
@@ -62,7 +67,33 @@ export function renderDiagram(arch, { onNode, selected } = {}) {
       svg('circle', { class: 'arch__dot', cx: p.x + p.w - 14, cy: p.y + 14, r: '5' }),
     );
     const fire = () => onNode && onNode(n);
-    g.addEventListener('click', fire);
+    // Нажал, потянул, отпустил: плашка идёт за мышью (или пальцем), стрелки следуют за ней. Без сдвига это обычный клик.
+    g.addEventListener('pointerdown', (ev) => {
+      if (ev.button > 0) return;
+      if (!draggable) return void fire();
+      ev.preventDefault();
+      const scale = root.getBoundingClientRect().width / L.width || 1;
+      const sx = ev.clientX;
+      const sy = ev.clientY;
+      let moved = false;
+      const mv = (e) => {
+        const dx = (e.clientX - sx) / scale;
+        const dy = (e.clientY - sy) / scale;
+        if (!moved && Math.hypot(dx, dy) * scale < 5) return;
+        moved = true;
+        onMove(n.id, Math.max(8, Math.round(p.x + dx)), Math.max(8, Math.round(p.y + dy)), false);
+      };
+      const up = () => {
+        document.removeEventListener('pointermove', mv);
+        document.removeEventListener('pointerup', up);
+        document.removeEventListener('pointercancel', up);
+        if (moved) onMove(n.id, null, null, true);
+        else fire();
+      };
+      document.addEventListener('pointermove', mv);
+      document.addEventListener('pointerup', up);
+      document.addEventListener('pointercancel', up);
+    });
     g.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fire(); } });
     root.append(g);
   });
@@ -73,7 +104,7 @@ const row = (k, v, link) => (v ? [el('dt', { text: k }), el('dd', {}, [link && /
 
 export function nodePanel(n, { onEdit } = {}) {
   const box = el('section', { class: 'card stack nodepanel', 'aria-label': `Узел: ${n.name}` });
-  const edit = onEdit ? el('button', { type: 'button', class: 'btn btn--ghost btn--s', text: 'Изменить схему' }) : '';
+  const edit = onEdit ? el('button', { type: 'button', class: 'btn btn--ghost btn--s', text: 'Изменить плашку' }) : '';
   if (edit) edit.addEventListener('click', onEdit);
   box.append(
     el('div', { class: 'listhead' }, [el('h3', { text: n.name }), el('span', { class: 'listhead__count' }), edit]),
@@ -84,100 +115,56 @@ export function nodePanel(n, { onEdit } = {}) {
   return box;
 }
 
-// Окно правки: узлы, связи, группы. Ключи и пароли не вводятся: поле «Где лежат ключи» только про место.
-export function archSheet({ arch, onSave }) {
-  openSheet((close) => {
-    let a = normalizeArch(JSON.parse(JSON.stringify(arch || emptyArch())));
-    const f = el('form', { class: 'sheet__form sub-form arch-form' });
-    const err = el('p', { class: 'err', role: 'alert' });
-    const body = el('div', { class: 'stack' });
-    const sel = (label, value, opts, set) => {
-      const s = el('select', { class: 'field', 'aria-label': label }, opts.map(([v, t]) => el('option', { value: v, text: t })));
-      s.value = value;
-      s.addEventListener('change', () => set(s.value));
-      return s;
-    };
-    const inp = (label, value, set, attrs = {}) => {
-      const i = el('input', { class: 'field', 'aria-label': label, placeholder: label, value: value || '', ...attrs });
-      i.addEventListener('input', () => set(i.value));
-      return i;
-    };
-    const nodeOpts = () => a.nodes.map((n) => [n.id, n.name]);
-    const paint = () => {
-      body.replaceChildren();
-      // Узлы
-      const nodes = el('div', { class: 'stack stack--tight' }, [el('h3', { text: 'Узлы' })]);
-      a.nodes.forEach((n) => {
-        const d = el('details', { class: 'archrow' }, [el('summary', { text: `${n.name} · ${NODE_TYPES[n.type]}` })]);
-        const del = el('button', { type: 'button', class: 'btn btn--danger btn--s', text: 'Убрать узел' });
-        del.addEventListener('click', () => { a = removeNode(a, n.id); paint(); });
-        d.append(
-          inp('Название', n.name, (v) => { n.name = v; d.firstChild.textContent = `${v || '…'} · ${NODE_TYPES[n.type]}`; }, { maxlength: '60' }),
-          el('div', { class: 'task-form__row' }, [sel('Тип', n.type, Object.entries(NODE_TYPES), (v) => { n.type = v; }), sel('Статус', n.status, Object.entries(NODE_STATUS), (v) => { n.status = v; })]),
-          inp('Адрес (http…)', n.url, (v) => { n.url = v; }),
-          inp('Где размещено', n.host, (v) => { n.host = v; }),
-          inp('Репозиторий', n.repo, (v) => { n.repo = v; }),
-          inp('Как выкладывается', n.deploy, (v) => { n.deploy = v; }),
-          inp('Где лежат ключи (только место, без самих ключей)', n.keys, (v) => { n.keys = v; }),
-          inp('Заметка', n.note, (v) => { n.note = v; }),
-          inp('Открытые вопросы через точку с запятой', n.questions.join('; '), (v) => { n.questions = v.split(';').map((x) => x.trim()).filter(Boolean); }),
-          del,
-        );
-        nodes.append(d);
-      });
-      const addN = el('button', { type: 'button', class: 'btn btn--ghost btn--s', text: 'Добавить узел' });
-      addN.addEventListener('click', () => { a.nodes.push({ id: newId(a, 'узел'), type: 'site', name: 'Новый узел', status: 'unknown', url: '', host: '', repo: '', deploy: '', keys: '', note: '', questions: [] }); paint(); });
-      nodes.append(addN);
-      // Связи
-      const edges = el('div', { class: 'stack stack--tight' }, [el('h3', { text: 'Связи (стрелки)' })]);
-      a.edges.forEach((e, i) => {
-        const del = el('button', { type: 'button', class: 'iconbtn2', 'aria-label': 'Убрать связь', text: '×' });
-        del.addEventListener('click', () => { a.edges.splice(i, 1); paint(); });
-        edges.append(el('div', { class: 'edgerow' }, [sel('Откуда', e.from, nodeOpts(), (v) => { e.from = v; }), sel('Куда', e.to, nodeOpts(), (v) => { e.to = v; }), inp('Подпись', e.label, (v) => { e.label = v; }, { maxlength: '60' }), del]));
-      });
-      const addE = el('button', { type: 'button', class: 'btn btn--ghost btn--s', text: 'Добавить связь' });
-      addE.addEventListener('click', () => {
-        if (a.nodes.length < 2) return void (err.textContent = 'Для связи нужно хотя бы два узла.');
-        err.textContent = '';
-        a.edges.push({ from: a.nodes[0].id, to: a.nodes[1].id, label: '' });
-        paint();
-      });
-      edges.append(addE);
-      // Группы
-      const groups = el('div', { class: 'stack stack--tight' }, [el('h3', { text: 'Группы (общая рамка)' })]);
-      a.groups.forEach((g, gi) => {
-        const del = el('button', { type: 'button', class: 'btn btn--danger btn--s', text: 'Убрать группу' });
-        del.addEventListener('click', () => { a.groups.splice(gi, 1); paint(); });
-        const chips = el('div', { class: 'chips' }, a.nodes.map((n) => {
-          const b = el('button', { type: 'button', class: 'chip', 'aria-pressed': String(g.nodes.includes(n.id)), text: n.name });
-          b.addEventListener('click', () => { g.nodes = g.nodes.includes(n.id) ? g.nodes.filter((x) => x !== n.id) : [...g.nodes, n.id]; b.setAttribute('aria-pressed', String(g.nodes.includes(n.id))); });
-          return b;
-        }));
-        groups.append(el('div', { class: 'archrow archrow--open stack stack--tight' }, [inp('Название группы', g.name, (v) => { g.name = v; }, { maxlength: '60' }), chips, del]));
-      });
-      const addG = el('button', { type: 'button', class: 'btn btn--ghost btn--s', text: 'Добавить группу' });
-      addG.addEventListener('click', () => { a.groups.push({ id: newId(a, 'группа'), name: 'Новая группа', nodes: [] }); paint(); });
-      groups.append(addG);
-      body.append(nodes, edges, groups);
-    };
-    paint();
-    const save = el('button', { type: 'submit', class: 'btn btn--primary', text: 'Сохранить схему' });
-    const cancel = el('button', { type: 'button', class: 'btn btn--ghost', text: 'Отмена' });
-    cancel.addEventListener('click', close);
-    f.append(el('div', { class: 'sheet__head' }, [el('h2', { text: 'Схема проекта' })]), body, err, el('div', { class: 'task-form__row' }, [save, cancel]));
-    f.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      if (a.nodes.some((n) => !n.name.trim())) return void (err.textContent = 'У каждого узла должно быть название.');
-      if (a.nodes.some((n) => n.url && !/^https?:\/\//i.test(n.url))) return void (err.textContent = 'Адрес узла должен начинаться с http:// или https://.');
-      save.disabled = true;
-      try {
-        await onSave(normalizeArch(a));
-        close();
-      } catch (ex) {
-        err.textContent = ex.message || 'Не удалось сохранить';
-        save.disabled = false;
-      }
-    });
-    return f;
-  });
+const labeled = (text, control) => el('label', { class: 'fieldrow' }, [el('span', { class: 'fieldrow__label', text }), control]);
+
+// Редактор плашки прямо под схемой. onChange(redrawDiagramOnly), onGroup(name), onDelete.
+export function nodeEditor(arch, n, { onChange, onGroup, onDelete }) {
+  const inp = (key, attrs = {}) => {
+    const i = el('input', { class: 'field', value: n[key] || '', ...attrs });
+    i.addEventListener('input', () => { n[key] = i.value; onChange(); });
+    return i;
+  };
+  const sel = (key, map) => {
+    const s = el('select', { class: 'field' }, Object.entries(map).map(([v, t]) => el('option', { value: v, text: t })));
+    s.value = n[key];
+    s.addEventListener('change', () => { n[key] = s.value; onChange(); });
+    return s;
+  };
+  const group = el('input', { class: 'field', value: groupNameOf(arch, n.id), list: 'arch-groups', placeholder: 'Например: Сервер' });
+  group.addEventListener('change', () => onGroup(group.value));
+  const qs = el('input', { class: 'field', value: n.questions.join('; '), placeholder: 'Через точку с запятой' });
+  qs.addEventListener('input', () => { n.questions = qs.value.split(';').map((x) => x.trim()).filter(Boolean); });
+  const del = el('button', { type: 'button', class: 'btn btn--danger btn--s', text: 'Удалить плашку' });
+  del.addEventListener('click', onDelete);
+  return el('section', { class: 'card stack nodeeditor', 'aria-label': 'Правка плашки' }, [
+    el('h3', { text: 'Плашка' }),
+    labeled('Название', inp('name', { maxlength: '60', 'aria-label': 'Название плашки' })),
+    el('div', { class: 'task-form__row' }, [labeled('Что это', sel('type', NODE_TYPES)), labeled('Состояние', sel('status', NODE_STATUS))]),
+    labeled('Адрес (http…)', inp('url', { placeholder: 'https://' })),
+    labeled('Где размещено', inp('host')),
+    labeled('Репозиторий', inp('repo')),
+    labeled('Как выкладывается', inp('deploy')),
+    labeled('Где лежат ключи (только место, без самих ключей)', inp('keys')),
+    labeled('Заметка', inp('note', { maxlength: '400' })),
+    labeled('Открытые вопросы', qs),
+    labeled('Общая рамка (группа)', group),
+    el('datalist', { id: 'arch-groups' }, arch.groups.map((g) => el('option', { value: g.name }))),
+    del,
+  ]);
+}
+
+// Редактор стрелки: подпись, развернуть, удалить.
+export function edgeEditor(arch, e, { onChange, onSwap, onDelete }) {
+  const name = (id) => (arch.nodes.find((n) => n.id === id) || {}).name || id;
+  const label = el('input', { class: 'field', value: e.label || '', maxlength: '60', placeholder: 'Например: заявки', 'aria-label': 'Подпись стрелки' });
+  label.addEventListener('input', () => { e.label = label.value; onChange(); });
+  const swap = el('button', { type: 'button', class: 'btn btn--ghost btn--s', text: 'Развернуть стрелку' });
+  swap.addEventListener('click', onSwap);
+  const del = el('button', { type: 'button', class: 'btn btn--danger btn--s', text: 'Удалить стрелку' });
+  del.addEventListener('click', onDelete);
+  return el('section', { class: 'card stack nodeeditor', 'aria-label': 'Правка стрелки' }, [
+    el('h3', { text: `${name(e.from)} → ${name(e.to)}` }),
+    labeled('Подпись', label),
+    el('div', { class: 'task-form__row' }, [swap, del]),
+  ]);
 }

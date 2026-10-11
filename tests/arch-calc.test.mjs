@@ -37,4 +37,45 @@ ok('layout: same group nodes adjacent in a column', () => {
 ok('removeNode cleans edges and groups', () => { const r = removeNode(a, 'bot'); assert.ok(!r.nodes.some((n) => n.id === 'bot')); assert.ok(!r.edges.some((e) => e.from === 'bot' || e.to === 'bot')); assert.deepEqual(r.groups[0].nodes, ['form']); });
 ok('newId unique', () => { assert.equal(newId(a, 'Бот'), 'бот'); assert.equal(newId(a, 'bot'), 'bot-2'); });
 ok('schemaPath', () => assert.equal(schemaPath('Проекты/Impulse Group сайт.md'), 'architecture/Impulse Group сайт.json'));
+
+import { freezeLayout, addNode, setGroup, groupNameOf } from '../js/arch-calc.js';
+const base = normalizeArch({ nodes: [{ id: 'a', name: 'A' }, { id: 'b', name: 'B' }], edges: [{ from: 'a', to: 'b', label: 'x' }] });
+ok('x,y kept only as a pair, clamped', () => {
+  const r = normalizeArch({ nodes: [{ id: 'a', x: 10.4, y: 20 }, { id: 'b', x: 5 }, { id: 'c', x: -9, y: 99999 }, { id: 'd', x: null, y: null }] });
+  assert.deepEqual([r.nodes[0].x, r.nodes[0].y], [10, 20]);
+  assert.equal(r.nodes[1].x, undefined); assert.deepEqual([r.nodes[2].x, r.nodes[2].y], [0, 5000]); assert.equal(r.nodes[3].x, undefined);
+});
+ok('freezeLayout keeps positions and is stable', () => {
+  const f = freezeLayout(base);
+  const L0 = computeLayout(base); const L1 = computeLayout(f);
+  assert.deepEqual(L0.nodes.map((p) => [p.x, p.y]), L1.nodes.map((p) => [p.x, p.y]));
+  assert.deepEqual(freezeLayout(f), f);
+});
+ok('manual node moves and arrow follows', () => {
+  const f = freezeLayout(base);
+  const m = { ...f, nodes: f.nodes.map((n) => (n.id === 'b' ? { ...n, x: 40, y: 400 } : n)) };
+  const L = computeLayout(m);
+  const b = L.nodes.find((p) => p.id === 'b');
+  assert.deepEqual([b.x, b.y], [40, 400]);
+  assert.match(L.edges[0].d, /^M[\d.]+,[\d.]+ C/);
+  assert.ok(L.height >= 400 + 64);
+  const end = L.edges[0].d.split(' ').pop().split(',').map(Number);
+  assert.ok(end[1] >= 400 && end[1] <= 464);
+});
+ok('arrow goes to the left side when target is left', () => {
+  const m = normalizeArch({ nodes: [{ id: 'a', x: 600, y: 20 }, { id: 'b', x: 20, y: 20 }], edges: [{ from: 'a', to: 'b' }] });
+  const d = computeLayout(m).edges[0].d;
+  assert.ok(d.startsWith('M600,52'), d);
+});
+ok('addNode places below, ids unique', () => {
+  const r = addNode(base, 'A'); const r2 = addNode(r.arch, 'A');
+  assert.equal(r.arch.nodes.length, 3); assert.notEqual(r.node.id, 'a'); assert.notEqual(r2.node.id, r.node.id);
+  assert.ok(r.node.y >= 64 + 20);
+});
+ok('setGroup create, move, remove', () => {
+  let a = setGroup(base, 'a', 'Сервер'); assert.equal(groupNameOf(a, 'a'), 'Сервер');
+  a = setGroup(a, 'b', 'сервер'); assert.equal(a.groups.length, 1); assert.equal(a.groups[0].nodes.length, 2);
+  a = setGroup(a, 'a', ''); assert.equal(groupNameOf(a, 'a'), ''); assert.equal(a.groups[0].nodes.length, 1);
+  a = setGroup(a, 'b', ''); assert.equal(a.groups.length, 0);
+});
 console.log(`${passed} passed`);
