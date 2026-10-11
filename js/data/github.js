@@ -55,6 +55,18 @@ export function createGithub({ repo, token, apiBase = 'https://api.github.com', 
       }
     },
 
+    // Список папки: [{name, path, type}] или null, если папки нет. Только чтение.
+    async listDir(path = '') {
+      try {
+        const res = await call(url(path).replace(/\/$/, ''));
+        const body = await res.json();
+        return Array.isArray(body) ? body.map((x) => ({ name: x.name, path: x.path, type: x.type })) : null;
+      } catch (e) {
+        if (e instanceof GhError && e.kind === 'notfound') return null;
+        throw e;
+      }
+    },
+
     async putFile(path, text, sha, message) {
       const body = { message, content: bytesToB64(enc.encode(text)) };
       if (sha) body.sha = sha;

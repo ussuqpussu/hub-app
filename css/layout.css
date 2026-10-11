@@ -469,3 +469,6 @@
 .pgroup { display: flex; align-items: center; gap: var(--sp-2); }
 .pgroup .logo { width: var(--tap); height: var(--tap); }
 .evline { display: flex; justify-content: space-between; align-items: center; gap: var(--sp-2); }
+.pillrow { display: flex; gap: var(--sp-2); flex-wrap: wrap; }
+.pill--src { background: transparent; border: var(--border) var(--border-style) var(--c-line); color: var(--c-dim); }
+.pre { white-space: pre-wrap; margin: 0; }

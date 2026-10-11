@@ -13,7 +13,7 @@ import { todayView } from './today-view.js';
 
 export { ICONS, fmtTime };
 
-export const VERSION = '0.9.0 (этап 6: проекты)';
+export const VERSION = '0.9.1 (этап 6: проекты и Obsidian)';
 
 // Вкладки. group: main (в нижней панели телефона), more (внутри «Ещё»).
 export const TABS = [

@@ -4,6 +4,8 @@ import { todayYmd } from './dates.js';
 import { load, save } from './storage.js';
 import { openSheet, confirmSheet, readLogoFile } from './subs-form.js';
 import { logoNode, dateText } from './subs-parts.js';
+import { loadProjects, onProjects, getProjectsState } from './projects-data.js';
+import { fmtTime } from './ui.js';
 import { STATUS_LABEL, STATUS_ORDER, SORTS, GROUPS, NO_COMPANY, NO_TYPE, normalizeProject, filterProjects, sortProjects, groupProjects, companies, typeOptions, parseTags, lastActivity, colorIndex, gaps } from './projects-calc.js';
 
 const KEY = 'hub.projectsUi';
@@ -121,17 +123,40 @@ function projectSheet({ project, companyList, types, onSave, onDelete }) {
   });
 }
 
+function viewSheet(p) {
+  openSheet((close) => {
+    const x = el('button', { type: 'button', class: 'iconbtn2', 'aria-label': 'Закрыть', text: '×' });
+    x.addEventListener('click', close);
+    const box = el('div', { class: 'sheet__form' }, [
+      el('div', { class: 'sheet__head' }, [el('h2', { text: p.name }), x]),
+      el('p', { class: 'muted', text: `Из Obsidian (${p.path}). Менять карточку нужно в Obsidian, хаб её только читает.` }),
+      el('p', { class: 'muted', text: [p.company || NO_COMPANY, p.types.join(', ') || NO_TYPE, STATUS_LABEL[p.status]].join(' · ') }),
+    ]);
+    const block = (title, node) => box.append(el('div', { class: 'stack stack--tight' }, [el('h3', { text: title }), node]));
+    if (p.tags.length) block('Теги', el('p', { text: p.tags.map((t) => `#${t}`).join(' ') }));
+    if (p.nextAction) block('Следующее действие', el('p', { text: p.nextAction }));
+    if (p.summary) block('Сводка', el('p', { class: 'pre', text: p.summary }));
+    if (p.events.length) block('Последние события', el('ul', { class: 'hist' }, p.events.slice(0, 10).map((e) => el('li', { text: `${dateText(e.date)}: ${e.text}` }))));
+    if (p.questions && p.questions.length) block('Открытые вопросы', el('ul', { class: 'hist' }, p.questions.map((q) => el('li', { text: q }))));
+    if (p.links.length) block('Ссылки', el('ul', { class: 'hist' }, p.links.map((l) => el('li', {}, [el('a', { href: l.url, target: '_blank', rel: 'noopener noreferrer', text: l.title || l.url })]))));
+    const close2 = el('button', { type: 'button', class: 'btn btn--ghost', text: 'Закрыть' });
+    close2.addEventListener('click', close);
+    box.append(close2);
+    return box;
+  });
+}
+
 export function projectsView({ store, subscribe }) {
   const root = el('section', { class: 'view' }, [el('div', { class: 'view__head' }, [el('h1', { text: 'Проекты' }), el('p', { class: 'muted', text: 'Сайты, боты и всё остальное, что ты делаешь.' })])]);
   let ui = { ...ui0, ...(load(KEY, {}) || {}) };
   let query = '';
   const body = el('div', { class: 'stack' });
-  const all = () => store.list('projects').map(normalizeProject);
+  const all = () => [...store.list('projects').map((p) => normalizeProject({ ...p, source: 'hub' })), ...getProjectsState().cards.map(normalizeProject)];
   const persist = () => save(KEY, ui);
   const set = (patch) => { ui = { ...ui, ...patch }; persist(); render(); };
   const onSave = (fields, prev) => (prev ? store.update('projects', prev.id, fields) : store.add('projects', fields));
   const askDelete = (p) => confirmSheet({ title: 'Удалить проект?', text: `Карточка «${p.name}» исчезнет. Это нельзя отменить.`, action: 'Удалить', onConfirm: () => store.remove('projects', p.id) });
-  const open = (p) => { const list = all(); projectSheet({ project: p, companyList: companies(list), types: typeOptions(list), onSave, onDelete: askDelete }); };
+  const open = (p) => { if (p && p.source === 'obsidian') return viewSheet(p); const list = all(); projectSheet({ project: p, companyList: companies(list), types: typeOptions(list), onSave, onDelete: askDelete }); };
 
   function card(p) {
     const today = todayYmd();
@@ -139,7 +164,7 @@ export function projectsView({ store, subscribe }) {
     const g = gaps(p);
     const b = el('button', { type: 'button', class: 'pcard', 'data-status': p.status, 'aria-label': `${p.name}. ${STATUS_LABEL[p.status]}. Открыть` }, [
       el('span', { class: 'pcard__top' }, [mark(p), el('span', { class: 'pcard__title' }, [el('span', { class: 'pcard__name', text: p.name }), el('span', { class: 'muted', text: [p.company || NO_COMPANY, p.types.join(', ') || NO_TYPE].join(' · ') })])]),
-      el('span', { class: 'pill', text: STATUS_LABEL[p.status] }),
+      el('span', { class: 'pillrow' }, [el('span', { class: 'pill', text: STATUS_LABEL[p.status] }), p.source === 'obsidian' ? el('span', { class: 'pill pill--src', text: 'Obsidian' }) : '']),
       p.nextAction ? el('span', { class: 'pcard__next' }, [el('b', { text: 'Дальше: ' }), p.nextAction]) : '',
       ev ? el('span', { class: 'muted pcard__ev', text: `${dateText(ev.date, today)}: ${ev.text}` }) : p.summary ? el('span', { class: 'muted pcard__ev', text: p.summary }) : '',
       g.length ? el('span', { class: 'sched-note', text: `Не заполнено: ${g.join(', ')}` }) : '',
@@ -158,7 +183,12 @@ export function projectsView({ store, subscribe }) {
     add.addEventListener('click', () => open(null));
     const search = el('input', { class: 'field', type: 'search', 'aria-label': 'Поиск по названию и тегам', placeholder: 'Поиск по названию и тегам', value: query, autocomplete: 'off' });
     search.addEventListener('input', () => { query = search.value; const pos = search.selectionStart; render(); const s2 = root.querySelector('input[type="search"]'); if (s2) { s2.focus(); s2.setSelectionRange(pos, pos); } });
-    wrap.append(el('div', { class: 'listhead' }, [el('h2', { text: 'Карточки' }), el('span', { class: 'listhead__count', text: String(shown.length) }), add]), search);
+    const ps = getProjectsState();
+    const refresh = el('button', { type: 'button', class: 'btn btn--ghost btn--s', text: ps.busy ? 'Обновляю…' : 'Обновить', ...(ps.busy ? { disabled: '' } : {}) });
+    refresh.addEventListener('click', () => loadProjects());
+    wrap.append(el('div', { class: 'listhead' }, [el('h2', { text: 'Карточки' }), el('span', { class: 'listhead__count', text: String(shown.length) }), refresh, add]), search);
+    const line = ps.error ? `Obsidian: ${ps.error}.${ps.cards.length ? ` Показана копия от ${fmtTime(Date.parse(ps.fetchedAt))}.` : ''}` : ps.fetchedAt ? `Из Obsidian: ${ps.cards.length}, обновлено ${fmtTime(Date.parse(ps.fetchedAt))}.${ps.skipped ? ` Заметок без блока свойств пропущено: ${ps.skipped}.` : ''}` : 'Obsidian: ещё не загружено.';
+    wrap.append(el('p', { class: ps.error ? 'err' : 'sched-note', role: ps.error ? 'alert' : 'status', text: line }));
     if (list.length) {
       const companyOpts = [['', 'Все компании'], [NO_COMPANY, NO_COMPANY], ...cs.map((c) => [c, c])];
       const typeOpts = [['', 'Все типы'], [NO_TYPE, NO_TYPE], ...ts.map((t) => [t, t])];
@@ -205,6 +235,8 @@ export function projectsView({ store, subscribe }) {
   });
   document.addEventListener('close', () => { if (dirty && root.isConnected) { dirty = false; setTimeout(render, 0); } }, true);
   sig = signature();
+  const offP = onProjects(() => { if (!root.isConnected) return offP(); if (!document.querySelector('dialog[open]')) render(); else dirty = true; });
+  loadProjects();
   render();
   root.append(body);
   return root;
