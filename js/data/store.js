@@ -4,7 +4,7 @@ import { encryptJSON, decryptJSON } from './crypto.js';
 import { dbGet, dbSet, dbDelete, dbAll, dbClear } from './db.js';
 import { createGithub, GhError } from './github.js';
 
-export const MODULES = ['inbox', 'tasks', 'habits', 'habitlog', 'goals'];
+export const MODULES = ['inbox', 'tasks', 'goals'];
 export const TOMBSTONE_TTL = 30 * 24 * 3600 * 1000;
 const path = (m) => `data/${m}.json`;
 
@@ -24,8 +24,6 @@ const isStr = (v) => typeof v === 'string';
 const VALID = {
   inbox: (it) => isStr(it.text) && isStr(it.type),
   tasks: (it) => isStr(it.title) && typeof it.done === 'boolean',
-  habits: (it) => isStr(it.title),
-  habitlog: (it) => isStr(it.habit) && isStr(it.date) && typeof it.done === 'boolean',
   goals: (it) => isStr(it.title) && typeof it.progress === 'number',
 };
 

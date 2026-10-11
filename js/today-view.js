@@ -1,17 +1,15 @@
-// Вкладка «Сегодня»: главные задачи, задачи на сегодня, входящие, привычки, цели.
+// Вкладка «Сегодня»: главные задачи, задачи на сегодня, входящие, цели.
 // Источники, которых ещё нет (расписание, подписки, погода, проекты), показываются одной честной строкой.
 import { el } from './ui.js';
 import { todayYmd, fromYmd, fmtDay, dueLabel, weekType } from './dates.js';
 import { groupTasks, openTasksTab, INBOX_OLD_DAYS, MAIN_LIMIT } from './tasks-view.js';
-import { doneDates, streak } from './habits.js';
-import { toggleDay } from './habits-view.js';
 
 const WEEKDAYS_FULL = ['воскресенье', 'понедельник', 'вторник', 'среда', 'четверг', 'пятница', 'суббота'];
 const MONTHS_GEN = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
 
 export function todayView({ store, subscribe }) {
   const root = el('section', { class: 'view' });
-  const keys = ['inbox', 'tasks', 'habits', 'habitlog', 'goals'];
+  const keys = ['inbox', 'tasks', 'goals'];
   const signature = () => keys.map((m) => store.list(m).map((it) => `${it.id}:${it.updatedAt}`).join(',')).join('|');
   let sig = '';
   let shown = '';
@@ -86,23 +84,6 @@ export function todayView({ store, subscribe }) {
         goTo('#/tasks', { id: 'inbox', label: 'Разобрать' }),
       ),
     );
-
-    // Привычки
-    const habits = store.list('habits').sort((a, b) => a.created - b.created);
-    const logs = store.list('habitlog');
-    if (habits.length) {
-      const ul = el('ul', { class: 'tasks' });
-      habits.forEach((h) => {
-        const done = doneDates(logs, h.id);
-        const li = el('li', { class: 'task' });
-        const check = el('button', { type: 'button', class: 'task__check', role: 'checkbox', 'aria-checked': String(done.has(today)), 'aria-label': `${h.title}: отметить сегодня` });
-        check.addEventListener('click', () => toggleDay(store, h.id, today));
-        const n = streak(done, today);
-        li.append(check, el('span', { class: 'task__text' }, [el('span', { class: 'task__title', text: h.title }), el('span', { class: 'task__meta', text: n ? `серия: ${n} дн.` : 'серии пока нет' })]), el('span'));
-        ul.append(li);
-      });
-      root.append(tile('Привычки', ul, goTo('#/tasks', { id: 'habits', label: 'Все привычки' })));
-    }
 
     // Цели
     const goals = store.list('goals').filter((x) => x.progress < 100).sort((a, b) => a.created - b.created).slice(0, 3);

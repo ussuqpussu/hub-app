@@ -223,17 +223,12 @@
 .done-box { display: grid; gap: var(--sp-2); }
 .done-box summary { cursor: pointer; min-height: var(--tap); display: flex; align-items: center; color: var(--c-dim); }
 
-/* Сегодня, привычки, цели */
+/* Сегодня и цели */
 .tile { display: grid; gap: var(--sp-3); }
 .tile__head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--sp-3); }
 .tile__head h2 { font-size: var(--fs-m); }
 .tile__link { font-size: var(--fs-s); color: var(--c-dim); }
 .today-warn { color: var(--c-danger); }
-.habit { display: grid; grid-template-columns: auto 1fr; gap: var(--sp-2) var(--sp-3); align-items: center; padding: var(--sp-3); background: var(--c-surface); border: var(--border) var(--border-style) var(--c-line); border-radius: var(--radius-m); }
-.habit > .btn { grid-column: 1 / -1; justify-self: start; }
-.dots { grid-column: 1 / -1; display: flex; gap: var(--sp-1); }
-.dot { flex: 1; min-height: var(--tap); border: var(--border) solid var(--c-line); border-radius: var(--radius-s); background: transparent; font-size: var(--fs-xs); color: var(--c-dim); }
-.dot[aria-checked="true"] { background: var(--c-accent); color: var(--c-on-accent); border-color: var(--c-accent); }
 .goal { display: grid; grid-template-columns: 1fr auto; gap: var(--sp-2) var(--sp-3); align-items: center; padding: var(--sp-3); background: var(--c-surface); border: var(--border) var(--border-style) var(--c-line); border-radius: var(--radius-m); }
 .goal > .bar, .goal > .range, .goal > .task__tools { grid-column: 1 / -1; }
 .goal--compact { padding: var(--sp-2) var(--sp-3); }
