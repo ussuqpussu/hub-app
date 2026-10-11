@@ -8,12 +8,13 @@ import { tasksView } from './tasks-view.js';
 import { scheduleView, sourceLine } from './schedule-view.js';
 import { subsView } from './subs-view.js';
 import { projectsView } from './projects-view.js';
+import { projectPage } from './project-page.js';
 import { getScheduleState, loadSchedule, onSchedule } from './schedule-data.js';
 import { todayView } from './today-view.js';
 
 export { ICONS, fmtTime };
 
-export const VERSION = '0.9.3 (этап 6: правка карточек Obsidian)';
+export const VERSION = '0.10.0 (этап 7: страница проекта и схема)';
 
 // Вкладки. group: main (в нижней панели телефона), more (внутри «Ещё»).
 export const TABS = [
@@ -291,7 +292,7 @@ export function renderRoute(route, ctx) {
   if (route === 'tasks') return tasksView(ctx);
   if (route === 'schedule') return scheduleView(ctx);
   if (route === 'subscriptions') return subsView(ctx);
-  if (route === 'projects') return projectsView(ctx);
+  if (route === 'projects') return ctx.param ? projectPage(ctx, ctx.param) : projectsView(ctx);
   if (route === 'today') return todayView(ctx);
   if (route === 'more') return moreView();
   if (PLACEHOLDERS[route]) return placeholderView(route);

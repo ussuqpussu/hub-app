@@ -5,10 +5,11 @@ import { createGithub } from './data/github.js';
 import { getSession } from './data/vault.js';
 import { load } from './storage.js';
 import { parseCard, updateCardText } from './projects-parse.js';
+import { normalizeArch, schemaPath } from './arch-calc.js';
 
 const CACHE_KEY = 'obsidian-projects';
 const MAX_FILES = 80;
-let state = { cards: [], fetchedAt: null, loaded: false, busy: false, error: null, skipped: 0 };
+let state = { cards: [], schemas: {}, fetchedAt: null, loaded: false, busy: false, error: null, skipped: 0 };
 const listeners = new Set();
 const set = (patch) => {
   state = { ...state, ...patch };
@@ -53,7 +54,7 @@ export async function loadProjects({ refresh = true } = {}) {
   if (state.busy) return;
   try {
     const c = await dbGet('files', CACHE_KEY);
-    if (c && Array.isArray(c.cards)) state = { ...state, cards: c.cards, fetchedAt: c.fetchedAt };
+    if (c && Array.isArray(c.cards)) state = { ...state, cards: c.cards, schemas: c.schemas || {}, fetchedAt: c.fetchedAt };
   } catch (_) {
     /* кэша нет */
   }
@@ -75,9 +76,19 @@ export async function loadProjects({ refresh = true } = {}) {
       if (card) cards.push(card);
       else skipped += 1;
     }
+    const schemas = {};
+    const sdir = (await gh.listDir('architecture').catch(() => null)) || [];
+    for (const it of sdir.filter((x) => x.type === 'file' && /\.json$/i.test(x.name)).slice(0, MAX_FILES)) {
+      try {
+        const f = await gh.getFile(it.path);
+        if (f) schemas[it.path] = normalizeArch(JSON.parse(f.text));
+      } catch (_) {
+        /* битая схема пропускается */
+      }
+    }
     const fetchedAt = new Date().toISOString();
-    await dbSet('files', CACHE_KEY, { cards, fetchedAt }).catch(() => {});
-    set({ cards, fetchedAt, skipped: skipped + Math.max(0, paths.length - MAX_FILES) });
+    await dbSet('files', CACHE_KEY, { cards, schemas, fetchedAt }).catch(() => {});
+    set({ cards, schemas, fetchedAt, skipped: skipped + Math.max(0, paths.length - MAX_FILES) });
   } catch (e) {
     set({ error: explain(e) });
   }
@@ -95,10 +106,10 @@ function client() {
   if (!session.token || !repo) throw new Error('Нет подключения к репозиторию');
   return createGithub({ repo, token: session.token, apiBase: apiBase() });
 }
-async function persist(cards) {
+async function persist(cards, schemas = state.schemas) {
   const fetchedAt = new Date().toISOString();
-  await dbSet('files', CACHE_KEY, { cards, fetchedAt }).catch(() => {});
-  set({ cards, fetchedAt });
+  await dbSet('files', CACHE_KEY, { cards, schemas, fetchedAt }).catch(() => {});
+  set({ cards, schemas, fetchedAt });
 }
 
 // Правит заметку на GitHub: берёт свежий текст файла, меняет только изменённые поля, отправляет.
@@ -122,7 +133,28 @@ export async function deleteCard(card) {
     const gh = client();
     const f = await gh.getFile(card.path);
     if (f) await gh.deleteFile(card.path, f.sha, `Хаб: удалена карточка ${card.name}`);
-    await persist(state.cards.filter((c) => c.path !== card.path));
+    const sp = schemaPath(card.path);
+    const sf = state.schemas[sp] ? await gh.getFile(sp) : null;
+    if (sf) await gh.deleteFile(sp, sf.sha, `Хаб: удалена схема ${card.name}`);
+    const rest = { ...state.schemas };
+    delete rest[sp];
+    await persist(state.cards.filter((c) => c.path !== card.path), rest);
+  } catch (e) {
+    throw new Error(writeError(e));
+  }
+}
+
+export const schemaOf = (card) => (card && card.source === 'obsidian' ? state.schemas[schemaPath(card.path)] || null : null);
+
+// Схема карточки из Obsidian лежит файлом architecture/<имя>.json в hub-projects
+export async function saveSchema(card, arch) {
+  try {
+    const gh = client();
+    const path = schemaPath(card.path);
+    const f = await gh.getFile(path);
+    const text = `${JSON.stringify(normalizeArch(arch), null, 2)}\n`;
+    await gh.putFile(path, text, f ? f.sha : undefined, `Хаб: схема ${card.name}`);
+    await persist(state.cards, { ...state.schemas, [path]: normalizeArch(arch) });
   } catch (e) {
     throw new Error(writeError(e));
   }

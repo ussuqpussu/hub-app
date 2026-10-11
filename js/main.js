@@ -72,8 +72,16 @@ function currentRoute() {
 function route() {
   subs.forEach((off) => off());
   subs = [];
-  const id = currentRoute();
-  main.replaceChildren(renderRoute(id, { onLockNow: () => lock.lockNow(), store, subscribe }));
+  const full = currentRoute();
+  const slash = full.indexOf('/');
+  const id = slash === -1 ? full : full.slice(0, slash);
+  let param = '';
+  try {
+    param = slash === -1 ? '' : decodeURIComponent(full.slice(slash + 1));
+  } catch (_) {
+    param = '';
+  }
+  main.replaceChildren(renderRoute(id, { onLockNow: () => lock.lockNow(), store, subscribe, param }));
   const tab = TABS.find((t) => t.id === id);
   title.textContent = id === 'settings' ? 'Настройки' : id === 'more' ? 'Ещё' : tab ? tab.name : 'Хаб';
   document.title = `${title.textContent} · Хаб`;

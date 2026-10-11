@@ -18,14 +18,14 @@ function select(label, value, options, onChange) {
   return s;
 }
 
-function mark(p) {
+export function mark(p) {
   const box = logoNode(p);
   if (!p.logo) box.style.setProperty('--logo-bg', `var(--chart-${colorIndex(p.name)})`);
   box.classList.toggle('logo--color', !p.logo);
   return box;
 }
 
-function projectSheet({ project, companyList, types, onSave, onDelete, external = false }) {
+export function projectSheet({ project, companyList, types, onSave, onDelete, external = false }) {
   openSheet((close) => {
     const f = el('form', { class: 'sheet__form sub-form' });
     const inp = (label, attrs) => el('input', { class: 'field', 'aria-label': label, placeholder: label, ...attrs });
@@ -130,24 +130,32 @@ function projectSheet({ project, companyList, types, onSave, onDelete, external 
   });
 }
 
+export const mergedProjects = (store) => [...store.list('projects').map((p) => normalizeProject({ ...p, source: 'hub' })), ...getProjectsState().cards.map(normalizeProject)];
+
+const alertSheet = (m) => confirmSheet({ title: 'Не получилось', text: m, action: 'Понятно', onConfirm: () => {} });
+
+// Окно правки карточки (своей или из Obsidian). onGone вызывается после удаления.
+export function openEditor(store, project, { onGone } = {}) {
+  const list = mergedProjects(store);
+  const base = { companyList: companies(list), types: typeOptions(list) };
+  if (project && project.source === 'obsidian') {
+    const askDeleteCard = (p) => confirmSheet({ title: 'Удалить карточку из Obsidian?', text: `Файл «${p.path}» будет удалён из репозитория hub-projects. На компьютере он исчезнет после git pull. Вернуть можно из истории GitHub.`, action: 'Удалить', onConfirm: async () => { try { await deleteCard(p); if (onGone) onGone(); } catch (ex) { alertSheet(ex.message); } } });
+    return projectSheet({ ...base, project, external: true, onSave: (fields) => saveCard(project, fields), onDelete: askDeleteCard });
+  }
+  const askDelete = (p) => confirmSheet({ title: 'Удалить проект?', text: `Карточка «${p.name}» исчезнет. Это нельзя отменить.`, action: 'Удалить', onConfirm: async () => { await store.remove('projects', p.id); if (onGone) onGone(); } });
+  const onSave = async (fields, prev) => { const { questions, ...rest } = fields; return prev ? store.update('projects', prev.id, rest) : store.add('projects', rest); };
+  return projectSheet({ ...base, project, onSave, onDelete: askDelete });
+}
+
 export function projectsView({ store, subscribe }) {
   const root = el('section', { class: 'view' }, [el('div', { class: 'view__head' }, [el('h1', { text: 'Проекты' }), el('p', { class: 'muted', text: 'Сайты, боты и всё остальное, что ты делаешь.' })])]);
   let ui = { ...ui0, ...(load(KEY, {}) || {}) };
   let query = '';
   const body = el('div', { class: 'stack' });
-  const all = () => [...store.list('projects').map((p) => normalizeProject({ ...p, source: 'hub' })), ...getProjectsState().cards.map(normalizeProject)];
+  const all = () => mergedProjects(store);
   const persist = () => save(KEY, ui);
   const set = (patch) => { ui = { ...ui, ...patch }; persist(); render(); };
-  const onSave = async (fields, prev) => { const { questions, ...rest } = fields; return prev ? store.update('projects', prev.id, rest) : store.add('projects', rest); };
-  const askDelete = (p) => confirmSheet({ title: 'Удалить проект?', text: `Карточка «${p.name}» исчезнет. Это нельзя отменить.`, action: 'Удалить', onConfirm: () => store.remove('projects', p.id) });
-  const askDeleteCard = (p) => confirmSheet({ title: 'Удалить карточку из Obsidian?', text: `Файл «${p.path}» будет удалён из репозитория hub-projects. На компьютере он исчезнет после git pull. Вернуть можно из истории GitHub.`, action: 'Удалить', onConfirm: async () => { try { await deleteCard(p); } catch (ex) { alert2(ex.message); } } });
-  const alert2 = (m) => confirmSheet({ title: 'Не получилось', text: m, action: 'Понятно', onConfirm: () => {} });
-  const open = (p) => {
-    const list = all();
-    const base = { companyList: companies(list), types: typeOptions(list) };
-    if (p && p.source === 'obsidian') return projectSheet({ ...base, project: p, external: true, onSave: (fields) => saveCard(p, fields), onDelete: askDeleteCard });
-    return projectSheet({ ...base, project: p, onSave, onDelete: askDelete });
-  };
+  const open = (p) => openEditor(store, p);
 
   function card(p) {
     const today = todayYmd();
@@ -160,7 +168,7 @@ export function projectsView({ store, subscribe }) {
       ev ? el('span', { class: 'muted pcard__ev', text: `${dateText(ev.date, today)}: ${ev.text}` }) : p.summary ? el('span', { class: 'muted pcard__ev', text: p.summary }) : '',
       g.length ? el('span', { class: 'sched-note', text: `Не заполнено: ${g.join(', ')}` }) : '',
     ]);
-    b.addEventListener('click', () => open(p));
+    b.addEventListener('click', () => { location.hash = `#/projects/${encodeURIComponent(p.id)}`; });
     return b;
   }
 
