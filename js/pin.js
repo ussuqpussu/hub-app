@@ -11,6 +11,10 @@ import {
   codeToRaw,
   showCodeForRaw,
   wipeEverything,
+  resumeSession,
+  markHidden,
+  clearHidden,
+  getHiddenAt,
 } from './data/vault.js';
 
 const KEY_AUTOLOCK = 'hub.autolock';
@@ -237,18 +241,28 @@ export function createLock(root, { onUnlock, onLock }) {
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) {
       state.hiddenAt = Date.now();
+      if (state.unlocked) markHidden(state.hiddenAt);
       return;
     }
     const min = getAutolock();
     if (state.unlocked && min > 0 && state.hiddenAt && Date.now() - state.hiddenAt > min * 60000) {
       doLock();
       show('enter');
+    } else if (state.unlocked) {
+      clearHidden();
     }
   });
 
   return {
-    start() {
+    async start() {
       show(vaultExists() || legacyPinExists() ? 'enter' : 'setup');
+      if (!vaultExists()) return;
+      // Обновление страницы: если вкладку не закрывали и автоблокировка не сработала, PIN не нужен.
+      const min = getAutolock();
+      const hiddenAt = getHiddenAt();
+      const expired = min > 0 && hiddenAt && Date.now() - hiddenAt > min * 60000;
+      if (!expired && (await resumeSession())) finishUnlock();
+      else if (expired) doLock();
     },
     lockNow() {
       if (vaultExists()) {

@@ -5,7 +5,7 @@ import { createGithub } from './data/github.js';
 import { TYPES } from './plus.js';
 import { load } from './storage.js';
 
-export const VERSION = '0.2.0 (этап 2: данные)';
+export const VERSION = '0.2.1 (этап 2: данные)';
 
 // Свои простые значки (линия, без заимствованных наборов).
 const ico = (d) =>

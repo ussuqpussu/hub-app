@@ -5,6 +5,7 @@ import { load, save, remove } from '../storage.js';
 import {
   PBKDF2_ITER,
   bytesToB64,
+  b64ToBytes,
   randomBytes,
   deriveWrapKey,
   importDataKey,
@@ -18,6 +19,42 @@ import {
 
 const KEY = 'hub.vault';
 const LEGACY = 'hub.pin';
+// Ключ данных на время жизни вкладки: обновление страницы не просит PIN, закрытие вкладки сбрасывает вход.
+const SESSION_KEY = 'hub.session';
+const HIDDEN_KEY = 'hub.hiddenAt';
+
+function sessGet(k) {
+  try {
+    return window.sessionStorage.getItem(k);
+  } catch (_) {
+    return null;
+  }
+}
+function sessSet(k, v) {
+  try {
+    window.sessionStorage.setItem(k, v);
+  } catch (_) {
+    /* без sessionStorage вход просто не переживёт обновление */
+  }
+}
+function sessDel(k) {
+  try {
+    window.sessionStorage.removeItem(k);
+  } catch (_) {
+    /* ничего */
+  }
+}
+
+export function markHidden(ts) {
+  sessSet(HIDDEN_KEY, String(ts));
+}
+export function clearHidden() {
+  sessDel(HIDDEN_KEY);
+}
+export function getHiddenAt() {
+  const n = Number(sessGet(HIDDEN_KEY));
+  return Number.isFinite(n) && n > 0 ? n : 0;
+}
 
 const session = { raw: null, dataKey: null, token: null, repo: null };
 
@@ -40,6 +77,8 @@ export function getSession() {
 }
 
 export function lockVault() {
+  sessDel(SESSION_KEY);
+  sessDel(HIDDEN_KEY);
   session.raw = null;
   session.dataKey = null;
   session.token = null;
@@ -54,6 +93,7 @@ async function wrapRaw(pin, raw, saltB64, iter) {
 async function openSession(raw, vault) {
   session.raw = raw;
   session.dataKey = await importDataKey(raw);
+  sessSet(SESSION_KEY, bytesToB64(raw));
   session.repo = vault.repo || null;
   session.token = null;
   if (vault.token) {
@@ -88,6 +128,25 @@ export async function unlockVault(pin) {
     throw new Error('wrong-pin');
   }
   await openSession(raw, vault);
+}
+
+// Возвращает вход после обновления страницы, если вкладка не закрывалась.
+export async function resumeSession() {
+  const vault = load(KEY);
+  const b64 = sessGet(SESSION_KEY);
+  if (!vault || !b64) return false;
+  try {
+    const raw = b64ToBytes(b64);
+    await openSession(raw, vault);
+    if (vault.token && !session.token) {
+      lockVault();
+      return false;
+    }
+    return true;
+  } catch (_) {
+    lockVault();
+    return false;
+  }
 }
 
 export async function verifyPin(pin) {
