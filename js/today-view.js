@@ -6,11 +6,6 @@ import { nextDue, lamp } from './subs-calc.js';
 import { dueText, money, dateText, periodText, lampNode, logoNode } from './subs-parts.js';
 import { pairRow } from './schedule-view.js';
 import { loadSchedule, onSchedule, getScheduleState, pairsOn, pairPhase, isStale, withGaps } from './schedule-data.js';
-import { mergedProjects } from './projects-view.js';
-import { onProjects, loadProjects, getProjectsState } from './projects-data.js';
-import { load, save } from './storage.js';
-import { buildFeed } from './feed-calc.js';
-import { feedLine } from './feed-view.js';
 import { groupTasks, openTasksTab, INBOX_OLD_DAYS, MAIN_LIMIT } from './tasks-view.js';
 
 const WEEKDAYS_FULL = ['воскресенье', 'понедельник', 'вторник', 'среда', 'четверг', 'пятница', 'суббота'];
@@ -18,7 +13,7 @@ const MONTHS_GEN = ['января', 'февраля', 'марта', 'апрел�
 
 export function todayView({ store, subscribe }) {
   const root = el('section', { class: 'view' });
-  const keys = ['inbox', 'tasks', 'goals', 'subs', 'projects'];
+  const keys = ['inbox', 'tasks', 'goals', 'subs'];
   const signature = () => keys.map((m) => store.list(m).map((it) => `${it.id}:${it.updatedAt}`).join(',')).join('|');
   let sig = '';
   let shown = '';
@@ -146,12 +141,13 @@ export function todayView({ store, subscribe }) {
       root.append(tile('Ближайшие платежи', ul, el('a', { class: 'tile__link', href: '#/subscriptions', text: 'Все подписки' })));
     }
 
-    // Лента проектов: пять последних событий
-    const feed = buildFeed(mergedProjects(store)).slice(0, 5);
-    if (feed.length) {
-      const all = el('a', { class: 'tile__link', href: '#/projects', text: 'Вся лента' });
-      all.addEventListener('click', () => save('hub.projectsUi', { ...(load('hub.projectsUi', {}) || {}), tab: 'feed', fProject: null }));
-      root.append(tile('Лента проектов', el('ul', { class: 'feedlist' }, feed.map((i) => feedLine(i))), all));
+    // Ближайшие задачи: то, чего нет выше (не главные, не на сегодня и не просроченные)
+    const upcoming = [...g.later, ...g.nodue].filter((t) => !t.main).slice(0, 4);
+    if (upcoming.length) {
+      const hidden = g.later.filter((t) => !t.main).length + g.nodue.filter((t) => !t.main).length - upcoming.length;
+      const items = [el('ul', { class: 'tasks' }, upcoming.map((t) => taskLine(t, today)))];
+      if (hidden > 0) items.push(el('p', { class: 'muted', text: `И ещё: ${hidden}` }));
+      root.append(tile('Ближайшие задачи', items, goTo('#/tasks', { id: 'tasks', label: 'Все задачи' })));
     }
 
     // Источники, которых ещё нет
@@ -171,8 +167,6 @@ export function todayView({ store, subscribe }) {
       render();
     } else if (seen) offSched();
   });
-  const offProj = onProjects(() => { if (root.isConnected) render(); else offProj(); });
-  if (!getProjectsState().loaded) loadProjects();
   loadSchedule();
   subscribe(() => {
     const next = signature();

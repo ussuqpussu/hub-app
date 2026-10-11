@@ -3,6 +3,10 @@ import { el, ICONS, fmtTime } from './ui.js';
 import { load, save } from './storage.js';
 import { todayYmd, dueLabel, parseQuick, isYmd, isHm } from './dates.js';
 import { goalsPanel } from './goals-view.js';
+import { questionsBoard, allQuestions } from './questions-view.js';
+import { countOpen } from './questions-calc.js';
+import { mergedProjects, mark } from './projects-view.js';
+import { loadProjects, onProjects, getProjectsState } from './projects-data.js';
 
 const KEY_TAB = 'hub.tasksTab';
 export const INBOX_OLD_DAYS = 7;
@@ -43,7 +47,8 @@ export function tasksView({ store, subscribe }) {
   ]);
 
   let tab = load(KEY_TAB, 'inbox');
-  if (!['inbox', 'tasks', 'goals'].includes(tab)) tab = 'inbox';
+  if (!['inbox', 'tasks', 'questions', 'goals'].includes(tab)) tab = 'inbox';
+  let qui = load('hub.questionsUi', {}) || {};
   let editingGoal = null;
   let editingId = null;
   let projectFor = null; // запись «Входящих», у которой открыт ввод проекта
@@ -70,6 +75,7 @@ export function tasksView({ store, subscribe }) {
     [
       ['inbox', `Входящие: ${openInbox().length}`],
       ['tasks', `Задачи: ${openTasks}`],
+      ['questions', `Вопросы${countOpen(allQuestions(store, mergedProjects(store))) ? `: ${countOpen(allQuestions(store, mergedProjects(store)))}` : ''}`],
       ['goals', 'Цели'],
     ].forEach(([id, label]) => {
       const b = el('button', { type: 'button', class: 'chip', 'aria-pressed': String(tab === id), text: label });
@@ -289,14 +295,17 @@ export function tasksView({ store, subscribe }) {
     renderTabs();
     if (tab === 'inbox') renderInbox();
     else if (tab === 'tasks') renderTasks();
+    else if (tab === 'questions') body.replaceChildren(questionsBoard({ store, projects: mergedProjects(store), ui: qui, setUi: (patch) => { qui = { ...qui, ...patch }; save('hub.questionsUi', qui); render(); }, mark }));
     else body.replaceChildren(goalsPanel({ store, rerender: render, editing: editingGoal, setEditing: (id) => { editingGoal = id; } }));
     live.textContent = msg;
   }
 
   // Обновления из синхронизации не должны стирать то, что ты сейчас печатаешь.
-  const signature = () => ['inbox', 'tasks', 'goals'].map((m) => store.list(m).map((it) => `${it.id}:${it.updatedAt}`).join(',')).join('|');
+  const signature = () => ['inbox', 'tasks', 'goals', 'questions', 'projects'].map((m) => store.list(m).map((it) => `${it.id}:${it.updatedAt}`).join(',')).join('|');
   let sig = signature();
   let stale = false;
+  const offP = onProjects(() => { if (!root.isConnected) return offP(); if (tab === 'questions' || tab === 'tasks') { if (typing()) stale = true; else render(); } });
+  if (!getProjectsState().loaded) loadProjects();
   const typing = () => root.contains(document.activeElement) && /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName);
   subscribe(() => {
     const next = signature();

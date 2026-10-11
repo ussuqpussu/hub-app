@@ -6,9 +6,7 @@ import { openSheet, confirmSheet, readLogoFile } from './subs-form.js';
 import { logoNode, dateText } from './subs-parts.js';
 import { loadProjects, onProjects, getProjectsState, saveCard, deleteCard } from './projects-data.js';
 import { fmtTime } from './ui.js';
-import { questionsBoard, allQuestions } from './questions-view.js';
 import { feedBoard } from './feed-view.js';
-import { countOpen } from './questions-calc.js';
 import { STATUS_LABEL, STATUS_ORDER, SORTS, GROUPS, NO_COMPANY, NO_TYPE, normalizeProject, filterProjects, sortProjects, groupProjects, companies, typeOptions, parseTags, lastActivity, colorIndex, gaps } from './projects-calc.js';
 
 const KEY = 'hub.projectsUi';
@@ -161,6 +159,7 @@ export function openEditor(store, project, { onGone } = {}) {
 export function projectsView({ store, subscribe }) {
   const root = el('section', { class: 'view' }, [el('div', { class: 'view__head' }, [el('h1', { text: 'Проекты' }), el('p', { class: 'muted', text: 'Сайты, боты и всё остальное, что ты делаешь.' })])]);
   let ui = { ...ui0, ...(load(KEY, {}) || {}) };
+  if (!['cards', 'feed'].includes(ui.tab)) ui.tab = 'cards';
   let query = '';
   const body = el('div', { class: 'stack' });
   const all = () => mergedProjects(store);
@@ -184,8 +183,7 @@ export function projectsView({ store, subscribe }) {
   }
 
   function tabs(list) {
-    const n = countOpen(allQuestions(store, list));
-    return el('div', { class: 'seg', role: 'group', 'aria-label': 'Раздел проектов' }, [['cards', 'Карточки'], ['questions', `Вопросы${n ? ` ${n}` : ''}`], ['feed', 'Лента']].map(([k, t]) => {
+    return el('div', { class: 'seg', role: 'group', 'aria-label': 'Раздел проектов' }, [['cards', 'Карточки'], ['feed', 'Лента']].map(([k, t]) => {
       const b = el('button', { type: 'button', 'aria-pressed': String(ui.tab === k), text: t });
       b.addEventListener('click', () => set({ tab: k }));
       return b;
@@ -195,7 +193,6 @@ export function projectsView({ store, subscribe }) {
   function render() {
     const list = all();
     if (ui.tab === 'feed') return void body.replaceChildren(el('div', { class: 'stack' }, [tabs(list), feedBoard({ projects: list, ui, setUi: set })]));
-    if (ui.tab === 'questions') return void body.replaceChildren(el('div', { class: 'stack' }, [tabs(list), questionsBoard({ store, projects: list, ui, setUi: set, mark })]));
     const cs = companies(list);
     const ts = typeOptions(list).filter((t) => list.some((p) => p.types.includes(t)));
     const shown = sortProjects(filterProjects(list, { company: ui.company, type: ui.type, status: ui.status, query }), ui.sort);
@@ -250,7 +247,7 @@ export function projectsView({ store, subscribe }) {
 
   let sig = '';
   let dirty = false;
-  const signature = () => [...store.list('projects'), ...store.list('questions')].map((s) => `${s.id}:${s.updatedAt}`).join(',');
+  const signature = () => store.list('projects').map((s) => `${s.id}:${s.updatedAt}`).join(',');
   subscribe(() => {
     const n = signature();
     if (n !== sig) { sig = n; if (!document.querySelector('dialog[open]')) render(); else dirty = true; }

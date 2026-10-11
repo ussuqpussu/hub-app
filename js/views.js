@@ -14,7 +14,7 @@ import { todayView } from './today-view.js';
 
 export { ICONS, fmtTime };
 
-export const VERSION = '0.12.0 (этап 9: лента событий)';
+export const VERSION = '0.12.1 (вопросы переехали в задачи)';
 
 // Вкладки. group: main (в нижней панели телефона), more (внутри «Ещё»).
 export const TABS = [
