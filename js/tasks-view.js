@@ -2,6 +2,7 @@
 import { el, ICONS, fmtTime } from './ui.js';
 import { load, save } from './storage.js';
 import { todayYmd, dueLabel, parseQuick, isYmd, isHm } from './dates.js';
+import { playSound } from './appearance.js';
 import { goalsPanel } from './goals-view.js';
 import { questionTile, allQuestions, copyButton } from './questions-view.js';
 import { NO_PROJECT } from './questions-calc.js';
@@ -276,7 +277,7 @@ export function tasksView({ store, subscribe }) {
       'aria-label': t.done ? `Вернуть в работу: ${t.title}` : `Выполнено: ${t.title}`,
       text: t.done ? 'Вернуть' : 'Готово',
     });
-    check.addEventListener('click', () => store.update('tasks', t.id, { done: !t.done, doneAt: !t.done ? Date.now() : null, main: !t.done ? false : t.main }));
+    check.addEventListener('click', () => { if (!t.done) playSound('done'); store.update('tasks', t.id, { done: !t.done, doneAt: !t.done ? Date.now() : null, main: !t.done ? false : t.main }); });
     const edit = el('button', { type: 'button', class: 'iconbtn', 'aria-label': `Изменить: ${t.title}`, html: ICONS.edit });
     edit.addEventListener('click', () => { editingId = t.id; render(); });
     const del = el('button', { type: 'button', class: 'iconbtn', 'aria-label': `Удалить: ${t.title}`, html: ICONS.close });

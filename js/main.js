@@ -6,11 +6,15 @@ import { initSearch } from './search-view.js';
 import { load } from './storage.js';
 import { createStore } from './data/store.js';
 import { getSession } from './data/vault.js';
+import { applyAppearance, showSplash, playSound } from './appearance.js';
+import { initFx } from './fx.js';
 import { importInbox, refreshPulse, sendBotConfig, reportHubErrors } from './bot-sync.js';
 import { onProjects, getProjectsState } from './projects-data.js';
 import { mergedProjects } from './projects-view.js';
 
 applyTheme(currentTheme());
+applyAppearance();
+initFx();
 
 const nav = document.getElementById('nav');
 const main = document.getElementById('main');
@@ -134,6 +138,8 @@ onProjects((st) => {
 
 const lock = createLock(document.getElementById('lock'), {
   async onUnlock() {
+    playSound('unlock');
+    showSplash();
     await store.init();
     renderStatus(store.getStatus());
     if (!location.hash) location.hash = '#/today';

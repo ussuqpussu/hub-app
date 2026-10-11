@@ -1,6 +1,7 @@
 import { load, save } from './storage.js';
 import { parseQuick, dueLabel } from './dates.js';
 import { normalizeUrl } from './notes-calc.js';
+import { playSound } from './appearance.js';
 
 // Типы записей по разделу 6F плана. «Задача» создаёт настоящую задачу, остальные типы
 // сохраняются во «Входящие» (зашифрованно, с отправкой в репозиторий данных).
@@ -79,6 +80,7 @@ export function initPlus({ button, dialog, store }) {
       return;
     }
     input.value = '';
+    playSound('add');
     const st = store.getStatus();
     if (created) {
       const when = created.due ? `, срок: ${dueLabel(created.due)}${created.time ? ` ${created.time}` : ''}` : '';

@@ -1,4 +1,4 @@
-import { THEMES, currentTheme, setTheme } from './theme.js';
+import { appearanceBlock } from './appearance-view.js';
 import { AUTOLOCK_OPTIONS, getAutolock, setAutolock } from './pin.js';
 import { verifyPin, changePin, getRecoveryCode, setToken, clearToken, getSession } from './data/vault.js';
 import { createGithub } from './data/github.js';
@@ -18,7 +18,7 @@ import { todayView } from './today-view.js';
 
 export { ICONS, fmtTime };
 
-export const VERSION = '0.19.0 (Знания: заготовка, этап 14)';
+export const VERSION = '0.20.0 (Темы, обои, эффекты, этап 15)';
 
 // Вкладки. group: main (в нижней панели телефона), more (внутри «Ещё»).
 export const TABS = [
@@ -68,25 +68,7 @@ function settingsView({ onLockNow, store, subscribe }) {
   const root = el('section', { class: 'view' }, [el('div', { class: 'view__head' }, [el('h1', { text: 'Настройки' })])]);
 
   // Оформление
-  const themesBox = el('div', { class: 'themes', role: 'radiogroup', 'aria-label': 'Тема оформления' });
-  function renderThemes() {
-    themesBox.replaceChildren();
-    const active = currentTheme();
-    THEMES.forEach((t) => {
-      const card = el('button', { type: 'button', class: 'theme-card', role: 'radio', 'aria-checked': String(t.id === active), 'data-theme': t.id }, [
-        el('span', { class: 'theme-card__swatch', html: '<i style="background:var(--c-bg)"></i><i style="background:var(--c-surface)"></i><i style="background:var(--c-accent)"></i>' }),
-        el('span', { class: 'theme-card__name', text: t.name }),
-        el('span', { class: 'muted', text: t.note }),
-      ]);
-      card.addEventListener('click', () => {
-        setTheme(t.id);
-        renderThemes();
-      });
-      themesBox.append(card);
-    });
-  }
-  renderThemes();
-  root.append(el('div', { class: 'settings-group' }, [el('h2', { text: 'Оформление' }), themesBox, el('p', { class: 'muted', text: 'Остальные темы появятся на этапе 15.' })]));
+  root.append(appearanceBlock());
 
   // Данные
   const pinField = (label) => el('input', { class: 'field', type: 'password', inputmode: 'numeric', pattern: '[0-9]*', maxlength: '6', autocomplete: 'off', placeholder: label, 'aria-label': label });

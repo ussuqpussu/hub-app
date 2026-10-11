@@ -11,6 +11,8 @@ import { loadProjects, onProjects } from './projects-data.js';
 import { ruporPosts } from './rupor-view.js';
 import { pendingPost, publishedCount, recOf, dayNeed } from './rupor-calc.js';
 import { liveSummary, ensureSnapshot } from './weekly-view.js';
+import { drawSky, bodyPos } from './sky.js';
+import { getAppearance } from './appearance.js';
 import { groupTasks, openTasksTab, INBOX_OLD_DAYS, MAIN_LIMIT } from './tasks-view.js';
 
 const WEEKDAYS_FULL = ['воскресенье', 'понедельник', 'вторник', 'среда', 'четверг', 'пятница', 'суббота'];
@@ -61,6 +63,14 @@ export function todayView({ store, subscribe }) {
         el('p', { class: 'muted', text: `${weekType(today)[0].toUpperCase()}${weekType(today).slice(1)} неделя` }),
       ]),
     );
+
+    // Небо за окном (по времени суток)
+    if (getAppearance().sky) {
+      const now = new Date();
+      const cv = el('canvas', { class: 'sky', width: '480', height: '120', role: 'img', 'aria-label': `Небо за окном: сейчас ${bodyPos(now.getHours() + now.getMinutes() / 60).day ? 'день' : 'ночь'}, по времени на этом устройстве` });
+      drawSky(cv, now);
+      root.append(cv);
+    }
 
     // Расписание на сегодня
     const sst = getScheduleState();

@@ -120,6 +120,9 @@
   --logo-l: 3rem;
   --cal-cell: 2.75rem;
   --sheet-tall: 90dvh;
+  --sky-h: 7.5rem;
+  --fs-splash: 3rem;
+  --splash-line: 6rem;
 
   /* Движение */
   --dur: 0.18s;
