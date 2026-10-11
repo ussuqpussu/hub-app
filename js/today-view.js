@@ -3,7 +3,7 @@
 import { el } from './ui.js';
 import { todayYmd, fromYmd, fmtDay, dueLabel, weekType } from './dates.js';
 import { nextDue, lamp } from './subs-calc.js';
-import { dueText, money } from './subs-parts.js';
+import { dueText, money, dateText, periodText, lampNode, logoNode } from './subs-parts.js';
 import { pairRow } from './schedule-view.js';
 import { loadSchedule, onSchedule, getScheduleState, pairsOn, pairPhase, isStale, withGaps } from './schedule-data.js';
 import { groupTasks, openTasksTab, INBOX_OLD_DAYS, MAIN_LIMIT } from './tasks-view.js';
@@ -122,16 +122,21 @@ export function todayView({ store, subscribe }) {
     // Ближайшие списания
     const subs = store.list('subs').filter((x) => x.status === 'active').sort((a, b) => (nextDue(a, today) || '9').localeCompare(nextDue(b, today) || '9')).slice(0, 3);
     if (subs.length) {
-      const ul = el('ul', { class: 'tasks' });
+      const ul = el('ul', { class: 'card sublist' });
       subs.forEach((x) => {
-        const lvl = lamp(x, today);
-        ul.append(
-          el('li', { class: 'task', 'data-level': lvl }, [
-            el('span'),
-            el('span', { class: 'task__text' }, [el('span', { class: 'task__title', text: `${x.name} · ${money(x.price, x.currency)}` }), el('span', { class: lvl === 'red' || lvl === 'yellow' ? 'task__meta today-warn' : 'task__meta', text: dueText(x, today) })]),
-            el('span'),
+        const l = lamp(x, today);
+        const d = nextDue(x, today);
+        ul.append(el('li', { class: 'subrow', 'data-lamp': l }, [
+          el('a', { class: 'subrow__main subrow__main--link', href: '#/subscriptions' }, [
+            logoNode(x),
+            el('span', { class: 'subrow__text' }, [
+              el('span', { class: 'subrow__name', text: x.name }),
+              el('span', { class: 'subrow__due' }, [lampNode(l), el('span', { text: dueText(x, today) })]),
+              el('span', { class: 'subrow__meta', text: dateText(d, today) }),
+            ]),
+            el('span', { class: 'subrow__money' }, [el('span', { class: 'subrow__price', text: money(x.price, x.currency) }), el('span', { class: 'subrow__period', text: periodText(x).toLowerCase() })]),
           ]),
-        );
+        ]));
       });
       root.append(tile('Ближайшие платежи', ul, el('a', { class: 'tile__link', href: '#/subscriptions', text: 'Все подписки' })));
     }

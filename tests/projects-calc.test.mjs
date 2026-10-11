@@ -1,0 +1,31 @@
+import assert from 'node:assert/strict';
+import { normalizeProject as n, filterProjects, sortProjects, groupProjects, parseTags, lastActivity, colorIndex, NO_COMPANY, NO_TYPE, gaps } from '../js/projects-calc.js';
+
+let passed = 0;
+const ok = (name, fn) => { fn(); passed += 1; console.log('ok', name); };
+const P = (o) => n({ created: 1, ...o });
+const a = P({ name: 'Impulse Group', company: 'Impulse', types: ['Сайт', 'Telegram-бот'], status: 'active', tags: ['b2b'], events: [{ date: '2026-10-01', text: 'x' }, { date: '2026-10-05', text: 'y' }], created: 100 });
+const b = P({ name: 'Рупор', company: 'Impulse', types: ['Контент'], status: 'paused', created: 300 });
+const c = P({ name: 'Хаб', types: [], status: 'done', events: [{ date: '2026-10-10', text: 'z' }], created: 200 });
+const all = [a, b, c];
+
+ok('normalize defaults', () => { const x = n({ name: 'q', status: 'bad' }); assert.equal(x.status, 'active'); assert.deepEqual(x.types, []); });
+ok('events sorted new first', () => assert.equal(a.events[0].date, '2026-10-05'));
+ok('parseTags', () => assert.deepEqual(parseTags('#a, b;a\n  c  d'), ['a', 'b', 'c d']));
+ok('lastActivity', () => assert.equal(lastActivity(a), '2026-10-05'));
+ok('filter company', () => assert.deepEqual(filterProjects(all, { company: 'Impulse' }).map((p) => p.name), ['Impulse Group', 'Рупор']));
+ok('filter no company', () => assert.deepEqual(filterProjects(all, { company: NO_COMPANY }).map((p) => p.name), ['Хаб']));
+ok('filter no type', () => assert.deepEqual(filterProjects(all, { type: NO_TYPE }).map((p) => p.name), ['Хаб']));
+ok('filter type+status combine', () => assert.equal(filterProjects(all, { type: 'Сайт', status: 'paused' }).length, 0));
+ok('search name and tag', () => { assert.equal(filterProjects(all, { query: 'ХАБ' }).length, 1); assert.equal(filterProjects(all, { query: 'b2b' })[0].name, 'Impulse Group'); });
+ok('sort recent', () => assert.deepEqual(sortProjects(all, 'recent').map((p) => p.name), ['Хаб', 'Impulse Group', 'Рупор']));
+ok('sort name (ru collation)', () => assert.deepEqual(sortProjects(all, 'name').map((p) => p.name), ['Рупор', 'Хаб', 'Impulse Group']));
+ok('sort status', () => assert.deepEqual(sortProjects(all, 'status').map((p) => p.name), ['Impulse Group', 'Рупор', 'Хаб']));
+ok('sort created', () => assert.deepEqual(sortProjects(all, 'created').map((p) => p.name), ['Рупор', 'Хаб', 'Impulse Group']));
+ok('group company: no-company last', () => assert.deepEqual(groupProjects(all, 'company').map((g) => g.label), ['Impulse', NO_COMPANY]));
+ok('group type multi', () => { const g = groupProjects(all, 'type'); assert.deepEqual(g.map((x) => x.label), ['Контент', 'Сайт', 'Telegram-бот', NO_TYPE]); });
+ok('group status order', () => assert.deepEqual(groupProjects(all, 'status').map((g) => g.label), ['Идёт', 'На паузе', 'Сдан']));
+ok('group none', () => assert.equal(groupProjects(all, 'none')[0].items.length, 3));
+ok('colorIndex stable 1..7', () => { assert.equal(colorIndex('Хаб'), colorIndex('Хаб')); assert.ok(colorIndex('Рупор') >= 1 && colorIndex('Рупор') <= 7); });
+ok('gaps', () => assert.deepEqual(gaps(c), ['компания', 'тип']));
+console.log(`${passed} passed`);
