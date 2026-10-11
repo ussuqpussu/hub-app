@@ -556,3 +556,20 @@
 button.feedline__proj { cursor: pointer; }
 .feedline__text { color: inherit; text-decoration: none; overflow-wrap: anywhere; flex: 1 1 12rem; }
 .feedline__text:hover, .feedline__text:focus-visible { text-decoration: underline; }
+/* Задачи и вопросы одним списком */
+.qtile__top { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-1); min-height: 1.5rem; padding-right: var(--sp-3); }
+.qtile[data-kind="task"] .qtile__top { padding-right: 0; }
+.qtile__kind { font-size: 0.7rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--c-dim); }
+.qtile[data-kind="question"]::before { background: var(--c-dim); }
+.qtile__proj--late { color: var(--c-danger); }
+.qtile__foot--task { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-1); }
+.qtile__done { flex: 1; min-height: 2.25rem; border: var(--border) var(--border-style) var(--c-line); border-radius: var(--radius-pill); background: var(--c-fill); color: inherit; font: inherit; font-size: 0.8rem; font-weight: 600; cursor: pointer; }
+.qtile__done[aria-checked="true"] { background: transparent; color: var(--c-dim); }
+.ttile--done .qtile__text { text-decoration: line-through; color: var(--c-dim); }
+.qtile .task__tools { display: flex; }
+.qtile--form { grid-column: 1 / -1; list-style: none; }
+.qhead--plain { padding: var(--sp-2) var(--sp-3); }
+.qgroup--late .qhead__title { color: var(--c-danger); }
+.tfilters { display: grid; gap: var(--sp-2); }
+.tbox { border: var(--border) var(--border-style) var(--c-line); border-radius: var(--radius-m); padding: var(--sp-2) var(--sp-3); display: grid; gap: var(--sp-2); }
+.tbox > summary { cursor: pointer; min-height: var(--tap); display: flex; align-items: center; font-weight: 600; }
