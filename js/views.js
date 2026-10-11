@@ -11,13 +11,14 @@ import { projectsView } from './projects-view.js';
 import { projectPage } from './project-page.js';
 import { weeklyView } from './weekly-view.js';
 import { notesView } from './notes-view.js';
+import { knowledgeView } from './knowledge-view.js';
 import { botSettings } from './bot-view.js';
 import { getScheduleState, loadSchedule, onSchedule } from './schedule-data.js';
 import { todayView } from './today-view.js';
 
 export { ICONS, fmtTime };
 
-export const VERSION = '0.18.0 (Бот и входящие, этап 13)';
+export const VERSION = '0.19.0 (Знания: заготовка, этап 14)';
 
 // Вкладки. group: main (в нижней панели телефона), more (внутри «Ещё»).
 export const TABS = [
@@ -36,7 +37,6 @@ const PLACEHOLDERS = {
   tasks: ['Задачи и цели', 'Задачи со сроками, привычки и цели, а также «Входящие».', 'Задач, привычек и целей пока нет: они появятся на этапе 3.'],
   projects: ['Проекты', 'Карточки проектов, лента событий и открытые вопросы.', 'Данных пока нет: проекты из Obsidian подключатся на этапе 6.'],
   'smart-home': ['Умный дом', 'Управление устройствами, комнатами и сценариями.', 'Нет связи с сервером умного дома: он ещё не подключён (этап 14).'],
-  knowledge: ['Знания', 'Хроника сессий и промпты со скиллами.', 'Данных пока нет: вкладка появится на этапе 14.'],
 };
 
 function placeholderView(id) {
@@ -301,6 +301,7 @@ export function renderRoute(route, ctx) {
   if (route === 'projects') return ctx.param ? projectPage(ctx, ctx.param) : projectsView(ctx);
   if (route === 'today') return todayView(ctx);
   if (route === 'more') return moreView();
+  if (route === 'knowledge') return knowledgeView();
   if (PLACEHOLDERS[route]) return placeholderView(route);
   return el('section', { class: 'view' }, [
     el('h1', { text: 'Страница не найдена' }),
