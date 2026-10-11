@@ -324,8 +324,8 @@ export function tasksView({ store, subscribe }) {
         const part = entries.filter(test);
         if (!part.length) return;
         list.append(el('section', { class: `qgroup stack stack--tight ${cls || ''}`.trim() }, [
-          el('div', { class: 'qhead qhead--plain' }, [el('div', { class: 'qhead__text' }, [el('h3', { class: 'qhead__title', text: title })]), el('span', { class: 'qhead__count', text: String(part.length) })]),
-          el('ul', { class: 'qgrid' }, part.map((e) => (e.kind === 'task' ? taskTile(e.item, today, { showProject: true }) : questionTile(store, e.item, { showProject: true })))),
+          el('div', { class: 'qhead qhead--plain' }, [el('div', { class: 'qhead__text' }, [el('h3', { class: 'qhead__title', text: title })])]),
+          el('ul', { class: 'qgrid', 'data-n': String(Math.min(part.length, 4)) }, part.map((e) => (e.kind === 'task' ? taskTile(e.item, today, { showProject: true }) : questionTile(store, e.item, { showProject: true })))),
         ]));
       });
     } else {
@@ -337,9 +337,8 @@ export function tasksView({ store, subscribe }) {
         sec.append(el('div', { class: 'qhead' }, [
           mark(p || { name: gr.label }),
           el('div', { class: 'qhead__text' }, [el('h3', { class: 'qhead__title', text: gr.label }), el('span', { class: 'muted', text: p ? [p.company, STATUS_LABEL[p.status]].filter(Boolean).join(' · ') : gr.key === 'none' ? 'Дела без проекта' : 'Проект не заведён в «Проектах»' })]),
-          el('span', { class: 'qhead__count', text: String(gr.items.length) }),
         ]));
-        sec.append(el('ul', { class: 'qgrid' }, gr.items.map((e) => (e.kind === 'task' ? taskTile(e.item, today) : questionTile(store, e.item)))));
+        sec.append(el('ul', { class: 'qgrid', 'data-n': String(Math.min(gr.items.length, 4)) }, gr.items.map((e) => (e.kind === 'task' ? taskTile(e.item, today) : questionTile(store, e.item)))));
         if (p && gr.items.some((e) => e.kind === 'question')) sec.append(copyButton(questions, p.id, p.name, note));
         list.append(sec);
       });

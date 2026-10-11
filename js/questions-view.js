@@ -40,14 +40,14 @@ export function questionTile(store, q, { showProject = false } = {}) {
   const st = sel('Статус', q.status, Object.entries(Q_STATUS), (v) => patchQuestion(store, q, { status: v }));
   st.classList.add('qtile__sel');
   st.disabled = q.auto;
-  const who = el('button', { type: 'button', class: 'qtile__who', 'aria-label': `У кого спросить: ${Q_WHO[q.who]}. Нажми, чтобы сменить`, text: Q_WHO[q.who] });
+  const who = el('button', { type: 'button', class: 'qtile__who', 'aria-label': `У кого спросить: ${Q_WHO[q.who]}. Нажми, чтобы сменить`, text: q.who === 'unset' ? 'Вопрос' : `Вопрос · ${Q_WHO[q.who]}` });
   who.addEventListener('click', () => patchQuestion(store, q, { who: WHO_ORDER[(WHO_ORDER.indexOf(q.who) + 1) % WHO_ORDER.length] }));
   const body = el('p', { class: 'qtile__text', text: q.text, title: q.text });
   body.addEventListener('click', () => body.closest('.qtile').classList.toggle('qtile--open'));
-  const kids = [el('div', { class: 'qtile__top' }, [el('span', { class: 'qtile__kind', text: 'Вопрос' })]), body];
+  const kids = [el('div', { class: 'qtile__top' }, [who]), body];
   if (showProject) kids.push(el('span', { class: 'qtile__proj', text: q.project }));
   if (q.auto) kids.push(el('span', { class: 'qtile__proj', text: 'Строки больше нет в заметке, закрыт сам' }));
-  kids.push(el('div', { class: 'qtile__foot' }, [who, st]));
+  kids.push(el('div', { class: 'qtile__foot' }, [st]));
   const li = el('li', { class: 'qtile', 'data-status': q.status, 'data-kind': 'question', 'data-origin': q.origin }, kids);
   if (q.origin === 'manual') {
     const del = el('button', { type: 'button', class: 'qtile__del', 'aria-label': 'Удалить вопрос', text: '×' });
