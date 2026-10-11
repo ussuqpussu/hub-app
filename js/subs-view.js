@@ -1,223 +1,200 @@
-// Вкладка «Подписки»: список, статистика, календарь списаний, выгрузка .ics, копия и импорт.
-import { el } from './ui.js';
-import { todayYmd, dueLabel, fromYmd, addDays, monthName, isYmd } from './dates.js';
+// Вкладка «Подписки»: Главная, Статистика, Календарь. Устройство и поведение перенесены из старого приложения.
+import { el, ICONS } from './ui.js';
+import { todayYmd, fromYmd, addDays, monthName, ymd } from './dates.js';
 import { load, save } from './storage.js';
-import { nextDue, daysUntil, dueLevel, markPaid, monthlyCost, totalsByCurrency, byCategory, monthGrid, buildIcs, convertBackup, toBackup, PERIOD_LABEL } from './subs-calc.js';
+import { ensureRates } from './rates.js';
+import { lamp, nextDue, daysUntil, markPaid, editFields, withInitialPaidThrough, monthlyTotalRub, categoryShares, spent, tips, categories, sortSubs, filterSubs, monthEvents, monthTotalRub, buildIcs, convertBackup, toBackup, normalizeSub, toRub, CURRENCY_SYMBOL } from './subs-calc.js';
+import { money, rubMoney, periodText, dateText, dueWords, dueText, lampNode, logoNode } from './subs-parts.js';
+import { subscriptionSheet, filtersSheet, confirmSheet } from './subs-form.js';
 
 const KEY_TAB = 'hub.subsTab';
-const CURRENCIES = ['RUB', 'USD', 'EUR'];
+const KEY_HIDE = 'hub.subsHide';
+const REVEAL = 80; // px, совпадает с --reveal
+const SEARCH_FROM = 6;
 
-export function money(amount, currency) {
-  const n = Number(amount) || 0;
-  const frac = Math.abs(n - Math.round(n)) < 0.005 ? 0 : 2;
-  try {
-    return new Intl.NumberFormat('ru-RU', { style: 'currency', currency, minimumFractionDigits: frac, maximumFractionDigits: frac }).format(n);
-  } catch (_) {
-    return `${n.toFixed(frac)} ${currency}`;
-  }
-}
-export const moneyMap = (o) => Object.entries(o).map(([c, v]) => money(v, c)).join(' · ') || '0';
-
-export function periodText(s) {
-  if (s.period === 'custom') return `каждые ${s.customDays} дн.`;
-  return PERIOD_LABEL[s.period] || s.period;
+function download(name, type, text) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([text], { type }));
+  a.download = name;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
 }
 
-function logoNode(s) {
-  const box = el('span', { class: 'sub__logo', 'aria-hidden': 'true' });
-  const letter = () => box.replaceChildren(el('span', { text: (s.name || '?').trim().slice(0, 1).toUpperCase() }));
-  let src = s.logo || '';
-  if (!src && s.url) {
-    try {
-      src = `${new URL(s.url).origin}/favicon.ico`;
-    } catch (_) {
-      src = '';
-    }
-  }
-  if (!src) {
-    letter();
-    return box;
-  }
-  const img = el('img', { src, alt: '', loading: 'lazy', referrerpolicy: 'no-referrer' });
-  img.addEventListener('error', letter);
-  box.append(img);
-  return box;
-}
-
-export function dueText(s, today) {
-  const d = nextDue(s, today);
-  if (!d) return 'дата не задана';
-  const n = daysUntil(d, today);
-  const when = n < 0 ? `просрочено на ${-n} дн.` : n === 0 ? 'сегодня' : n === 1 ? 'завтра' : `через ${n} дн.`;
-  return `${dueLabel(d, today)} · ${when}`;
-}
+const seg = (options, value, onChange, label, small) =>
+  el('div', { class: `seg${small ? ' seg--s' : ''}`, role: 'group', 'aria-label': label }, options.map(([v, t]) => {
+    const b = el('button', { type: 'button', 'aria-pressed': String(value === v), text: t });
+    b.addEventListener('click', () => onChange(v));
+    return b;
+  }));
 
 export function subsView({ store, subscribe }) {
   const root = el('section', { class: 'view' }, [
     el('div', { class: 'view__head' }, [el('h1', { text: 'Подписки' }), el('p', { class: 'muted', text: 'Регулярные платежи и ближайшие списания.' })]),
   ]);
-  let tab = load(KEY_TAB, 'list');
-  if (!['list', 'stats', 'calendar'].includes(tab)) tab = 'list';
-  let editing = null; // id, 'new' или null
-  let confirmDel = null;
-  let otherOpen = false;
-  let msg = '';
-  const now = new Date();
-  let cal = { y: now.getFullYear(), m: now.getMonth() };
-
-  const tabs = el('div', { class: 'chips', role: 'group', 'aria-label': 'Раздел' });
-  const body = el('div', { class: 'stack' });
+  let tab = load(KEY_TAB, 'home');
+  if (!['home', 'stats', 'calendar'].includes(tab)) tab = 'home';
+  let hidden = !!load(KEY_HIDE, false);
+  let query = '';
+  let filters = { status: 'all', category: null };
+  let calMode = 'month';
+  const t0 = fromYmd(todayYmd());
+  let cal = { y: t0.getFullYear(), m: t0.getMonth(), selected: todayYmd() };
+  let rates = ensureRates((r) => {
+    rates = r;
+    if (root.isConnected) render();
+  });
   const live = el('p', { class: 'muted', role: 'status', 'aria-live': 'polite' });
-  const all = () => store.list('subs').sort((a, b) => a.created - b.created);
+  const body = el('div', { class: 'stack' });
+  const tabsEl = el('div', {});
+  const all = () => store.list('subs').map(normalizeSub).sort((a, b) => a.created - b.created);
+  const hide = (text) => (hidden ? '•••• ₽' : text);
 
-  function setTab(t) {
-    tab = t;
-    save(KEY_TAB, t);
-    render();
-  }
+  const save1 = async (fields, prev) => {
+    const today = todayYmd();
+    if (prev) await store.update('subs', prev.id, editFields(prev, fields, today));
+    else await store.add('subs', { ...withInitialPaidThrough({ ...fields, payments: [] }, today) });
+  };
+  const askDelete = (s) => confirmSheet({ title: 'Удалить подписку?', text: `«${s.name}» исчезнет из списка и календаря. Это нельзя отменить.`, action: 'Удалить', onConfirm: () => store.remove('subs', s.id) });
+  const openEdit = (s) => subscriptionSheet({ sub: s, categories: categories(all()), onSave: save1, onDelete: askDelete });
+  const openAdd = () => subscriptionSheet({ sub: null, categories: categories(all()), onSave: save1, onDelete: askDelete });
+  const pay = (s) => store.update('subs', s.id, markPaid(s, todayYmd()));
+  const exportOne = (s) => download(`${s.name.replace(/[^\p{L}\p{N}]+/gu, '-')}.ics`, 'text/calendar', buildIcs([s]));
 
-  function form(s) {
-    const f = el('form', { class: 'task-form card sub-form' });
-    const inp = (label, attrs) => el('input', { class: 'field', 'aria-label': label, placeholder: label, ...attrs });
-    const name = inp('Название', { type: 'text', maxlength: '80', value: s ? s.name : '' });
-    const price = inp('Сумма', { type: 'text', inputmode: 'decimal', value: s ? String(s.price) : '' });
-    const cur = el('select', { class: 'field', 'aria-label': 'Валюта' }, CURRENCIES.map((c) => el('option', { value: c, text: c })));
-    cur.value = s ? s.currency : 'RUB';
-    const period = el('select', { class: 'field', 'aria-label': 'Периодичность' }, [['monthly', 'Каждый месяц'], ['yearly', 'Каждый год'], ['weekly', 'Каждую неделю'], ['custom', 'Каждые N дней']].map(([v, t]) => el('option', { value: v, text: t })));
-    period.value = s ? s.period : 'monthly';
-    const days = inp('Сколько дней между списаниями', { type: 'number', min: '1', step: '1', value: s && s.customDays ? String(s.customDays) : '30' });
-    const start = inp('Дата первого списания', { type: 'date', value: s ? s.startDate : todayYmd() });
-    const category = inp('Категория', { type: 'text', maxlength: '40', value: s ? s.category || '' : '', list: 'sub-cats' });
-    const dl = el('datalist', { id: 'sub-cats' }, [...new Set(all().map((x) => x.category).filter(Boolean))].map((c) => el('option', { value: c })));
-    const url = inp('Ссылка на сайт (для значка)', { type: 'url', value: s ? s.url || '' : '' });
-    const remind = inp('Напомнить за (дней)', { type: 'number', min: '0', step: '1', value: s && s.reminders && s.reminders.length ? String(s.reminders[0]) : '3' });
-    const notes = inp('Заметка', { type: 'text', maxlength: '200', value: s ? s.notes || '' : '' });
-    const err = el('p', { class: 'err', role: 'alert' });
-    const syncDays = () => {
-      days.hidden = period.value !== 'custom';
-    };
-    period.addEventListener('change', syncDays);
-    syncDays();
-    const cancel = el('button', { type: 'button', class: 'btn btn--ghost', text: 'Отмена' });
-    cancel.addEventListener('click', () => {
-      editing = null;
-      render();
-    });
-    f.append(
-      name,
-      el('div', { class: 'task-form__row' }, [price, cur]),
-      el('div', { class: 'task-form__row' }, [period, days]),
-      el('label', { class: 'stack stack--tight' }, [el('span', { class: 'muted', text: 'Дата первого списания' }), start]),
-      el('div', { class: 'task-form__row' }, [category, remind]),
-      url,
-      notes,
-      dl,
-      err,
-      el('div', { class: 'task-form__row' }, [el('button', { type: 'submit', class: 'btn btn--primary', text: s ? 'Сохранить' : 'Добавить подписку' }), cancel]),
-    );
-    f.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const nm = name.value.trim();
-      const pr = Number(String(price.value).replace(',', '.'));
-      if (!nm) return void ((err.textContent = 'Напиши название.'), name.focus());
-      if (!Number.isFinite(pr) || pr < 0 || price.value === '') return void ((err.textContent = 'Укажи сумму числом.'), price.focus());
-      if (!isYmd(start.value)) return void ((err.textContent = 'Укажи дату первого списания.'), start.focus());
-      const fields = {
-        name: nm,
-        price: pr,
-        currency: cur.value,
-        period: period.value,
-        startDate: start.value,
-        category: category.value.trim(),
-        reminders: [Math.max(0, Math.round(Number(remind.value) || 0))],
-        url: url.value.trim(),
-        notes: notes.value.trim(),
-      };
-      if (fields.url && !/^https?:\/\//i.test(fields.url)) return void ((err.textContent = 'Ссылка должна начинаться с http:// или https://.'), url.focus());
-      if (period.value === 'custom') fields.customDays = Math.max(1, Math.round(Number(days.value) || 1));
-      else fields.customDays = undefined;
-      if (s) {
-        // поменялась дата или период: отметки оплаты старого графика не переносим
-        const scheduleChanged = s.startDate !== fields.startDate || s.period !== fields.period || s.customDays !== fields.customDays;
-        if (scheduleChanged) fields.paidThrough = undefined;
-        if (s.price !== pr || s.currency !== fields.currency) fields.priceHistory = [...(s.priceHistory || []), { date: todayYmd(), currency: s.currency, price: s.price }];
-        await store.update('subs', s.id, fields);
-      } else await store.add('subs', { ...fields, status: 'active', payments: [] });
-      editing = null;
-      render();
-    });
-    return f;
-  }
-
-  function subCard(s, today) {
-    const level = s.status === 'active' ? dueLevel(s, today) : 'later';
-    const card = el('li', { class: `card sub sub--${level}`, 'data-id': s.id, 'data-level': level });
-    const title = el('div', { class: 'sub__main' }, [
-      el('strong', { class: 'sub__name', text: s.name }),
-      el('span', { class: 'sub__price', text: `${money(s.price, s.currency)} · ${periodText(s)}` }),
-      el('span', { class: `sub__due${level === 'overdue' || level === 'soon' ? ' today-warn' : ''}`, text: s.status === 'active' ? dueText(s, today) : s.status === 'paused' ? 'на паузе' : 'в архиве' }),
-    ]);
-    if (s.category) title.append(el('span', { class: 'muted', text: s.category }));
-    if (s.notes) title.append(el('span', { class: 'muted', text: s.notes }));
-    const btn = (label, fn, cls = 'btn btn--ghost btn--s') => {
-      const b = el('button', { type: 'button', class: cls, text: label });
-      b.addEventListener('click', fn);
-      return b;
-    };
-    const tools = el('div', { class: 'sub__tools' });
-    if (s.status === 'active') tools.append(btn('Оплачено', async () => { await store.update('subs', s.id, markPaid(s, today)); }, 'btn btn--s'));
-    tools.append(btn('Изменить', () => { editing = s.id; render(); }));
-    if (s.status === 'active') tools.append(btn('Пауза', () => store.update('subs', s.id, { status: 'paused' })));
-    else tools.append(btn('Вернуть', () => store.update('subs', s.id, { status: 'active' })));
-    if (s.status !== 'archived') tools.append(btn('В архив', () => store.update('subs', s.id, { status: 'archived' })));
-    if (confirmDel === s.id) {
-      tools.append(btn('Точно удалить', async () => { confirmDel = null; await store.remove('subs', s.id); }, 'btn btn--s btn--danger'));
-      tools.append(btn('Нет', () => { confirmDel = null; render(); }));
-    } else tools.append(btn('Удалить', () => { confirmDel = s.id; render(); }));
-    card.append(logoNode(s), title, tools);
+  // ---------- Главная ----------
+  function summaryCard(subs, today) {
+    const active = subs.filter((s) => s.status === 'active');
+    const total = monthlyTotalRub(subs, rates);
+    const overdue = subs.filter((s) => lamp(s, today) === 'red').length;
+    const eye = el('button', { type: 'button', class: 'iconbtn2', 'aria-label': 'Скрыть суммы', 'aria-pressed': String(hidden), html: hidden ? ICONS.eyeoff : ICONS.eye });
+    eye.addEventListener('click', () => { hidden = !hidden; save(KEY_HIDE, hidden); render(); });
+    const card = el('section', { class: 'card sum', 'aria-labelledby': 'sum-title' }, [el('div', { class: 'sum__head' }, [el('h2', { id: 'sum-title', text: 'Траты в месяц' }), eye])]);
+    if (active.length) {
+      card.append(el('p', { class: 'sum__total', text: hide(rubMoney(total.amount)) }), el('p', { class: 'sum__year', text: `${hide(rubMoney(total.amount * 12))} в год` }));
+    } else card.append(el('p', { class: 'muted', text: 'Нет активных подписок' }));
+    const pills = el('div', { class: 'pills' }, [el('span', { class: 'pill', text: `${active.length} активных` })]);
+    if (overdue) pills.append(el('span', { class: 'pill pill--bad' }, [lampNode('red'), `Просрочено: ${overdue}`]));
+    card.append(pills);
+    const foreign = [...new Set(active.filter((s) => s.currency !== 'RUB').map((s) => CURRENCY_SYMBOL[s.currency]))].join(' и ');
+    if (total.missing.length) card.append(el('p', { class: 'sched-note', text: `Без ${total.missing.map((c) => CURRENCY_SYMBOL[c]).join(' и ')}: курс загрузится, когда появится интернет.` }));
+    else if (total.converted && rates) card.append(el('p', { class: 'sched-note', text: `${foreign} пересчитаны по курсу ЦБ на ${dateText(rates.date, today)}.` }));
     return card;
   }
 
-  function listPanel() {
-    const today = todayYmd();
-    const subs = all();
-    const wrap = el('div', { class: 'stack' });
-    const add = el('button', { type: 'button', class: 'btn btn--primary', text: 'Добавить подписку' });
-    add.addEventListener('click', () => { editing = 'new'; render(); });
-    const active = subs.filter((s) => s.status === 'active').sort((a, b) => (nextDue(a, today) || '9').localeCompare(nextDue(b, today) || '9'));
-    const other = subs.filter((s) => s.status !== 'active');
-    const month = totalsByCurrency(active);
-    const year = totalsByCurrency(active, (s) => monthlyCost(s) * 12);
-    wrap.append(el('div', { class: 'card sub-sum' }, [
-      el('div', {}, [el('span', { class: 'muted', text: 'В месяц (в среднем)' }), el('strong', { class: 'sub-sum__v', text: moneyMap(month) })]),
-      el('div', {}, [el('span', { class: 'muted', text: 'В год' }), el('strong', { class: 'sub-sum__v', text: moneyMap(year) })]),
-    ]));
-    if (active.length && Object.keys(month).length > 1) wrap.append(el('p', { class: 'sched-note', text: 'Валюты не пересчитываются: курсов в хабе нет.' }));
-    wrap.append(editing === 'new' ? form(null) : add);
-    if (!subs.length) {
-      wrap.append(el('div', { class: 'empty' }, [el('strong', { text: 'Подписок пока нет' }), el('span', { text: 'Добавь первую или загрузи копию из старого приложения (внизу страницы).' })]));
-    }
-    const ul = el('ul', { class: 'subs' });
-    active.forEach((s) => ul.append(s.id === editing ? el('li', {}, [form(s)]) : subCard(s, today)));
-    if (active.length) wrap.append(ul);
-    if (other.length) {
-      const ul2 = el('ul', { class: 'subs' });
-      other.forEach((s) => ul2.append(s.id === editing ? el('li', {}, [form(s)]) : subCard(s, today)));
-      const det = el('details', { class: 'done-box' }, [el('summary', { text: `Пауза и архив: ${other.length}` }), ul2]);
-      if (otherOpen) det.open = true;
-      det.addEventListener('toggle', () => { otherOpen = det.open; });
-      wrap.append(det);
-    }
-    wrap.append(dataPanel());
-    return wrap;
+  function nextCard(subs, today) {
+    const next = sortSubs(subs.filter((s) => s.status === 'active'), today)[0];
+    if (!next) return null;
+    const d = nextDue(next, today);
+    const dt = dueWords(daysUntil(d, today));
+    const b = el('button', { type: 'button', class: 'next', 'aria-label': `Ближайший платёж: ${next.name}, ${hidden ? 'сумма скрыта' : money(next.price, next.currency)}, ${dt}, ${dateText(d, today)}. Открыть` }, [
+      el('span', { class: 'next__head' }, [el('span', { text: 'Ближайший платёж' }), el('span', { text: dateText(d, today) })]),
+      el('span', { class: 'next__body' }, [
+        logoNode(next),
+        el('span', {}, [el('span', { class: 'next__name', text: next.name }), el('span', { class: 'next__due' }, [lampNode(lamp(next, today)), el('span', { text: dt })])]),
+        el('span', { class: 'next__amount', text: hidden ? '••••' : money(next.price, next.currency) }),
+      ]),
+    ]);
+    b.addEventListener('click', () => openEdit(next));
+    return b;
   }
 
-  function download(name, type, text) {
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(new Blob([text], { type }));
-    a.download = name;
-    a.click();
-    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  function row(s, today) {
+    const l = lamp(s, today);
+    const active = s.status === 'active';
+    const d = nextDue(s, today);
+    const dt = active ? dueWords(daysUntil(d, today)) : s.status === 'paused' ? 'на паузе' : 'отменена';
+    const needs = l === 'yellow' || l === 'red';
+    const trial = s.trialUntil && daysUntil(s.trialUntil, today) >= 0;
+    const li = el('li', { class: 'subrow', 'data-lamp': l, 'data-id': s.id });
+    const content = el('div', { class: 'subrow__content' });
+    const price = hidden ? '••••' : money(s.price, s.currency);
+    const meta = [active ? dateText(d, today) : '', trial ? 'пробный период' : '', s.category].filter(Boolean).join(' · ');
+    const main = el('button', { type: 'button', class: 'subrow__main', 'aria-label': [s.name, s.category, `${price}, ${periodText(s).toLowerCase()}`, active ? `${dt}, ${dateText(d, today)}` : dt, 'изменить'].filter(Boolean).join('. ') }, [
+      logoNode(s),
+      el('span', { class: 'subrow__text' }, [
+        el('span', { class: 'subrow__name', text: s.name }),
+        el('span', { class: 'subrow__due' }, [lampNode(l), el('span', { text: dt })]),
+        meta ? el('span', { class: 'subrow__meta', text: meta }) : '',
+      ]),
+      el('span', { class: 'subrow__money' }, [el('span', { class: 'subrow__price', text: price }), el('span', { class: 'subrow__period', text: periodText(s).toLowerCase() })]),
+    ]);
+    main.addEventListener('click', () => openEdit(s));
+    const exp = el('button', { type: 'button', class: 'iconbtn2', 'aria-label': `Добавить «${s.name}» в календарь`, html: ICONS.calplus });
+    exp.addEventListener('click', () => exportOne(s));
+    content.append(main, exp);
+    if (needs) {
+      const b = el('button', { type: 'button', class: 'btn btn--s', text: 'Оплачено' });
+      b.addEventListener('click', () => pay(s));
+      content.append(el('div', { class: 'subrow__pay' }, [b]));
+    }
+    const delAct = el('button', { type: 'button', class: 'subrow__act subrow__act--del', 'aria-label': `Удалить «${s.name}»`, tabindex: '-1', html: ICONS.trash });
+    delAct.addEventListener('click', () => { reset(); askDelete(s); });
+    const payAct = needs ? el('button', { type: 'button', class: 'subrow__act subrow__act--pay', 'aria-label': `Отметить «${s.name}» оплаченной`, tabindex: '-1', html: ICONS.check }) : null;
+    if (payAct) payAct.addEventListener('click', () => { reset(); pay(s); });
+
+    // Свайп: влево удаление, вправо отметка оплаты (только если платёж пора оплатить)
+    let drag = null;
+    let revealed = null;
+    let suppress = false;
+    function reset() {
+      revealed = null;
+      delete content.dataset.revealed;
+      content.style.transform = '';
+    }
+    content.addEventListener('pointerdown', (e) => {
+      if (e.pointerType === 'mouse' && e.button !== 0) return;
+      suppress = false;
+      drag = { id: e.pointerId, x: e.clientX, y: e.clientY, base: revealed === 'delete' ? -REVEAL : revealed === 'paid' ? REVEAL : 0, active: false, off: 0 };
+    });
+    content.addEventListener('pointermove', (e) => {
+      if (!drag || drag.id !== e.pointerId) return;
+      const dx = e.clientX - drag.x;
+      const dy = e.clientY - drag.y;
+      if (!drag.active) {
+        if (Math.abs(dy) > 10 && Math.abs(dy) > Math.abs(dx)) { drag = null; return; }
+        if (Math.abs(dx) < 10) return;
+        drag.active = true;
+        content.setPointerCapture(e.pointerId);
+        content.dataset.dragging = '';
+      }
+      let off = drag.base + dx;
+      if (off > 0 && !needs) off = Math.min(off, 20);
+      drag.off = off;
+      content.dataset.direction = off < 0 ? 'delete' : 'paid';
+      content.style.transform = `translateX(${off}px)`;
+    });
+    const end = (e) => {
+      if (!drag || drag.id !== e.pointerId) return;
+      const d0 = drag;
+      drag = null;
+      if (!d0.active) return;
+      suppress = true;
+      delete content.dataset.direction;
+      delete content.dataset.dragging;
+      content.style.transform = '';
+      const dist = Math.abs(d0.off);
+      const action = d0.off < 0 ? 'delete' : 'paid';
+      if (action === 'paid' && !needs) return reset();
+      if (e.type === 'pointerup' && dist > content.offsetWidth * 0.6) {
+        reset();
+        if (action === 'delete') askDelete(s);
+        else pay(s);
+        return;
+      }
+      if (dist > REVEAL / 2) {
+        revealed = action;
+        content.dataset.revealed = action;
+        (action === 'delete' ? delAct : payAct).tabIndex = 0;
+      } else reset();
+    };
+    content.addEventListener('pointerup', end);
+    content.addEventListener('pointercancel', end);
+    content.addEventListener('click', (e) => {
+      if (suppress) { e.preventDefault(); e.stopPropagation(); suppress = false; }
+      else if (revealed) { e.preventDefault(); e.stopPropagation(); reset(); }
+    }, true);
+    if (payAct) li.append(payAct);
+    li.append(delAct, content);
+    return li;
   }
 
   function dataPanel() {
@@ -225,8 +202,7 @@ export function subsView({ store, subscribe }) {
     const ics = el('button', { type: 'button', class: 'btn', text: 'Скачать .ics (календарь)' });
     ics.addEventListener('click', () => {
       download('subscriptions.ics', 'text/calendar', buildIcs(all()));
-      msg = 'Календарь на 12 месяцев сохранён. Открой файл на телефоне, чтобы добавить списания.';
-      live.textContent = msg;
+      live.textContent = 'Календарь на 12 месяцев сохранён. Открой файл на телефоне, чтобы добавить платежи.';
     });
     const exp = el('button', { type: 'button', class: 'btn', text: 'Скачать копию (JSON)' });
     exp.addEventListener('click', () => {
@@ -253,99 +229,166 @@ export function subsView({ store, subscribe }) {
     return box;
   }
 
+  function homePanel() {
+    const today = todayYmd();
+    const subs = all();
+    const wrap = el('div', { class: 'stack' });
+    wrap.append(summaryCard(subs, today));
+    const nc = nextCard(subs, today);
+    if (nc) wrap.append(nc);
+    if (subs.length >= SEARCH_FROM) {
+      const input = el('input', { class: 'field', type: 'search', 'aria-label': 'Поиск по подпискам', placeholder: 'Поиск', autocomplete: 'off', value: query });
+      input.addEventListener('input', () => {
+        query = input.value;
+        const pos = input.selectionStart;
+        render();
+        const again = root.querySelector('input[type="search"]');
+        if (again) { again.focus(); again.setSelectionRange(pos, pos); }
+      });
+      wrap.append(el('div', { class: 'searchf' }, [el('span', { html: ICONS.search }), input]));
+    }
+    const shown = sortSubs(filterSubs(subs, { ...filters, query }), today);
+    const fActive = filters.status !== 'all' || filters.category !== null;
+    const fb = el('button', { type: 'button', class: 'iconbtn2', 'aria-label': 'Фильтры списка', 'data-active': String(fActive), html: ICONS.sliders });
+    fb.addEventListener('click', () => filtersSheet({ subs, rates, status: filters.status, category: filters.category, categories: categories(subs), onApply: (f) => { filters = f; render(); } }));
+    const add = el('button', { type: 'button', class: 'btn btn--primary btn--s', text: 'Добавить' });
+    add.addEventListener('click', openAdd);
+    wrap.append(el('div', { class: 'listhead' }, [el('h2', { text: 'Подписки' }), el('span', { class: 'listhead__count', text: String(shown.length) }), fb, add]));
+    if (!subs.length) wrap.append(el('div', { class: 'empty' }, [el('strong', { text: 'Подписок пока нет' }), el('span', { text: 'Добавь первую или загрузи копию из старого приложения (внизу страницы).' })]));
+    else if (!shown.length) wrap.append(el('div', { class: 'empty' }, [el('strong', { text: 'Ничего не найдено' }), el('span', { text: 'Измени поиск или сбрось фильтры.' })]));
+    else wrap.append(el('ul', { class: 'card sublist' }, shown.map((s) => row(s, today))));
+    wrap.append(dataPanel());
+    return wrap;
+  }
+
+  // ---------- Статистика ----------
   function statsPanel() {
     const today = todayYmd();
-    const active = all().filter((s) => s.status === 'active');
+    const subs = all();
     const wrap = el('div', { class: 'stack' });
-    if (!active.length) return el('div', { class: 'empty' }, [el('strong', { text: 'Статистики пока нет' }), el('span', { text: 'Добавь подписки на вкладке «Список».' })]);
-    wrap.append(el('div', { class: 'card sub-sum' }, [
-      el('div', {}, [el('span', { class: 'muted', text: 'В месяц' }), el('strong', { class: 'sub-sum__v', text: moneyMap(totalsByCurrency(active)) })]),
-      el('div', {}, [el('span', { class: 'muted', text: 'В год' }), el('strong', { class: 'sub-sum__v', text: moneyMap(totalsByCurrency(active, (s) => monthlyCost(s) * 12)) })]),
+    if (!subs.length) return el('div', { class: 'empty' }, [el('strong', { text: 'Статистики пока нет' }), el('span', { text: 'Добавь подписки на вкладке «Главная».' })]);
+    const d = fromYmd(today);
+    const monthStart = ymd(new Date(d.getFullYear(), d.getMonth(), 1));
+    const yearStart = `${d.getFullYear()}-01-01`;
+    wrap.append(el('section', { class: 'card stack' }, [
+      el('h3', { text: 'Оплачено' }),
+      el('div', { class: 'stat2' }, [
+        el('div', {}, [el('span', { class: 'muted', text: 'В этом месяце' }), el('strong', { text: hide(rubMoney(spent(subs, rates, monthStart, today))) })]),
+        el('div', {}, [el('span', { class: 'muted', text: 'С начала года' }), el('strong', { text: hide(rubMoney(spent(subs, rates, yearStart, today))) })]),
+      ]),
+      el('p', { class: 'sched-note', text: 'Считается по нажатиям «Оплачено», поэтому учитывает только отмеченные платежи.' }),
     ]));
-    const cats = byCategory(active);
-    const rows = [];
-    Object.entries(cats).forEach(([c, m]) => Object.entries(m).forEach(([cur, v]) => rows.push({ c, cur, v })));
-    const sumBy = {};
-    rows.forEach((r) => { sumBy[r.cur] = (sumBy[r.cur] || 0) + r.v; });
-    const catList = el('ul', { class: 'tasks' });
-    rows.sort((a, b) => b.v - a.v).forEach((r) => catList.append(el('li', { class: 'goal goal--compact' }, [
-      el('span', { class: 'task__text' }, [el('span', { class: 'task__title', text: r.c }), el('span', { class: 'task__meta', text: `${money(r.v, r.cur)} в месяц` })]),
-      el('span', { class: 'goal__pct', text: `${Math.round((r.v / sumBy[r.cur]) * 100)}%` }),
-      el('progress', { class: 'bar', max: '100', value: String(Math.round((r.v / sumBy[r.cur]) * 100)), 'aria-label': `Доля: ${r.c}` }),
-    ])));
-    wrap.append(el('section', { class: 'card tile' }, [el('h2', { text: 'По категориям' }), catList]));
-    const top = [...active].sort((a, b) => monthlyCost(b) - monthlyCost(a)).slice(0, 3);
-    wrap.append(el('section', { class: 'card tile' }, [el('h2', { text: 'Самые дорогие (в пересчёте на месяц)' }), el('ul', { class: 'tasks' }, top.map((s) => el('li', {}, [el('span', { text: `${s.name}: ${money(monthlyCost(s), s.currency)} в месяц` })])))]));
-    const mrows = [];
-    const d0 = fromYmd(today);
-    for (let i = 0; i < 12; i += 1) {
-      const y = d0.getFullYear() + Math.floor((d0.getMonth() + i) / 12);
-      const m = (d0.getMonth() + i) % 12;
-      const g = monthGrid(active, y, m, today);
-      const sums = {};
-      Object.values(g.days).flat().forEach((c) => { sums[c.currency] = (sums[c.currency] || 0) + c.amount; });
-      mrows.push(el('li', {}, [el('span', { text: `${monthName(m)} ${y}: ` }), el('strong', { text: moneyMap(sums) })]));
+    const shares = categoryShares(subs, rates);
+    if (shares.length) {
+      const ul = el('ul', { class: 'legend' });
+      shares.forEach((s, i) => {
+        const color = `var(--chart-${(i % 7) + 1})`;
+        ul.append(el('li', {}, [
+          el('span', { class: 'legend__dot', style: `background:${color}` }),
+          el('span', { text: s.category }),
+          el('span', { text: `${hide(rubMoney(s.amount))} · ${Math.round(s.share * 100)}%` }),
+          el('span', { class: 'legend__bar' }, [el('i', { style: `width:${Math.round(s.share * 100)}%;background:${color}` })]),
+        ]));
+      });
+      wrap.append(el('section', { class: 'card stack' }, [el('h3', { text: 'На что уходит в месяц' }), ul]));
     }
-    wrap.append(el('section', { class: 'card tile' }, [el('h2', { text: 'Ближайшие 12 месяцев' }), el('p', { class: 'sched-note', text: 'Списания по расчёту от даты и периодичности.' }), el('ul', { class: 'tasks' }, mrows)]));
+    const tp = tips(subs, today, rates);
+    if (tp.length) wrap.append(el('section', { class: 'stack' }, [el('h3', { text: 'Стоит проверить' }), ...tp.map((t) => el('div', { class: 'card tipcard', 'data-tone': t.tone, text: t.text }))]));
     return wrap;
+  }
+
+  // ---------- Календарь ----------
+  function eventRow(e, date, today) {
+    const s = e.sub;
+    const l = lamp(s, today);
+    const kids = [logoNode(s), el('span', { class: 'task__text' }, [el('span', { class: 'task__title', text: s.name }), el('span', { class: 'task__meta', text: e.type === 'trial' ? 'заканчивается пробный период' : e.paid ? 'оплачено' : dueWords(daysUntil(date, today)) })])];
+    const right = el('span', { class: 'subrow__money' }, [el('span', { class: 'subrow__price', text: hidden ? '••••' : money(e.amount, e.currency) })]);
+    if (e.type === 'payment' && !e.paid && date <= today) {
+      const b = el('button', { type: 'button', class: 'btn btn--s', text: 'Оплачено' });
+      b.addEventListener('click', () => pay(s));
+      right.append(b);
+    } else right.append(lampNode(e.type === 'trial' ? 'yellow' : l));
+    const li = el('li', { class: 'evrow' }, [...kids, right]);
+    return li;
   }
 
   function calendarPanel() {
     const today = todayYmd();
     const subs = all();
-    const g = monthGrid(subs, cal.y, cal.m, today);
     const wrap = el('div', { class: 'stack' });
-    const prev = el('button', { type: 'button', class: 'btn btn--ghost btn--s', 'aria-label': 'Предыдущий месяц', text: '‹' });
-    const next = el('button', { type: 'button', class: 'btn btn--ghost btn--s', 'aria-label': 'Следующий месяц', text: '›' });
-    const step = (d) => { const x = new Date(cal.y, cal.m + d, 1); cal = { y: x.getFullYear(), m: x.getMonth() }; render(); };
-    prev.addEventListener('click', () => step(-1));
-    next.addEventListener('click', () => step(1));
+    wrap.append(seg([['month', 'Месяц'], ['list', 'Список']], calMode, (v) => { calMode = v; render(); }, 'Вид календаря', true));
+    if (calMode === 'list') {
+      const days = [];
+      let cursor = new Date(t0.getFullYear(), t0.getMonth(), 1);
+      const last = addDays(today, 60);
+      const evs = {};
+      while (ymd(cursor) <= last) {
+        Object.entries(monthEvents(subs, cursor.getFullYear(), cursor.getMonth())).forEach(([d, e]) => { if (d >= today && d <= last) evs[d] = e; });
+        cursor = new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1);
+      }
+      Object.keys(evs).sort().forEach((d) => days.push([d, evs[d]]));
+      const tot = monthTotalRub(evs, rates);
+      wrap.append(el('p', { class: 'muted', text: tot.payments ? `${tot.payments} платежей · ${hide(rubMoney(tot.amount))} за 60 дней` : 'В ближайшие 60 дней платежей нет' }));
+      days.forEach(([d, es]) => wrap.append(el('section', { class: 'stack stack--tight' }, [el('h3', { class: 'dayt', text: dateText(d, today) }), el('ul', { class: 'card sublist' }, es.map((e) => eventRow(e, d, today)))])));
+      return wrap;
+    }
+    const events = monthEvents(subs, cal.y, cal.m);
+    const prev = el('button', { type: 'button', class: 'iconbtn2', 'aria-label': 'Предыдущий месяц', html: ICONS.left });
+    const next = el('button', { type: 'button', class: 'iconbtn2', 'aria-label': 'Следующий месяц', html: ICONS.right });
+    const go = (n) => {
+      const x = new Date(cal.y, cal.m + n, 1);
+      cal = { y: x.getFullYear(), m: x.getMonth(), selected: x.getFullYear() === t0.getFullYear() && x.getMonth() === t0.getMonth() ? today : ymd(x) };
+      render();
+    };
+    prev.addEventListener('click', () => go(-1));
+    next.addEventListener('click', () => go(1));
     wrap.append(el('div', { class: 'week-nav' }, [prev, el('h2', { class: 'week-nav__title', text: `${monthName(cal.m)} ${cal.y}` }), next]));
     const grid = el('div', { class: 'cal', role: 'grid' });
-    ['пн', 'вт', 'ср', 'чт', 'пт', 'сб', 'вс'].forEach((d) => grid.append(el('span', { class: 'cal__wd', text: d })));
-    const first = new Date(cal.y, cal.m, 1);
-    const offset = (first.getDay() + 6) % 7;
+    ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'].forEach((d) => grid.append(el('span', { class: 'cal__wd', text: d })));
+    const offset = (new Date(cal.y, cal.m, 1).getDay() + 6) % 7;
     for (let i = 0; i < offset; i += 1) grid.append(el('span', { class: 'cal__cell cal__cell--empty' }));
     const dim = new Date(cal.y, cal.m + 1, 0).getDate();
-    for (let d = 1; d <= dim; d += 1) {
-      const date = `${cal.y}-${String(cal.m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-      const items = g.days[date] || [];
-      grid.append(el('span', { class: `cal__cell${items.length ? ' cal__cell--has' : ''}${date === today ? ' cal__cell--today' : ''}`, 'data-date': date }, [
-        el('span', { class: 'cal__d', text: String(d) }),
-        items.length ? el('span', { class: 'cal__n', text: String(items.length) }) : '',
-      ]));
+    for (let n = 1; n <= dim; n += 1) {
+      const date = ymd(new Date(cal.y, cal.m, n));
+      const es = events[date] || [];
+      const dots = el('span', { class: 'cal__dots' }, es.slice(0, 3).map((e) => el('span', { class: `cal__dot${e.type === 'trial' ? ' cal__dot--trial' : ''}`, 'data-lamp': lamp(e.sub, today) })));
+      if (es.length > 3) dots.append(el('span', { class: 'cal__more', text: `+${es.length - 3}` }));
+      const b = el('button', { type: 'button', class: `cal__cell${date === today ? ' cal__cell--today' : ''}`, 'aria-pressed': String(cal.selected === date), 'data-date': date, 'aria-label': `${dateText(date, today)}${es.length ? `, событий: ${es.length}` : ''}` }, [el('span', { text: String(n) }), dots]);
+      b.addEventListener('click', () => { cal.selected = date; render(); });
+      grid.append(b);
     }
+    let sx = null;
+    grid.addEventListener('pointerdown', (e) => { sx = { id: e.pointerId, x: e.clientX, y: e.clientY }; });
+    grid.addEventListener('pointerup', (e) => {
+      if (!sx || sx.id !== e.pointerId) return;
+      const dx = e.clientX - sx.x;
+      const dy = e.clientY - sx.y;
+      sx = null;
+      if (Math.abs(dx) >= 60 && Math.abs(dx) > Math.abs(dy)) go(dx < 0 ? 1 : -1);
+    });
     wrap.append(grid);
-    const dates = Object.keys(g.days).sort();
-    if (!dates.length) wrap.append(el('p', { class: 'muted', text: 'В этом месяце списаний нет.' }));
-    else {
-      const ul = el('ul', { class: 'tasks' });
-      dates.forEach((d) => g.days[d].forEach((c) => ul.append(el('li', { class: 'task' }, [el('span'), el('span', { class: 'task__text' }, [el('span', { class: 'task__title', text: c.name }), el('span', { class: 'task__meta', text: `${dueLabel(d, today)} · ${money(c.amount, c.currency)}${c.paid ? ' · оплачено' : ''}` })]), el('span')]))));
-      wrap.append(ul);
-    }
+    const tot = monthTotalRub(events, rates);
+    wrap.append(el('p', { class: 'muted', text: tot.payments ? `${tot.payments} платежей · ${hide(rubMoney(tot.amount))} за месяц` : 'В этом месяце платежей нет' }));
+    const sel = events[cal.selected] || [];
+    wrap.append(el('section', { class: 'stack stack--tight' }, [el('h3', { class: 'dayt', text: dateText(cal.selected, today) }), sel.length ? el('ul', { class: 'card sublist' }, sel.map((e) => eventRow(e, cal.selected, today))) : el('p', { class: 'muted', text: 'В этот день платежей нет.' })]));
     return wrap;
   }
 
   function render() {
-    tabs.replaceChildren(...[['list', 'Список'], ['stats', 'Статистика'], ['calendar', 'Календарь']].map(([id, label]) => {
-      const b = el('button', { type: 'button', class: 'chip', 'aria-pressed': String(tab === id), text: label });
-      b.addEventListener('click', () => setTab(id));
-      return b;
-    }));
-    body.replaceChildren(tab === 'stats' ? statsPanel() : tab === 'calendar' ? calendarPanel() : listPanel());
+    tabsEl.replaceChildren(seg([['home', 'Главная'], ['stats', 'Статистика'], ['calendar', 'Календарь']], tab, (v) => { tab = v; save(KEY_TAB, v); render(); }, 'Раздел'));
+    body.replaceChildren(tab === 'stats' ? statsPanel() : tab === 'calendar' ? calendarPanel() : homePanel());
   }
 
   let sig = '';
+  let dirty = false;
   const signature = () => store.list('subs').map((s) => `${s.id}:${s.updatedAt}`).join(',');
   subscribe(() => {
     const n = signature();
-    if (n !== sig && !editing) {
-      sig = n;
-      render();
-    }
+    if (n !== sig) { sig = n; if (!document.querySelector('dialog[open]')) render(); else dirty = true; }
   });
+  document.addEventListener('close', () => { if (dirty && root.isConnected) { dirty = false; setTimeout(render, 0); } }, true);
   sig = signature();
   render();
-  root.append(tabs, body);
+  root.append(tabsEl, body);
   return root;
 }

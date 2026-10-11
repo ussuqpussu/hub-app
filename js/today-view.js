@@ -2,8 +2,8 @@
 // Источники, которых ещё нет (расписание, подписки, погода, проекты), показываются одной честной строкой.
 import { el } from './ui.js';
 import { todayYmd, fromYmd, fmtDay, dueLabel, weekType } from './dates.js';
-import { nextDue, dueLevel } from './subs-calc.js';
-import { dueText, money } from './subs-view.js';
+import { nextDue, lamp } from './subs-calc.js';
+import { dueText, money } from './subs-parts.js';
 import { pairRow } from './schedule-view.js';
 import { loadSchedule, onSchedule, getScheduleState, pairsOn, pairPhase, isStale, withGaps } from './schedule-data.js';
 import { groupTasks, openTasksTab, INBOX_OLD_DAYS, MAIN_LIMIT } from './tasks-view.js';
@@ -124,11 +124,11 @@ export function todayView({ store, subscribe }) {
     if (subs.length) {
       const ul = el('ul', { class: 'tasks' });
       subs.forEach((x) => {
-        const lvl = dueLevel(x, today);
+        const lvl = lamp(x, today);
         ul.append(
           el('li', { class: 'task', 'data-level': lvl }, [
             el('span'),
-            el('span', { class: 'task__text' }, [el('span', { class: 'task__title', text: `${x.name} · ${money(x.price, x.currency)}` }), el('span', { class: lvl === 'overdue' || lvl === 'soon' ? 'task__meta today-warn' : 'task__meta', text: dueText(x, today) })]),
+            el('span', { class: 'task__text' }, [el('span', { class: 'task__title', text: `${x.name} · ${money(x.price, x.currency)}` }), el('span', { class: lvl === 'red' || lvl === 'yellow' ? 'task__meta today-warn' : 'task__meta', text: dueText(x, today) })]),
             el('span'),
           ]),
         );

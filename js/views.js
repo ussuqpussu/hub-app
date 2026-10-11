@@ -12,7 +12,7 @@ import { todayView } from './today-view.js';
 
 export { ICONS, fmtTime };
 
-export const VERSION = '0.8.0 (этап 5: подписки)';
+export const VERSION = '0.8.1 (этап 5: подписки как в старом приложении)';
 
 // Вкладки. group: main (в нижней панели телефона), more (внутри «Ещё»).
 export const TABS = [

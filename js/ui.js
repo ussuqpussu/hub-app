@@ -18,6 +18,15 @@ export const ICONS = {
   plus: ico('<path d="M12 5v14M5 12h14"/>'),
   star: ico('<path d="M12 4l2.4 5 5.6.7-4.1 3.8 1.1 5.5L12 16.3 7 19l1.1-5.5L4 9.7 9.6 9z"/>'),
   edit: ico('<path d="M5 19l1-4 9-9 3 3-9 9z"/><path d="M13.5 7.5l3 3"/>'),
+  eye: ico('<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>'),
+  eyeoff: ico('<path d="M3 3l18 18M10.6 6.2A9.6 9.6 0 0 1 12 6c6 0 10 6 10 6a17 17 0 0 1-3 3.6M6.6 6.8A17 17 0 0 0 2 12s4 7 10 7a9.6 9.6 0 0 0 4-.9"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/>'),
+  search: ico('<circle cx="11" cy="11" r="6"/><path d="M16 16l4 4"/>'),
+  sliders: ico('<path d="M4 7h8M16 7h4M4 17h4M12 17h8"/><circle cx="14" cy="7" r="2"/><circle cx="10" cy="17" r="2"/>'),
+  check: ico('<path d="M5 12.5l4.5 4.5L19 7.5"/>'),
+  trash: ico('<path d="M5 7h14M10 7V4h4v3M7 7l1 13h8l1-13"/>'),
+  left: ico('<path d="M15 5l-7 7 7 7"/>'),
+  right: ico('<path d="M9 5l7 7-7 7"/>'),
+  calplus: ico('<rect x="4" y="5" width="16" height="15"/><path d="M4 10h16M9 3v4M15 3v4M12 13v5M9.5 15.5h5"/>'),
   close: ico('<path d="M6 6l12 12M18 6L6 18"/>'),
 };
 

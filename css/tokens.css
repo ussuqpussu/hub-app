@@ -17,6 +17,19 @@
   --c-fill: #eeeeee;
   --c-danger: #b3261e;
   --c-overlay: rgb(17 17 17 / 45%);
+  --c-ok: #1a7f37;
+  --c-warn: #a16207;
+  --lamp-green: #1fa855;
+  --lamp-yellow: #e8a100;
+  --lamp-red: #e5342a;
+  --lamp-off: #b8b8b8;
+  --chart-1: #c2410c;
+  --chart-2: #2563eb;
+  --chart-3: #1a7f37;
+  --chart-4: #a16207;
+  --chart-5: #7c3aed;
+  --chart-6: #be185d;
+  --chart-7: #0e7490;
 
   /* Шрифты */
   --font-ui: "Outfit", "Geist", "Segoe UI Variable", "Segoe UI", system-ui, sans-serif;
@@ -46,6 +59,19 @@
   --c-fill: #181818;
   --c-danger: #ff8a80;
   --c-overlay: rgb(0 0 0 / 65%);
+  --c-ok: #30d158;
+  --c-warn: #ffd60a;
+  --lamp-green: #30d158;
+  --lamp-yellow: #ffd60a;
+  --lamp-red: #ff453a;
+  --lamp-off: #636366;
+  --chart-1: #ffb4a2;
+  --chart-2: #5e9cff;
+  --chart-3: #30d158;
+  --chart-4: #ffd60a;
+  --chart-5: #d8b4fe;
+  --chart-6: #ff9aa2;
+  --chart-7: #7fd7e8;
 
   --font-head: Georgia, "PT Serif", serif;
   --fw-head: 600;
@@ -88,6 +114,12 @@
   --theme-card-w: 14rem;
   --ls-pin: 0.4em;
   --chip-max: 11rem;
+  --lamp: 0.625rem;
+  --reveal: 5rem;
+  --logo: 2.75rem;
+  --logo-l: 3rem;
+  --cal-cell: 2.75rem;
+  --sheet-tall: 90dvh;
 
   /* Движение */
   --dur: 0.18s;
