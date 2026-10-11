@@ -5,10 +5,11 @@ import { createGithub } from './data/github.js';
 import { load } from './storage.js';
 import { el, ICONS, fmtTime } from './ui.js';
 import { tasksView } from './tasks-view.js';
+import { calendarView } from './calendar-view.js';
 
 export { ICONS, fmtTime };
 
-export const VERSION = '0.3.0 (этап 3, часть 1: задачи)';
+export const VERSION = '0.4.0 (этап 3, часть 2: календарь)';
 
 // Вкладки. group: main (в нижней панели телефона), more (внутри «Ещё»).
 export const TABS = [
@@ -260,6 +261,7 @@ function settingsView({ onLockNow, store, subscribe }) {
 export function renderRoute(route, ctx) {
   if (route === 'settings') return settingsView(ctx);
   if (route === 'tasks') return tasksView(ctx);
+  if (route === 'calendar') return calendarView(ctx);
   if (route === 'more') return moreView();
   if (PLACEHOLDERS[route]) return placeholderView(route);
   return el('section', { class: 'view' }, [

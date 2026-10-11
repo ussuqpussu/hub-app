@@ -223,6 +223,34 @@
 .done-box { display: grid; gap: var(--sp-2); }
 .done-box summary { cursor: pointer; min-height: var(--tap); display: flex; align-items: center; color: var(--c-dim); }
 
+/* Календарь */
+.cal-bar { display: grid; gap: var(--sp-2); }
+.cal-nav { display: flex; align-items: center; gap: var(--sp-2); }
+.cal-title { flex: 1; text-align: center; font-size: var(--fs-m); }
+.cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: var(--sp-1); }
+.cal-wd { text-align: center; font-size: var(--fs-xs); color: var(--c-dim); padding: var(--sp-1) 0; }
+.cal-cell {
+  position: relative;
+  display: grid;
+  align-content: start;
+  justify-items: center;
+  gap: var(--sp-1);
+  min-height: var(--tap);
+  padding: var(--sp-1);
+  background: var(--c-surface);
+  border: var(--border) var(--border-style) var(--c-line);
+  border-radius: var(--radius-s);
+}
+.cal-cell--out { color: var(--c-dim); background: transparent; }
+.cal-cell--sel { border-color: var(--c-accent); border-style: solid; }
+.cal-cell[aria-current="date"] .cal-num { background: var(--c-accent); color: var(--c-on-accent); border-radius: var(--radius-pill); padding: 0 var(--sp-2); }
+.cal-count { font-size: var(--fs-xs); color: var(--c-dim); }
+.cal-today { text-decoration: underline; }
+.cal-dot { width: var(--sp-2); height: var(--sp-2); background: var(--c-accent); border-radius: var(--radius-pill); }
+.cal-dot--task { background: transparent; border: var(--border) solid var(--c-accent); }
+.task--ghost { grid-template-columns: auto 1fr auto; }
+.task:has(.cal-dot) { grid-template-columns: auto 1fr auto; }
+
 /* Блокировка по PIN */
 .lock {
   position: fixed;

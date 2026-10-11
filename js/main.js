@@ -103,7 +103,8 @@ const lock = createLock(document.getElementById('lock'), {
     await store.init();
     renderStatus(store.getStatus());
     if (!location.hash) location.hash = '#/today';
-    route();
+    // Не перерисовываем экран, если человек уже что-то печатает в нём.
+    if (!main.childElementCount || !main.contains(document.activeElement)) route();
     store.syncNow();
   },
   onLock() {
