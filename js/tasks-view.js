@@ -1,10 +1,17 @@
 // Вкладка «Задачи и цели»: «Входящие» и «Задачи». Привычки и цели добавятся в третьей части этапа 3.
 import { el, ICONS, fmtTime } from './ui.js';
 import { load, save } from './storage.js';
-import { todayYmd, addDays, dueLabel, parseQuick, isYmd, isHm } from './dates.js';
+import { todayYmd, dueLabel, parseQuick, isYmd, isHm } from './dates.js';
+import { habitsPanel } from './habits-view.js';
+import { goalsPanel } from './goals-view.js';
 
 const KEY_TAB = 'hub.tasksTab';
 export const INBOX_OLD_DAYS = 7;
+
+// Открыть вкладку «Задачи и цели» на нужном разделе (используется ссылками с «Сегодня»).
+export function openTasksTab(tab) {
+  save(KEY_TAB, tab);
+}
 export const MAIN_LIMIT = 3;
 
 const TYPE_NAMES = { task: 'Задача', note: 'Заметка', event: 'Событие', question: 'Открытый вопрос', idea: 'Идея' };
@@ -32,12 +39,13 @@ export function tasksView({ store, subscribe }) {
   const root = el('section', { class: 'view' }, [
     el('div', { class: 'view__head' }, [
       el('h1', { text: 'Задачи и цели' }),
-      el('p', { class: 'muted', text: 'Привычки и цели появятся в следующей части этапа 3.' }),
+      el('p', { class: 'muted', text: 'Входящие, задачи со сроками, привычки и цели.' }),
     ]),
   ]);
 
   let tab = load(KEY_TAB, 'inbox');
-  if (!['inbox', 'tasks'].includes(tab)) tab = 'inbox';
+  if (!['inbox', 'tasks', 'habits', 'goals'].includes(tab)) tab = 'inbox';
+  let editingGoal = null;
   let editingId = null;
   let projectFor = null; // запись «Входящих», у которой открыт ввод проекта
   let msg = '';
@@ -63,6 +71,8 @@ export function tasksView({ store, subscribe }) {
     [
       ['inbox', `Входящие: ${openInbox().length}`],
       ['tasks', `Задачи: ${openTasks}`],
+      ['habits', 'Привычки'],
+      ['goals', 'Цели'],
     ].forEach(([id, label]) => {
       const b = el('button', { type: 'button', class: 'chip', 'aria-pressed': String(tab === id), text: label });
       b.addEventListener('click', () => setTab(id));
@@ -280,12 +290,14 @@ export function tasksView({ store, subscribe }) {
     stale = false;
     renderTabs();
     if (tab === 'inbox') renderInbox();
-    else renderTasks();
+    else if (tab === 'tasks') renderTasks();
+    else if (tab === 'habits') body.replaceChildren(habitsPanel({ store, rerender: render }));
+    else body.replaceChildren(goalsPanel({ store, rerender: render, editing: editingGoal, setEditing: (id) => { editingGoal = id; } }));
     live.textContent = msg;
   }
 
   // Обновления из синхронизации не должны стирать то, что ты сейчас печатаешь.
-  const signature = () => ['inbox', 'tasks'].map((m) => store.list(m).map((it) => `${it.id}:${it.updatedAt}`).join(',')).join('|');
+  const signature = () => ['inbox', 'tasks', 'habits', 'habitlog', 'goals'].map((m) => store.list(m).map((it) => `${it.id}:${it.updatedAt}`).join(',')).join('|');
   let sig = signature();
   let stale = false;
   const typing = () => root.contains(document.activeElement) && /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName);

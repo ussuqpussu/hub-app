@@ -1,0 +1,142 @@
+// Вкладка «Сегодня»: главные задачи, задачи на сегодня, входящие, привычки, цели.
+// Источники, которых ещё нет (расписание, подписки, погода, проекты), показываются одной честной строкой.
+import { el } from './ui.js';
+import { todayYmd, fromYmd, fmtDay, dueLabel, weekType } from './dates.js';
+import { groupTasks, openTasksTab, INBOX_OLD_DAYS, MAIN_LIMIT } from './tasks-view.js';
+import { doneDates, streak } from './habits.js';
+import { toggleDay } from './habits-view.js';
+
+const WEEKDAYS_FULL = ['воскресенье', 'понедельник', 'вторник', 'среда', 'четверг', 'пятница', 'суббота'];
+const MONTHS_GEN = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
+
+export function todayView({ store, subscribe }) {
+  const root = el('section', { class: 'view' });
+  const keys = ['inbox', 'tasks', 'habits', 'habitlog', 'goals'];
+  const signature = () => keys.map((m) => store.list(m).map((it) => `${it.id}:${it.updatedAt}`).join(',')).join('|');
+  let sig = '';
+  let shown = '';
+
+  function tile(title, children, link) {
+    const head = el('div', { class: 'tile__head' }, [el('h2', { text: title })]);
+    if (link) head.append(link);
+    return el('section', { class: 'card tile' }, [head, ...[].concat(children)]);
+  }
+
+  function goTo(hash, tab) {
+    const a = el('a', { class: 'tile__link', href: hash, text: tab.label });
+    a.addEventListener('click', () => openTasksTab(tab.id));
+    return a;
+  }
+
+  function taskLine(t, today) {
+    const li = el('li', { class: 'task' });
+    const check = el('button', { type: 'button', class: 'task__check', role: 'checkbox', 'aria-checked': 'false', 'aria-label': `Выполнено: ${t.title}` });
+    check.addEventListener('click', () => store.update('tasks', t.id, { done: true, doneAt: Date.now(), main: false }));
+    const meta = [];
+    if (t.due) meta.push(`${dueLabel(t.due, today)}${t.time ? ` ${t.time}` : ''}`);
+    if (t.project) meta.push(t.project);
+    const text = el('span', { class: 'task__text' }, [el('span', { class: 'task__title', text: t.title })]);
+    if (meta.length) text.append(el('span', { class: 'task__meta', text: meta.join(' · ') }));
+    li.append(check, text, el('span'));
+    return li;
+  }
+
+  function render() {
+    sig = signature();
+    const today = todayYmd();
+    shown = today;
+    const d = fromYmd(today);
+    const tasks = store.list('tasks');
+    const g = groupTasks(tasks, today);
+    root.replaceChildren(
+      el('div', { class: 'view__head' }, [
+        el('h1', { text: `${WEEKDAYS_FULL[d.getDay()][0].toUpperCase()}${WEEKDAYS_FULL[d.getDay()].slice(1)}, ${d.getDate()} ${MONTHS_GEN[d.getMonth()]}` }),
+        el('p', { class: 'muted', text: `${weekType(today)[0].toUpperCase()}${weekType(today).slice(1)} неделя` }),
+      ]),
+    );
+
+    // Расписание на сегодня
+    root.append(tile('Расписание', el('p', { class: 'muted', text: 'Расписание колледжа не подключено (этап 4).' })));
+
+    // Главные задачи
+    const mains = tasks.filter((t) => t.main && !t.done).sort((a, b) => a.created - b.created).slice(0, MAIN_LIMIT);
+    const mainBody = mains.length
+      ? el('ul', { class: 'tasks' }, mains.map((t) => taskLine(t, today)))
+      : el('p', { class: 'muted', text: `Отметь звёздочкой до ${MAIN_LIMIT} главных задач в разделе «Задачи».` });
+    root.append(tile(`Главные задачи${mains.length ? ` · ${mains.length}` : ''}`, mainBody, goTo('#/tasks', { id: 'tasks', label: 'Все задачи' })));
+
+    // Задачи на сегодня и просроченные
+    const rest = [...g.overdue, ...g.today].filter((t) => !t.main);
+    if (rest.length) {
+      const ul = el('ul', { class: 'tasks' }, rest.slice(0, 6).map((t) => taskLine(t, today)));
+      const more = rest.length > 6 ? el('p', { class: 'muted', text: `И ещё: ${rest.length - 6}` }) : null;
+      const title = g.overdue.some((t) => !t.main) ? `На сегодня · просрочено: ${g.overdue.filter((t) => !t.main).length}` : 'На сегодня';
+      root.append(tile(title, more ? [ul, more] : ul, goTo('#/tasks', { id: 'tasks', label: 'Все задачи' })));
+    }
+
+    // Входящие
+    const inbox = store.list('inbox').filter((it) => !it.resolved);
+    const oldest = inbox.reduce((m, it) => Math.min(m, it.created), Infinity);
+    const days = inbox.length ? Math.floor((Date.now() - oldest) / (24 * 3600 * 1000)) : 0;
+    const old = inbox.length && days >= INBOX_OLD_DAYS;
+    root.append(
+      tile(
+        `Входящие: ${inbox.length}`,
+        el('p', { class: old ? 'today-warn' : 'muted', text: !inbox.length ? 'Всё разобрано.' : old ? `Самая старая запись висит ${days} дн. Пора разобрать.` : 'Есть неразобранные записи.' }),
+        goTo('#/tasks', { id: 'inbox', label: 'Разобрать' }),
+      ),
+    );
+
+    // Привычки
+    const habits = store.list('habits').sort((a, b) => a.created - b.created);
+    const logs = store.list('habitlog');
+    if (habits.length) {
+      const ul = el('ul', { class: 'tasks' });
+      habits.forEach((h) => {
+        const done = doneDates(logs, h.id);
+        const li = el('li', { class: 'task' });
+        const check = el('button', { type: 'button', class: 'task__check', role: 'checkbox', 'aria-checked': String(done.has(today)), 'aria-label': `${h.title}: отметить сегодня` });
+        check.addEventListener('click', () => toggleDay(store, h.id, today));
+        const n = streak(done, today);
+        li.append(check, el('span', { class: 'task__text' }, [el('span', { class: 'task__title', text: h.title }), el('span', { class: 'task__meta', text: n ? `серия: ${n} дн.` : 'серии пока нет' })]), el('span'));
+        ul.append(li);
+      });
+      root.append(tile('Привычки', ul, goTo('#/tasks', { id: 'habits', label: 'Все привычки' })));
+    }
+
+    // Цели
+    const goals = store.list('goals').filter((x) => x.progress < 100).sort((a, b) => a.created - b.created).slice(0, 3);
+    if (goals.length) {
+      const ul = el('ul', { class: 'tasks' });
+      goals.forEach((x) => {
+        ul.append(
+          el('li', { class: 'goal goal--compact' }, [
+            el('span', { class: 'task__text' }, [el('span', { class: 'task__title', text: x.title }), el('span', { class: 'task__meta', text: x.area || 'другое' })]),
+            el('span', { class: 'goal__pct', text: `${x.progress}%` }),
+            el('progress', { class: 'bar', max: '100', value: String(x.progress), 'aria-label': `Прогресс: ${x.title}` }),
+          ]),
+        );
+      });
+      root.append(tile('Цели', ul, goTo('#/tasks', { id: 'goals', label: 'Все цели' })));
+    }
+
+    // Источники, которых ещё нет
+    root.append(el('p', { class: 'muted', text: 'Пока не подключено: подписки (этап 5), проекты и следующие шаги (этап 6), погода (этап 17).' }));
+
+    // Смена суток: в полночь экран обновляется сам
+    const next = new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1, 0, 0, 5);
+    setTimeout(() => {
+      if (root.isConnected && shown !== todayYmd()) render();
+    }, Math.max(1000, next - new Date()));
+  }
+
+  subscribe(() => {
+    const next = signature();
+    if (next !== sig) render();
+  });
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden && root.isConnected && shown !== todayYmd()) render();
+  });
+  render();
+  return root;
+}

@@ -4,7 +4,7 @@ import { encryptJSON, decryptJSON } from './crypto.js';
 import { dbGet, dbSet, dbDelete, dbAll, dbClear } from './db.js';
 import { createGithub, GhError } from './github.js';
 
-export const MODULES = ['inbox', 'tasks'];
+export const MODULES = ['inbox', 'tasks', 'habits', 'habitlog', 'goals'];
 export const TOMBSTONE_TTL = 30 * 24 * 3600 * 1000;
 const path = (m) => `data/${m}.json`;
 
@@ -24,6 +24,9 @@ const isStr = (v) => typeof v === 'string';
 const VALID = {
   inbox: (it) => isStr(it.text) && isStr(it.type),
   tasks: (it) => isStr(it.title) && typeof it.done === 'boolean',
+  habits: (it) => isStr(it.title),
+  habitlog: (it) => isStr(it.habit) && isStr(it.date) && typeof it.done === 'boolean',
+  goals: (it) => isStr(it.title) && typeof it.progress === 'number',
 };
 
 function validItem(it, m) {
@@ -115,6 +118,16 @@ export function createStore({ getKey, getAccess, debounceMs = 15000, retryMs = [
   async function add(m, fields) {
     const t = now();
     const record = { id: crypto.randomUUID(), created: t, updatedAt: t, ...fields };
+    await enqueue(m, record);
+    return record;
+  }
+
+  // Запись с заранее известным id (отметка привычки за день): создаёт или обновляет, в том числе поверх удалённой.
+  async function upsert(m, id, fields) {
+    const cur = view(m).find((it) => it.id === id);
+    const t = now();
+    const base = cur && !cur.deleted ? cur : { created: t };
+    const record = { ...base, ...fields, id, updatedAt: Math.max(t, cur ? cur.updatedAt + 1 : t) };
     await enqueue(m, record);
     return record;
   }
@@ -267,6 +280,7 @@ export function createStore({ getKey, getAccess, debounceMs = 15000, retryMs = [
     init,
     list,
     add,
+    upsert,
     update,
     remove,
     syncNow,
