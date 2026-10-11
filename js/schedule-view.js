@@ -2,11 +2,22 @@
 // Нет данных, не распознано, устарело, неделя вне таблицы: всё показывается честными пометками.
 import { el, fmtTime } from './ui.js';
 import { todayYmd, addDays, fromYmd, weekStart, weekType, WEEKDAYS } from './dates.js';
-import { loadSchedule, refreshNow, importCsvFiles, onSchedule, getScheduleState, weekFor, isStale, pairPhase } from './schedule-data.js';
+import { loadSchedule, refreshNow, withGaps, importCsvFiles, onSchedule, getScheduleState, weekFor, isStale, pairPhase } from './schedule-data.js';
 
 // Строка пары; используется и на «Сегодня»
+// «н/к» в таблице значит «новый корпус»
+export function roomText(room) {
+  const m = String(room || '').match(/^н\/к\.?\s*(?:ауд\.?\s*)?(.*)$/i);
+  if (m) return m[1] ? `новый корпус, ауд. ${m[1]}` : 'новый корпус';
+  return room ? `ауд. ${room}` : '';
+}
+
 export function pairRow(p, phase) {
-  const meta = [p.kind, p.teacher, p.room ? `ауд. ${p.room}` : ''].filter(Boolean).join(' · ');
+  if (p.empty) {
+    const t = el('span', { class: 'pair__time' }, [el('b', { text: `${p.n}.` }), el('span', { text: p.start ? `${p.start}–${p.end}` : '' })]);
+    return el('li', { class: 'pair pair--free', 'data-phase': 'free' }, [t, el('span', { class: 'pair__meta', text: 'Пары нет' })]);
+  }
+  const meta = [p.kind, p.teacher, roomText(p.room)].filter(Boolean).join(' · ');
   const time = el('span', { class: 'pair__time' }, [el('b', { text: p.n != null ? `${p.n}.` : '·' }), el('span', { text: p.start ? `${p.start}–${p.end}` : '' })]);
   const body = el('span', {}, [el('span', { class: 'pair__subject', text: p.subject || p.raw })]);
   if (meta) body.append(el('span', { class: 'pair__meta', text: ` ${meta}` }));
@@ -76,7 +87,7 @@ export function scheduleView() {
       days.forEach((d) => {
         const date = addDays(start, d.day - 1);
         const isToday = date === today;
-        const list = el('ul', { class: 'pairs' }, d.pairs.map((p) => pairRow(p, isToday ? pairPhase(p, date) : date < today ? 'past' : '')));
+        const list = el('ul', { class: 'pairs' }, withGaps(st.data, d.pairs).map((p) => pairRow(p, p.empty ? 'free' : isToday ? pairPhase(p, date) : date < today ? 'past' : '')));
         kids.push(
           el('section', { class: `card sched-day${isToday ? ' sched-day--today' : ''}`, 'data-day': String(d.day) }, [
             el('div', { class: 'sched-day__head' }, [el('h3', { text: WEEKDAYS[(d.day) % 7][0].toUpperCase() + WEEKDAYS[d.day % 7].slice(1) }), el('span', { class: 'muted', text: `${fromYmd(date).getDate()}.${String(fromYmd(date).getMonth() + 1).padStart(2, '0')}` })]),

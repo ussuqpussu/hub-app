@@ -3,7 +3,7 @@
 import { el } from './ui.js';
 import { todayYmd, fromYmd, fmtDay, dueLabel, weekType } from './dates.js';
 import { pairRow } from './schedule-view.js';
-import { loadSchedule, onSchedule, getScheduleState, pairsOn, pairPhase, isStale } from './schedule-data.js';
+import { loadSchedule, onSchedule, getScheduleState, pairsOn, pairPhase, isStale, withGaps } from './schedule-data.js';
 import { groupTasks, openTasksTab, INBOX_OLD_DAYS, MAIN_LIMIT } from './tasks-view.js';
 
 const WEEKDAYS_FULL = ['воскресенье', 'понедельник', 'вторник', 'среда', 'четверг', 'пятница', 'суббота'];
@@ -64,7 +64,7 @@ export function todayView({ store, subscribe }) {
     else {
       const parts = [];
       if (!day.pairs.length) parts.push(el('p', { class: 'muted', text: 'Сегодня пар нет.' }));
-      else parts.push(el('ul', { class: 'pairs' }, day.pairs.map((p) => pairRow(p, day.exact ? pairPhase(p, today) : ''))));
+      else parts.push(el('ul', { class: 'pairs' }, withGaps(sst.data, day.pairs).map((p) => pairRow(p, p.empty ? 'free' : day.exact ? pairPhase(p, today) : ''))));
       if (!day.exact) parts.push(el('p', { class: 'sched-note', text: 'По шаблону, может измениться.' }));
       if (day.status === 'kept') parts.push(el('p', { class: 'sched-note sched-note--warn', text: 'Показана прошлая версия таблицы.' }));
       if (isStale(sst.data)) parts.push(el('p', { class: 'sched-note sched-note--warn', text: 'Расписание не обновлялось больше недели.' }));

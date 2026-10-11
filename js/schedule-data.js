@@ -161,3 +161,26 @@ export function pairsOn(data, date) {
   return { pairs: day ? day.pairs : [], exact: wf.exact, key: wf.key, status: wf.week.status };
 }
 export { addDays, todayYmd };
+
+// Время пар по номеру берётся из самой таблицы (звонки у всех дней одинаковые).
+function bells(data) {
+  const map = {};
+  Object.values((data && data.weeks) || {}).forEach((w) => (w.days || []).forEach((d) => d.pairs.forEach((p) => {
+    if (p.n != null && p.start && !map[p.n]) map[p.n] = { start: p.start, end: p.end };
+  })));
+  return map;
+}
+
+// Пары дня с первой до последней: пропущенные номера становятся строкой «пары нет».
+export function withGaps(data, pairs) {
+  const nums = pairs.filter((p) => p.n != null).map((p) => p.n);
+  if (!nums.length) return pairs;
+  const map = bells(data);
+  const out = [];
+  for (let n = 1; n <= Math.max(...nums); n += 1) {
+    const found = pairs.filter((p) => p.n === n);
+    if (found.length) out.push(...found);
+    else out.push({ n, empty: true, start: map[n] ? map[n].start : '', end: map[n] ? map[n].end : '' });
+  }
+  return [...out, ...pairs.filter((p) => p.n == null)];
+}

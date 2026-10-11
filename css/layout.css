@@ -350,3 +350,4 @@
 .sched-note { font-size: var(--fs-s); color: var(--c-dim); }
 .sched-note--warn { color: var(--c-danger); }
 .sched-actions { display: flex; flex-wrap: wrap; gap: var(--sp-2); align-items: center; }
+.pair--free { background: transparent; border-style: var(--border-style); border-color: var(--c-line); }
