@@ -14,7 +14,7 @@ import { todayView } from './today-view.js';
 
 export { ICONS, fmtTime };
 
-export const VERSION = '0.13.0 (задачи и вопросы одним списком)';
+export const VERSION = '0.14.0 (Рупор: посты, этап 10, шаги 1–5)';
 
 // Вкладки. group: main (в нижней панели телефона), more (внутри «Ещё»).
 export const TABS = [

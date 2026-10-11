@@ -579,3 +579,16 @@ button.feedline__proj { cursor: pointer; }
 .tfilters { display: grid; gap: var(--sp-2); }
 .tbox { border: var(--border) var(--border-style) var(--c-line); border-radius: var(--radius-m); padding: var(--sp-2) var(--sp-3); display: grid; gap: var(--sp-2); }
 .tbox > summary { cursor: pointer; min-height: var(--tap); display: flex; align-items: center; font-weight: 600; }
+
+/* Рупор */
+.rlist { display: grid; gap: var(--sp-2); }
+.rrow { display: grid; grid-template-columns: auto 1fr; gap: var(--sp-1) var(--sp-3); align-items: center; text-align: left; padding: var(--sp-3); border: var(--border) var(--border-style) var(--c-line); border-radius: var(--radius-m); background: var(--c-surface); color: inherit; font: inherit; cursor: pointer; }
+.rrow[data-type="article"] { border-left: 5px solid var(--c-accent); }
+.rrow__date { font-size: 0.8rem; color: var(--c-dim); min-width: 4.5rem; }
+.rrow__main { display: grid; min-width: 0; }
+.rrow__title { font-weight: 600; overflow-wrap: anywhere; }
+.rrow .pillrow { grid-column: 1 / -1; }
+.rnote { border: 2px solid var(--c-accent); }
+.rcount { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: var(--sp-2); font-variant-numeric: tabular-nums; font-size: 0.85rem; }
+.rcount--over { color: var(--c-danger); font-weight: 700; }
+.rtext { margin: 0; padding: var(--sp-3); white-space: pre-wrap; overflow-wrap: anywhere; font: inherit; font-size: var(--fs-s); background: var(--c-fill); border-radius: var(--radius-m); max-height: 24rem; overflow: auto; }

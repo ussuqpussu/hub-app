@@ -6,10 +6,11 @@ import { getSession } from './data/vault.js';
 import { load } from './storage.js';
 import { parseCard, updateCardText } from './projects-parse.js';
 import { normalizeArch, schemaPath } from './arch-calc.js';
+import { parsePost } from './rupor-parse.js';
 
 const CACHE_KEY = 'obsidian-projects';
 const MAX_FILES = 80;
-let state = { cards: [], schemas: {}, fetchedAt: null, loaded: false, busy: false, error: null, skipped: 0 };
+let state = { cards: [], schemas: {}, posts: [], fetchedAt: null, loaded: false, busy: false, error: null, skipped: 0 };
 const listeners = new Set();
 const set = (patch) => {
   state = { ...state, ...patch };
@@ -42,7 +43,7 @@ async function collectPaths(gh) {
   for (const it of root) {
     if (it.name.startsWith('.')) continue;
     if (it.type === 'file' && /\.md$/i.test(it.name) && !/^readme\.md$/i.test(it.name)) paths.push(it.path);
-    else if (it.type === 'dir' && !['node_modules', 'data'].includes(it.name)) {
+    else if (it.type === 'dir' && !['node_modules', 'data', 'rupor', 'assets'].includes(it.name)) {
       const sub = (await gh.listDir(it.path)) || [];
       sub.filter((x) => x.type === 'file' && /\.md$/i.test(x.name)).forEach((x) => paths.push(x.path));
     }
@@ -54,7 +55,7 @@ export async function loadProjects({ refresh = true } = {}) {
   if (state.busy) return;
   try {
     const c = await dbGet('files', CACHE_KEY);
-    if (c && Array.isArray(c.cards)) state = { ...state, cards: c.cards, schemas: c.schemas || {}, fetchedAt: c.fetchedAt };
+    if (c && Array.isArray(c.cards)) state = { ...state, cards: c.cards, schemas: c.schemas || {}, posts: c.posts || [], fetchedAt: c.fetchedAt };
   } catch (_) {
     /* кэша нет */
   }
@@ -86,9 +87,20 @@ export async function loadProjects({ refresh = true } = {}) {
         /* битая схема пропускается */
       }
     }
+    const posts = [];
+    const rdir = (await gh.listDir('rupor').catch(() => null)) || [];
+    for (const it of rdir.filter((x) => x.type === 'file' && /\.md$/i.test(x.name)).slice(0, 400)) {
+      try {
+        const f = await gh.getFile(it.path);
+        const post = f ? parsePost(it.path, f.text) : null;
+        if (post) posts.push(post);
+      } catch (_) {
+        /* битый пост пропускается */
+      }
+    }
     const fetchedAt = new Date().toISOString();
-    await dbSet('files', CACHE_KEY, { cards, schemas, fetchedAt }).catch(() => {});
-    set({ cards, schemas, fetchedAt, skipped: skipped + Math.max(0, paths.length - MAX_FILES) });
+    await dbSet('files', CACHE_KEY, { cards, schemas, posts, fetchedAt }).catch(() => {});
+    set({ cards, schemas, posts, fetchedAt, skipped: skipped + Math.max(0, paths.length - MAX_FILES) });
   } catch (e) {
     set({ error: explain(e) });
   }
@@ -108,7 +120,7 @@ function client() {
 }
 async function persist(cards, schemas = state.schemas) {
   const fetchedAt = new Date().toISOString();
-  await dbSet('files', CACHE_KEY, { cards, schemas, fetchedAt }).catch(() => {});
+  await dbSet('files', CACHE_KEY, { cards, schemas, posts: state.posts, fetchedAt }).catch(() => {});
   set({ cards, schemas, fetchedAt });
 }
 
