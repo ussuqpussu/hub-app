@@ -6,12 +6,13 @@ import { load } from './storage.js';
 import { el, ICONS, fmtTime } from './ui.js';
 import { tasksView } from './tasks-view.js';
 import { scheduleView, sourceLine } from './schedule-view.js';
+import { subsView } from './subs-view.js';
 import { getScheduleState, loadSchedule, onSchedule } from './schedule-data.js';
 import { todayView } from './today-view.js';
 
 export { ICONS, fmtTime };
 
-export const VERSION = '0.7.0 (этап 4: расписание)';
+export const VERSION = '0.8.0 (этап 5: подписки)';
 
 // Вкладки. group: main (в нижней панели телефона), more (внутри «Ещё»).
 export const TABS = [
@@ -29,7 +30,6 @@ const PLACEHOLDERS = {
   tasks: ['Задачи и цели', 'Задачи со сроками, привычки и цели, а также «Входящие».', 'Задач, привычек и целей пока нет: они появятся на этапе 3.'],
   projects: ['Проекты', 'Карточки проектов, лента событий и открытые вопросы.', 'Данных пока нет: проекты из Obsidian подключатся на этапе 6.'],
   'smart-home': ['Умный дом', 'Управление устройствами, комнатами и сценариями.', 'Нет связи с сервером умного дома: он ещё не подключён (этап 14).'],
-  subscriptions: ['Подписки', 'Список подписок и ближайшие списания.', 'Данных пока нет: подписки переедут в хаб на этапе 5.'],
   notes: ['Заметки и ссылки', 'Быстрые заметки, закладки с тегами и поиск.', 'Данных пока нет: вкладка наполнится на этапе 12.'],
   knowledge: ['Знания', 'Хроника сессий и промпты со скиллами.', 'Данных пока нет: вкладка появится на этапе 14.'],
 };
@@ -270,6 +270,7 @@ export function renderRoute(route, ctx) {
   if (route === 'settings') return settingsView(ctx);
   if (route === 'tasks') return tasksView(ctx);
   if (route === 'schedule') return scheduleView(ctx);
+  if (route === 'subscriptions') return subsView(ctx);
   if (route === 'today') return todayView(ctx);
   if (route === 'more') return moreView();
   if (PLACEHOLDERS[route]) return placeholderView(route);

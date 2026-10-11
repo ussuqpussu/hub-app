@@ -2,6 +2,8 @@
 // Источники, которых ещё нет (расписание, подписки, погода, проекты), показываются одной честной строкой.
 import { el } from './ui.js';
 import { todayYmd, fromYmd, fmtDay, dueLabel, weekType } from './dates.js';
+import { nextDue, dueLevel } from './subs-calc.js';
+import { dueText, money } from './subs-view.js';
 import { pairRow } from './schedule-view.js';
 import { loadSchedule, onSchedule, getScheduleState, pairsOn, pairPhase, isStale, withGaps } from './schedule-data.js';
 import { groupTasks, openTasksTab, INBOX_OLD_DAYS, MAIN_LIMIT } from './tasks-view.js';
@@ -11,7 +13,7 @@ const MONTHS_GEN = ['января', 'февраля', 'марта', 'апрел�
 
 export function todayView({ store, subscribe }) {
   const root = el('section', { class: 'view' });
-  const keys = ['inbox', 'tasks', 'goals'];
+  const keys = ['inbox', 'tasks', 'goals', 'subs'];
   const signature = () => keys.map((m) => store.list(m).map((it) => `${it.id}:${it.updatedAt}`).join(',')).join('|');
   let sig = '';
   let shown = '';
@@ -117,8 +119,25 @@ export function todayView({ store, subscribe }) {
       root.append(tile('Цели', ul, goTo('#/tasks', { id: 'goals', label: 'Все цели' })));
     }
 
+    // Ближайшие списания
+    const subs = store.list('subs').filter((x) => x.status === 'active').sort((a, b) => (nextDue(a, today) || '9').localeCompare(nextDue(b, today) || '9')).slice(0, 3);
+    if (subs.length) {
+      const ul = el('ul', { class: 'tasks' });
+      subs.forEach((x) => {
+        const lvl = dueLevel(x, today);
+        ul.append(
+          el('li', { class: 'task', 'data-level': lvl }, [
+            el('span'),
+            el('span', { class: 'task__text' }, [el('span', { class: 'task__title', text: `${x.name} · ${money(x.price, x.currency)}` }), el('span', { class: lvl === 'overdue' || lvl === 'soon' ? 'task__meta today-warn' : 'task__meta', text: dueText(x, today) })]),
+            el('span'),
+          ]),
+        );
+      });
+      root.append(tile('Ближайшие платежи', ul, el('a', { class: 'tile__link', href: '#/subscriptions', text: 'Все подписки' })));
+    }
+
     // Источники, которых ещё нет
-    root.append(el('p', { class: 'muted', text: 'Пока не подключено: подписки (этап 5), проекты и следующие шаги (этап 6), погода (этап 17).' }));
+    root.append(el('p', { class: 'muted', text: 'Пока не подключено: проекты и следующие шаги (этап 6), погода (этап 17).' }));
 
     // Смена суток: в полночь экран обновляется сам
     const next = new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1, 0, 0, 5);
