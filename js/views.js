@@ -11,12 +11,13 @@ import { projectsView } from './projects-view.js';
 import { projectPage } from './project-page.js';
 import { weeklyView } from './weekly-view.js';
 import { notesView } from './notes-view.js';
+import { botSettings } from './bot-view.js';
 import { getScheduleState, loadSchedule, onSchedule } from './schedule-data.js';
 import { todayView } from './today-view.js';
 
 export { ICONS, fmtTime };
 
-export const VERSION = '0.17.0 (Заметки и ссылки, общий поиск, этап 12)';
+export const VERSION = '0.18.0 (Бот и входящие, этап 13)';
 
 // Вкладки. group: main (в нижней панели телефона), more (внутри «Ещё»).
 export const TABS = [
@@ -183,6 +184,7 @@ function settingsView({ onLockNow, store, subscribe }) {
     if (kvEl) kvEl.replaceChildren(...kvRows());
   });
   root.append(dataBox);
+  root.append(botSettings({ store }));
 
   // Безопасность
   const sel = el('select', { class: 'field', id: 'autolock', 'aria-label': 'Автоблокировка' });

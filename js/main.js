@@ -6,6 +6,9 @@ import { initSearch } from './search-view.js';
 import { load } from './storage.js';
 import { createStore } from './data/store.js';
 import { getSession } from './data/vault.js';
+import { importInbox, refreshPulse, sendBotConfig, reportHubErrors } from './bot-sync.js';
+import { onProjects, getProjectsState } from './projects-data.js';
+import { mergedProjects } from './projects-view.js';
 
 applyTheme(currentTheme());
 
@@ -116,6 +119,19 @@ document.addEventListener('click', (e) => {
   if (e.target.closest && e.target.closest('[data-sync]')) store.syncNow();
 });
 
+// Входящие бота: разбираем при входе и при возврате в приложение (не чаще раза в минуту).
+async function inboxTick() {
+  const r = await importInbox({ store });
+  if (r && r.imported) store.syncNow();
+  refreshPulse();
+}
+// Список проектов и ошибка загрузки проектов уходят боту, когда меняются.
+onProjects((st) => {
+  if (!getSession().dataKey || st.busy) return;
+  if (st.error) reportHubErrors([{ id: 'projects', text: 'не получилось обновить карточки проектов из hub-projects' }]);
+  else if (st.loaded && st.fetchedAt) { reportHubErrors([]); sendBotConfig(mergedProjects(store)); }
+});
+
 const lock = createLock(document.getElementById('lock'), {
   async onUnlock() {
     await store.init();
@@ -124,6 +140,7 @@ const lock = createLock(document.getElementById('lock'), {
     // Не перерисовываем экран, если человек уже что-то печатает в нём.
     if (!main.childElementCount || !main.contains(document.activeElement)) route();
     store.syncNow();
+    inboxTick();
   },
   onLock() {
     store.init(); // ключа нет: статус «заблокировано», память очищается
@@ -141,6 +158,7 @@ document.addEventListener('visibilitychange', () => {
     if (store.getStatus().pending > 0) store.syncNow();
   } else {
     store.syncNow();
+    inboxTick();
   }
 });
 
