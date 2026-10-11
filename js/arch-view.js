@@ -1,6 +1,6 @@
 // Схема проекта: рисунок (SVG), панель узла и окно правки. Рисуется нашим кодом, без внешних сервисов.
 import { el } from './ui.js';
-import { NODE_TYPES, NODE_STATUS, computeLayout, groupNameOf } from './arch-calc.js';
+import { NODE_TYPES, NODE_STATUS, computeLayout, groupNameOf, nodeSize } from './arch-calc.js';
 
 const NS = 'http://www.w3.org/2000/svg';
 const svg = (tag, attrs = {}, kids = []) => {
@@ -61,9 +61,9 @@ export function renderDiagram(arch, { onNode, onEdge, onMove, selected, selected
       svg('title', {}, [document.createTextNode(`${n.name} (${NODE_TYPES[n.type]}, ${NODE_STATUS[n.status].toLowerCase()})`)]),
       svg('rect', { class: 'arch__box', x: p.x, y: p.y, width: p.w, height: p.h, rx: '8' }),
       svg('rect', { class: 'arch__strip', x: p.x, y: p.y, width: '5', height: p.h, rx: '2' }),
-      svg('path', { class: 'arch__icon', d: ICON[n.type] || ICON.other, transform: `translate(${p.x + 14},${p.y + 20}) scale(0.95)` }),
-      Object.assign(svg('text', { class: 'arch__name', x: p.x + 46, y: p.y + 28 }), { textContent: cut(n.name, 18) }),
-      Object.assign(svg('text', { class: 'arch__type', x: p.x + 46, y: p.y + 46 }), { textContent: cut(NODE_TYPES[n.type], 22) }),
+      svg('path', { class: 'arch__icon', d: ICON[n.type] || ICON.other, transform: `translate(${p.x + 14},${p.y + p.h / 2 - 11}) scale(0.95)` }),
+      ...nodeSize(n).lines.map((line, i) => Object.assign(svg('text', { class: 'arch__name', x: p.x + 46, y: p.y + 26 + i * 18 }), { textContent: line })),
+      Object.assign(svg('text', { class: 'arch__type', x: p.x + 46, y: p.y + p.h - 20 }), { textContent: cut(NODE_TYPES[n.type], 32) }),
       svg('circle', { class: 'arch__dot', cx: p.x + p.w - 14, cy: p.y + 14, r: '5' }),
     );
     const fire = () => onNode && onNode(n);

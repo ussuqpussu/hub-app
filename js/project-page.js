@@ -30,12 +30,15 @@ export function projectPage({ store, subscribe }, id) {
       sec.append(el('div', { class: 'empty' }, [el('strong', { text: 'Схемы пока нет' }), el('span', { text: 'Нарисуй, из чего состоит проект: сайт, сервер, бот, база и как они связаны. Плашки можно двигать мышью.' })]), add);
       return sec;
     }
-    let arch = ed.on ? ed.draft : clone(stored);
+    let arch = ed.on ? ed.draft : clone(view.pending || stored);
     const holder = el('div', { class: 'archwrap', tabindex: '0', 'aria-label': 'Схема, можно прокручивать' });
     const panel = el('div', { class: 'stack' });
     const msg = el('p', { class: 'err', role: 'alert', text: ed.msg });
     const toast = (t) => { ed.msg = t; msg.textContent = t; };
+    holder.addEventListener('scroll', () => { view.sl = holder.scrollLeft; view.st = holder.scrollTop; });
     const drawDiagram = () => {
+      const sl = holder.isConnected ? holder.scrollLeft : view.sl;
+      const st = holder.isConnected ? holder.scrollTop : view.st;
       holder.replaceChildren(renderDiagram(arch, {
         draggable: true,
         selected: ed.on ? ed.node : view.node,
@@ -56,15 +59,22 @@ export function projectPage({ store, subscribe }, id) {
         },
         onMove: (id, x, y, done) => {
           if (done) {
-            if (!ed.on) saveArch(p, normalizeArch(arch)).then(() => toast('')).catch((ex) => toast(ex.message || 'Не удалось сохранить положение'));
+            view.drag = false;
+            if (ed.on && view.late) { view.late = false; setTimeout(render, 0); }
+            if (!ed.on) {
+              view.pending = arch;
+              saveArch(p, normalizeArch(arch)).then(() => toast('')).catch((ex) => toast(ex.message || 'Не удалось сохранить положение')).finally(() => { view.pending = null; view.late = false; if (!view.drag) render(); });
+            }
             return;
           }
+          view.drag = true;
           if (arch.nodes.some((n) => n.x === undefined)) { arch = freezeLayout(arch); if (ed.on) ed.draft = arch; }
           const n = arch.nodes.find((q) => q.id === id);
           n.x = x; n.y = y;
           drawDiagram();
         },
       }));
+      holder.scrollLeft = sl; holder.scrollTop = st;
     };
     const drawPanel = () => {
       panel.replaceChildren();
@@ -119,12 +129,13 @@ export function projectPage({ store, subscribe }, id) {
       sec.append(bar);
     }
     sec.append(holder);
+    setTimeout(() => { holder.scrollLeft = view.sl; holder.scrollTop = view.st; }, 0);
     if (ed.on) sec.append(msg);
     sec.append(el('p', { class: 'muted archlegend' }, [el('span', { class: 'archlegend__dot', 'data-status': 'ok' }), ' работает ', el('span', { class: 'archlegend__dot', 'data-status': 'unknown' }), ' не проверялось ', el('span', { class: 'archlegend__dot', 'data-status': 'down' }), ' не работает ', el('span', { class: 'archlegend__dot', 'data-status': 'planned' }), ' запланировано']), panel);
     if (!ed.on) sec.append(msg);
     return sec;
   }
-  const view = { node: null };
+  const view = { node: null, sl: 0, st: 0, drag: false, pending: null };
 
   // Правка карточки прямо на странице: поля те же, что в карточке; «Подтвердить» сохраняет, «Отмена» отбрасывает.
   const pe = { on: false, d: null, err: '', busy: false };
@@ -278,7 +289,7 @@ export function projectPage({ store, subscribe }, id) {
   }
 
   let dirty = false;
-  const again = () => { if (!root.isConnected) return; if (document.querySelector('dialog[open]')) dirty = true; else render(); };
+  const again = () => { if (!root.isConnected) return; if (view.drag) { view.late = true; return; } if (document.querySelector('dialog[open]')) dirty = true; else render(); };
   subscribe(again);
   const off = onProjects(() => { if (!root.isConnected) return off(); again(); });
   document.addEventListener('close', () => { if (dirty && root.isConnected) { dirty = false; setTimeout(render, 0); } }, true);

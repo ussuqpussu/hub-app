@@ -79,3 +79,19 @@ ok('setGroup create, move, remove', () => {
   a = setGroup(a, 'b', ''); assert.equal(a.groups.length, 0);
 });
 console.log(`${passed} passed`);
+import { nodeSize, wrapName } from '../js/arch-calc.js';
+ok('nodeSize: short name keeps minimum, long grows then wraps', () => {
+  assert.deepEqual([nodeSize({ name: 'Сайт' }).w, nodeSize({ name: 'Сайт' }).h], [NODE_W, NODE_H]);
+  const mid = nodeSize({ name: 'Новый сайт-каталог' });
+  assert.ok(mid.w > NODE_W && mid.h === NODE_H && mid.lines.length === 1);
+  const long = nodeSize({ name: 'Очень длинное название плашки которое точно не поместится в одну строку' });
+  assert.equal(long.w, 300); assert.equal(long.lines.length, 2); assert.equal(long.h, NODE_H + 18);
+  assert.ok(long.lines[1].endsWith('…'));
+});
+ok('wrapName hard-splits long words', () => assert.deepEqual(wrapName('абвгдежзик', 4).length, 2));
+ok('layout uses node width: no overlap between columns', () => {
+  const a = normalizeArch({ nodes: [{ id: 'a', name: 'Очень длинное название плашки' }, { id: 'b', name: 'Б' }], edges: [{ from: 'a', to: 'b' }] });
+  const L = computeLayout(a); const pa = L.nodes.find((p) => p.id === 'a'); const pb = L.nodes.find((p) => p.id === 'b');
+  assert.ok(pb.x >= pa.x + pa.w + 60); assert.ok(L.width >= pb.x + pb.w);
+});
+console.log(`${passed} passed (всего)`);

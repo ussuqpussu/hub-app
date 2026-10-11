@@ -11,6 +11,44 @@ const GAP_Y = 28;
 const PAD = 20;
 const HEAD = 26;
 
+const CHAR = 8.8; // ширина одной буквы названия (14 px, жирный), с запасом
+const PAD_L = 46; // место под значок
+const PAD_R = 26; // место под точку состояния
+const MAX_W = 300;
+
+// Перенос названия плашки на строки (не больше двух), слишком длинное обрезается многоточием.
+export function wrapName(name, perLine) {
+  const words = String(name).split(/\s+/).filter(Boolean);
+  const lines = [];
+  let cur = '';
+  words.forEach((w0) => {
+    let w = w0;
+    while (w.length > perLine) {
+      if (cur) { lines.push(cur); cur = ''; }
+      lines.push(w.slice(0, perLine));
+      w = w.slice(perLine);
+    }
+    if (!cur) cur = w;
+    else if (cur.length + 1 + w.length <= perLine) cur += ` ${w}`;
+    else { lines.push(cur); cur = w; }
+  });
+  if (cur) lines.push(cur);
+  if (lines.length > 2) {
+    const rest = lines.slice(1).join(' ');
+    return [lines[0], rest.length > perLine ? `${rest.slice(0, perLine - 1)}…` : rest];
+  }
+  return lines.length ? lines : [''];
+}
+
+// Размер плашки по тексту: ширина растёт до предела, дальше название переносится на вторую строку.
+export function nodeSize(n) {
+  const name = String(n.name || '');
+  const w = Math.min(MAX_W, Math.max(NODE_W, Math.ceil(PAD_L + PAD_R + name.length * CHAR)));
+  const perLine = Math.floor((w - PAD_L - PAD_R) / CHAR);
+  const lines = wrapName(name, perLine);
+  return { w, h: NODE_H + (lines.length - 1) * 18, lines };
+}
+
 const str = (v, max = 200) => String(v == null ? '' : v).trim().slice(0, max);
 
 export const emptyArch = () => ({ schema: 1, nodes: [], edges: [], groups: [] });
@@ -146,6 +184,9 @@ export function computeLayout(arch) {
     (cols[l] = cols[l] || []).push(n.id);
   });
   const pos = new Map();
+  const size = new Map(arch.nodes.map((n) => [n.id, nodeSize(n)]));
+  const colW = Array.from({ length: cols.length }, (_, c) => (cols[c] ? Math.max(NODE_W, ...cols[c].map((id) => size.get(id).w)) : NODE_W));
+  const colX = colW.map((_w, c) => PAD + colW.slice(0, c).reduce((a, w) => a + w + GAP_X, 0));
   let height = 0;
   cols.forEach((ids, c) => {
     if (!ids) return;
@@ -155,15 +196,16 @@ export function computeLayout(arch) {
     ids.forEach((id) => {
       const g = groupOf.get(id);
       if (prev !== undefined && g !== prev) y += HEAD + PAD; // место под рамку и заголовок следующей группы
-      pos.set(id, { id, x: PAD + c * (NODE_W + GAP_X), y, w: NODE_W, h: NODE_H });
-      y += NODE_H + GAP_Y;
+      const sz = size.get(id);
+      pos.set(id, { id, x: colX[c], y, w: sz.w, h: sz.h });
+      y += sz.h + GAP_Y;
       prev = g;
     });
     height = Math.max(height, y);
   });
-  arch.nodes.forEach((n) => { if (n.x !== undefined) pos.set(n.id, { id: n.id, x: n.x, y: n.y, w: NODE_W, h: NODE_H }); });
+  arch.nodes.forEach((n) => { if (n.x !== undefined) pos.set(n.id, { id: n.id, x: n.x, y: n.y, w: size.get(n.id).w, h: size.get(n.id).h }); });
   const manual = new Set(arch.nodes.filter((n) => n.x !== undefined).map((n) => n.id));
-  const width0 = PAD * 2 + Math.max(1, cols.length) * NODE_W + Math.max(0, cols.length - 1) * GAP_X;
+  const width0 = PAD * 2 + colW.reduce((a, w) => a + w, 0) + Math.max(0, cols.length - 1) * GAP_X;
   const groups = [];
   arch.groups.forEach((g) => {
     const ps = g.nodes.map((id) => pos.get(id)).filter(Boolean);

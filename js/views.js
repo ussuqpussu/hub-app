@@ -14,7 +14,7 @@ import { todayView } from './today-view.js';
 
 export { ICONS, fmtTime };
 
-export const VERSION = '0.10.2 (этап 7: правка карточки на странице и связи проектов)';
+export const VERSION = '0.10.3 (этап 7: плавное перетаскивание, плашки по тексту)';
 
 // Вкладки. group: main (в нижней панели телефона), more (внутри «Ещё»).
 export const TABS = [
