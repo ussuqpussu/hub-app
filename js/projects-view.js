@@ -4,7 +4,7 @@ import { todayYmd } from './dates.js';
 import { load, save } from './storage.js';
 import { openSheet, confirmSheet, readLogoFile } from './subs-form.js';
 import { logoNode, dateText } from './subs-parts.js';
-import { loadProjects, onProjects, getProjectsState } from './projects-data.js';
+import { loadProjects, onProjects, getProjectsState, saveCard, deleteCard } from './projects-data.js';
 import { fmtTime } from './ui.js';
 import { STATUS_LABEL, STATUS_ORDER, SORTS, GROUPS, NO_COMPANY, NO_TYPE, normalizeProject, filterProjects, sortProjects, groupProjects, companies, typeOptions, parseTags, lastActivity, colorIndex, gaps } from './projects-calc.js';
 
@@ -25,7 +25,7 @@ function mark(p) {
   return box;
 }
 
-function projectSheet({ project, companyList, types, onSave, onDelete }) {
+function projectSheet({ project, companyList, types, onSave, onDelete, external = false }) {
   openSheet((close) => {
     const f = el('form', { class: 'sheet__form sub-form' });
     const inp = (label, attrs) => el('input', { class: 'field', 'aria-label': label, placeholder: label, ...attrs });
@@ -94,12 +94,13 @@ function projectSheet({ project, companyList, types, onSave, onDelete }) {
     const lbl = (t, k) => el('div', { class: 'stack stack--tight' }, [el('span', { class: 'muted', text: t }), k]);
     f.append(
       el('div', { class: 'sheet__head' }, [el('h2', { text: project ? 'Проект' : 'Новый проект' })]),
+      external ? el('p', { class: 'sched-note', text: `Эта карточка хранится в Obsidian (${project.path}). Изменения сохранятся в тот же файл на GitHub. Перед правками в Obsidian на компьютере сделай git pull.` }) : '',
       name, company, dl, lbl('Статус', status), lbl('Тип (можно несколько)', chips),
       el('div', { class: 'task-form__row' }, [newType, addType]),
       tags, summary, next,
       lbl('События', el('div', { class: 'stack stack--tight' }, [evBox, el('div', { class: 'task-form__row' }, [evText, evAdd])])),
       links,
-      el('div', { class: 'row' }, [logoPrev, el('div', { class: 'task-form__row' }, [logoBtn, logoClear]), logoIn]),
+      external ? '' : el('div', { class: 'row' }, [logoPrev, el('div', { class: 'task-form__row' }, [logoBtn, logoClear]), logoIn]),
       err, el('div', { class: 'task-form__row' }, [saveBtn, cancel]),
     );
     if (project) {
@@ -116,33 +117,16 @@ function projectSheet({ project, companyList, types, onSave, onDelete }) {
         return { title: a, url: b };
       });
       if (ls.some((l) => !/^https?:\/\//i.test(l.url))) return void ((err.textContent = 'Каждая ссылка должна начинаться с http:// или https://.'), links.focus());
-      await onSave({ name: nm, company: company.value.trim(), types: [...chosen], status: status.value, tags: parseTags(tags.value), summary: summary.value.trim(), nextAction: next.value.trim(), events, links: ls, logo }, project);
-      close();
+      saveBtn.disabled = true;
+      try {
+        await onSave({ name: nm, company: company.value.trim(), types: [...chosen], status: status.value, tags: parseTags(tags.value), summary: summary.value.trim(), nextAction: next.value.trim(), events, links: ls, logo, questions: project && project.questions ? project.questions : [] }, project);
+        close();
+      } catch (ex) {
+        err.textContent = ex.message || 'Не удалось сохранить';
+        saveBtn.disabled = false;
+      }
     });
     return f;
-  });
-}
-
-function viewSheet(p) {
-  openSheet((close) => {
-    const x = el('button', { type: 'button', class: 'iconbtn2', 'aria-label': 'Закрыть', text: '×' });
-    x.addEventListener('click', close);
-    const box = el('div', { class: 'sheet__form' }, [
-      el('div', { class: 'sheet__head' }, [el('h2', { text: p.name }), x]),
-      el('p', { class: 'muted', text: `Из Obsidian (${p.path}). Менять карточку нужно в Obsidian, хаб её только читает.` }),
-      el('p', { class: 'muted', text: [p.company || NO_COMPANY, p.types.join(', ') || NO_TYPE, STATUS_LABEL[p.status]].join(' · ') }),
-    ]);
-    const block = (title, node) => box.append(el('div', { class: 'stack stack--tight' }, [el('h3', { text: title }), node]));
-    if (p.tags.length) block('Теги', el('p', { text: p.tags.map((t) => `#${t}`).join(' ') }));
-    if (p.nextAction) block('Следующее действие', el('p', { text: p.nextAction }));
-    if (p.summary) block('Сводка', el('p', { class: 'pre', text: p.summary }));
-    if (p.events.length) block('Последние события', el('ul', { class: 'hist' }, p.events.slice(0, 10).map((e) => el('li', { text: `${dateText(e.date)}: ${e.text}` }))));
-    if (p.questions && p.questions.length) block('Открытые вопросы', el('ul', { class: 'hist' }, p.questions.map((q) => el('li', { text: q }))));
-    if (p.links.length) block('Ссылки', el('ul', { class: 'hist' }, p.links.map((l) => el('li', {}, [el('a', { href: l.url, target: '_blank', rel: 'noopener noreferrer', text: l.title || l.url })]))));
-    const close2 = el('button', { type: 'button', class: 'btn btn--ghost', text: 'Закрыть' });
-    close2.addEventListener('click', close);
-    box.append(close2);
-    return box;
   });
 }
 
@@ -154,9 +138,16 @@ export function projectsView({ store, subscribe }) {
   const all = () => [...store.list('projects').map((p) => normalizeProject({ ...p, source: 'hub' })), ...getProjectsState().cards.map(normalizeProject)];
   const persist = () => save(KEY, ui);
   const set = (patch) => { ui = { ...ui, ...patch }; persist(); render(); };
-  const onSave = (fields, prev) => (prev ? store.update('projects', prev.id, fields) : store.add('projects', fields));
+  const onSave = async (fields, prev) => { const { questions, ...rest } = fields; return prev ? store.update('projects', prev.id, rest) : store.add('projects', rest); };
   const askDelete = (p) => confirmSheet({ title: 'Удалить проект?', text: `Карточка «${p.name}» исчезнет. Это нельзя отменить.`, action: 'Удалить', onConfirm: () => store.remove('projects', p.id) });
-  const open = (p) => { if (p && p.source === 'obsidian') return viewSheet(p); const list = all(); projectSheet({ project: p, companyList: companies(list), types: typeOptions(list), onSave, onDelete: askDelete }); };
+  const askDeleteCard = (p) => confirmSheet({ title: 'Удалить карточку из Obsidian?', text: `Файл «${p.path}» будет удалён из репозитория hub-projects. На компьютере он исчезнет после git pull. Вернуть можно из истории GitHub.`, action: 'Удалить', onConfirm: async () => { try { await deleteCard(p); } catch (ex) { alert2(ex.message); } } });
+  const alert2 = (m) => confirmSheet({ title: 'Не получилось', text: m, action: 'Понятно', onConfirm: () => {} });
+  const open = (p) => {
+    const list = all();
+    const base = { companyList: companies(list), types: typeOptions(list) };
+    if (p && p.source === 'obsidian') return projectSheet({ ...base, project: p, external: true, onSave: (fields) => saveCard(p, fields), onDelete: askDeleteCard });
+    return projectSheet({ ...base, project: p, onSave, onDelete: askDelete });
+  };
 
   function card(p) {
     const today = todayYmd();

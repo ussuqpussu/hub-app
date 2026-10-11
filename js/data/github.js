@@ -79,6 +79,14 @@ export function createGithub({ repo, token, apiBase = 'https://api.github.com', 
       return out.content.sha;
     },
 
+    async deleteFile(path, sha, message) {
+      await call(url(path), {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message, sha }),
+      });
+    },
+
     // Проверка токена и доступа к репозиторию.
     async checkAccess() {
       const res = await call(`${apiBase}/repos/${repo}`);

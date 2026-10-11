@@ -4,7 +4,7 @@ import { dbGet, dbSet } from './data/db.js';
 import { createGithub } from './data/github.js';
 import { getSession } from './data/vault.js';
 import { load } from './storage.js';
-import { parseCard } from './projects-parse.js';
+import { parseCard, updateCardText } from './projects-parse.js';
 
 const CACHE_KEY = 'obsidian-projects';
 const MAX_FILES = 80;
@@ -82,4 +82,48 @@ export async function loadProjects({ refresh = true } = {}) {
     set({ error: explain(e) });
   }
   set({ busy: false });
+}
+
+function writeError(e) {
+  if (e && (e.kind === 'auth' || e.status === 403 || e.status === 404)) return 'Токену не хватает прав на запись в hub-projects: на GitHub в настройках токена для этого репозитория нужно «Contents: Read and write»';
+  if (e && e.kind === 'conflict') return 'Файл изменился на GitHub. Нажми «Обновить» и повтори';
+  return e && e.message ? e.message : 'Не удалось сохранить в Obsidian';
+}
+function client() {
+  const session = getSession();
+  const repo = projectsRepo(session);
+  if (!session.token || !repo) throw new Error('Нет подключения к репозиторию');
+  return createGithub({ repo, token: session.token, apiBase: apiBase() });
+}
+async function persist(cards) {
+  const fetchedAt = new Date().toISOString();
+  await dbSet('files', CACHE_KEY, { cards, fetchedAt }).catch(() => {});
+  set({ cards, fetchedAt });
+}
+
+// Правит заметку на GitHub: берёт свежий текст файла, меняет только изменённые поля, отправляет.
+export async function saveCard(card, fields) {
+  try {
+    const gh = client();
+    const f = await gh.getFile(card.path);
+    if (!f) throw new Error('Заметки уже нет в репозитории. Нажми «Обновить»');
+    const before = parseCard(card.path, f.text) || card;
+    const next = updateCardText(f.text, before, fields);
+    if (next !== f.text) await gh.putFile(card.path, next, f.sha, `Хаб: ${card.name}`);
+    const fresh = parseCard(card.path, next) || { ...card, ...fields };
+    await persist(state.cards.map((c) => (c.path === card.path ? fresh : c)));
+  } catch (e) {
+    throw new Error(writeError(e));
+  }
+}
+
+export async function deleteCard(card) {
+  try {
+    const gh = client();
+    const f = await gh.getFile(card.path);
+    if (f) await gh.deleteFile(card.path, f.sha, `Хаб: удалена карточка ${card.name}`);
+    await persist(state.cards.filter((c) => c.path !== card.path));
+  } catch (e) {
+    throw new Error(writeError(e));
+  }
 }
