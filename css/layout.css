@@ -376,7 +376,7 @@
 .logo { width: var(--logo); height: var(--logo); display: grid; place-items: center; flex: none; background: var(--c-fill); border-radius: var(--radius-s); overflow: hidden; font-weight: 600; color: var(--c-dim); }
 .logo img { width: 100%; height: 100%; object-fit: contain; }
 .logo--l { width: var(--logo-l); height: var(--logo-l); }
-.next { display: grid; gap: var(--sp-3); width: 100%; padding: var(--sp-4); border: var(--border) var(--border-style) var(--c-line); border-left: 4px solid var(--c-accent); border-radius: var(--radius-m); background: var(--c-surface); color: var(--c-text); text-align: left; font: inherit; cursor: pointer; }
+.next { display: grid; gap: var(--sp-3); width: 100%; padding: var(--sp-4); border: var(--border) var(--border-style) var(--c-accent); border-radius: var(--radius-m); background: var(--c-surface); color: var(--c-text); text-align: left; font: inherit; cursor: pointer; }
 .next__head { display: flex; justify-content: space-between; gap: var(--sp-3); font-size: var(--fs-s); color: var(--c-dim); font-weight: 600; }
 .next__body { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: var(--sp-3); }
 .next__name { font-size: var(--fs-m); font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
