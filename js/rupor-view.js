@@ -3,8 +3,10 @@ import { el } from './ui.js';
 import { todayYmd } from './dates.js';
 import { dateText } from './subs-parts.js';
 import { copyText } from './questions-view.js';
-import { getProjectsState } from './projects-data.js';
-import { PLATFORMS, STATUSES, RUBRICS, botLink, outgoing, counters, tagsPlain, tagWarnings, recOf, publishedCount, canCheck, filterPosts, sortPosts, stock, botCounter, repeatedTopics } from './rupor-calc.js';
+import { getProjectsState, loadProjects } from './projects-data.js';
+import { openSheet } from './subs-form.js';
+import { parseDocPosts } from './rupor-import.js';
+import { SETTINGS_ID, settingsOf, NOT_CHECKED, PLATFORMS, STATUSES, RUBRICS, botLink, outgoing, counters, tagsPlain, tagWarnings, recOf, publishedCount, canCheck, filterPosts, sortPosts, stock, botCounter, repeatedTopics } from './rupor-calc.js';
 
 const sel = (label, value, options, onChange) => {
   const s = el('select', { class: 'field', 'aria-label': label }, options.map(([v, t]) => el('option', { value: v, text: t })));
@@ -14,10 +16,58 @@ const sel = (label, value, options, onChange) => {
 };
 const TYPE_LABEL = { post: 'Пост', article: 'Статья' };
 
+// Все посты: из файлов hub-projects/rupor/ и вставленные из документа (файл с той же датой и заголовком главнее).
+export function ruporPosts(store) {
+  const files = getProjectsState().posts || [];
+  const have = new Set(files.map((p) => p.id));
+  const keys = new Set(files.map((p) => `${p.date}|${p.title.toLowerCase()}`));
+  const imported = store.list('rposts')
+    .filter((r) => !have.has(r.pid) && !keys.has(`${r.date}|${String(r.title).toLowerCase()}`))
+    .map(({ id, pid, updatedAt, created, deleted, ...rest }) => ({ ...rest, id: pid, imported: true, storeId: id }));
+  return sortPosts([...files, ...imported]);
+}
+
+const CHANNELS = [['Дзен', 'https://dzen.ru/impulse_group_news'], ['ВКонтакте', 'https://vk.ru/impulse_group_news'], ['Telegram', 'https://t.me/impulse_group_news']];
+const DESCRIPTION = 'Импульс Групп — всё о спецтехнике в России: новости, новинки, рынок и разборы для владельцев, водителей и арендаторов. Ищешь заказы на технику? Загляни в нашего бота-диспетчера: выбираешь тип техники и получаешь только нужные заявки.';
+const ASSETS = [['Аватар Telegram 500×500', 'assets/rupor/avatar_500x500_telegram.png'], ['Аватар ВК 400×400', 'assets/rupor/avatar_400x400_vk.png'], ['Обложка ВК 1920×768', 'assets/rupor/cover_1920x768_vk.png'], ['Исходный логотип 1024×1024', 'assets/rupor/logo_original_1024.jpg']];
+
 export function ruporBoard({ store, ui, setUi }) {
   const wrap = el('div', { class: 'stack' });
-  const posts = sortPosts(getProjectsState().posts || []);
+  const posts = ruporPosts(store);
   const records = store.list('rupor');
+  const settings = settingsOf(records);
+  const sub = ['posts', 'channel', 'settings'].includes(ui.rSub) ? ui.rSub : 'posts';
+
+  function saveSettings(patch) {
+    const stored = records.find((r) => r.postId === SETTINGS_ID);
+    const next = { siteReady: settings.siteReady, dzenTags: settings.dzenTags, checks: settings.checks, ...patch };
+    if (stored) store.update('rupor', stored.id, next);
+    else store.add('rupor', { postId: SETTINGS_ID, status: {}, ...next });
+  }
+
+  function importSheet() {
+    openSheet((close) => {
+      const area = el('textarea', { class: 'field field--area', 'aria-label': 'Текст из документа', rows: '12', placeholder: 'Вставь сюда текст документа: разделы «Пост на 12 октября: заголовок»' });
+      const msg = el('p', { class: 'sched-note', role: 'status' });
+      const go = el('button', { type: 'button', class: 'btn btn--primary', text: 'Добавить посты' });
+      go.addEventListener('click', () => {
+        const { posts: found, skipped } = parseDocPosts(area.value, { today: todayYmd() });
+        if (!found.length) { msg.textContent = skipped ? `Разделов найдено ${skipped}, но дату понять не удалось. Заголовок должен быть вида «Пост на 12 октября: …».` : 'Не нашла ни одного раздела «Пост на <дата>: <заголовок>».'; return; }
+        const existing = new Map(store.list('rposts').map((r) => [r.pid, r]));
+        found.forEach((p) => {
+          const { id, ...rest } = p;
+          const fields = { ...rest, pid: id };
+          const old = existing.get(id);
+          if (old) store.update('rposts', old.id, fields);
+          else store.add('rposts', fields);
+        });
+        close();
+      });
+      const x = el('button', { type: 'button', class: 'btn btn--ghost', text: 'Отмена' });
+      x.addEventListener('click', close);
+      return el('div', { class: 'sheet__form stack' }, [el('h2', { text: 'Вставить из документа' }), el('p', { class: 'muted', text: 'Разберу все разделы «Пост на <дата>: <заголовок>». Повторная вставка обновит те же посты, дубликатов не будет.' }), area, msg, el('div', { class: 'pillrow' }, [go, x])]);
+    });
+  }
   const today = todayYmd();
 
   function saveRec(post, patch) {
@@ -48,12 +98,17 @@ export function ruporBoard({ store, ui, setUi }) {
     const s = stock(posts, records, today);
     const bc = botCounter(posts);
     const rubrics = [...new Set([...RUBRICS, ...posts.map((p) => p.rubric).filter(Boolean)])];
+    const imp = el('button', { type: 'button', class: 'btn btn--ghost btn--s', text: 'Вставить из документа' });
+    imp.addEventListener('click', importSheet);
+    const busy = getProjectsState().busy;
+    const refresh = el('button', { type: 'button', class: 'btn btn--ghost btn--s', text: busy ? 'Обновляю…' : 'Обновить', ...(busy ? { disabled: '' } : {}) });
+    refresh.addEventListener('click', () => loadProjects());
     wrap.append(
-      el('div', { class: 'listhead' }, [el('h2', { text: 'Рупор' }), el('span', { class: 'listhead__count', text: String(posts.length) })]),
+      el('div', { class: 'listhead' }, [el('h2', { text: 'Посты' }), el('span', { class: 'listhead__count', text: String(posts.length) }), refresh, imp]),
       el('p', { class: 'sched-note', role: 'status', text: posts.length ? `В запасе: ${s.count}, хватит на ${s.days} дн. Следующий призыв к боту через ${bc.next} материал(а).` : '' }),
     );
     if (!posts.length) {
-      wrap.append(el('div', { class: 'empty' }, [el('strong', { text: 'Постов пока нет' }), el('span', { text: 'Посты берутся из папки rupor/ в репозитории hub-projects. Нажми «Обновить» на вкладке «Карточки» после того, как файлы появятся.' })]));
+      wrap.append(el('div', { class: 'empty' }, [el('strong', { text: 'Постов пока нет' }), el('span', { text: 'Посты берутся из папки rupor/ в репозитории hub-projects (кнопка «Обновить» на вкладке «Карточки») или вставляются из документа кнопкой выше.' })]));
       return;
     }
     wrap.append(el('div', { class: 'pfilters' }, [
@@ -115,8 +170,13 @@ export function ruporBoard({ store, ui, setUi }) {
     if (t.title) btns.push(copyBtn('Копировать заголовок', t.title, note));
     btns.push(copyBtn('Копировать текст', text, note), copyBtn('Копировать всё', (t.title && platform === 'dzen' ? `${t.title}\n\n` : '') + text, note));
     if (post.hashtags.length) btns.push(copyBtn('Копировать теги', post.hashtags.join(' '), note));
-    if (platform === 'dzen' && post.hashtags.length) btns.push(copyBtn('Копировать теги без #', tagsPlain(post), note));
+    if (platform === 'dzen' && post.hashtags.length && settings.dzenTags !== 'text') btns.push(copyBtn('Копировать теги без #', tagsPlain(post), note));
     btns.push(copyBtn('Копировать ссылку на бота', botLink(platform), note));
+    if (post.imported) {
+      const del = el('button', { type: 'button', class: 'btn btn--ghost btn--s', text: 'Удалить пост из хаба' });
+      del.addEventListener('click', () => { store.remove('rposts', post.storeId); setUi({ rPost: null }); });
+      btns.push(del);
+    }
     const gate = canCheck(post, rec);
     const status = el('select', { class: 'field', 'aria-label': 'Статус публикации площадки' }, STATUSES.map(([v, tt]) => el('option', { value: v, text: tt, ...(v !== 'new' && !gate ? { disabled: '' } : {}) })));
     status.value = rec.status[platform];
@@ -128,8 +188,49 @@ export function ruporBoard({ store, ui, setUi }) {
     );
   }
 
+  function channel() {
+    wrap.append(el('div', { class: 'listhead' }, [el('h2', { text: 'Канал «Импульс Групп»' })]));
+    const note = el('p', { class: 'sched-note', role: 'status', text: '' });
+    wrap.append(el('section', { class: 'card stack stack--tight' }, [
+      el('h3', { text: 'Площадки' }),
+      el('ul', { class: 'hist' }, CHANNELS.map(([t, u]) => el('li', {}, [el('a', { href: u, target: '_blank', rel: 'noopener', text: t }), ` · ${u.replace('https://', '')}`]))),
+      el('h3', { text: 'Описание (общее для трёх площадок)' }), el('p', { text: DESCRIPTION }), copyBtn('Копировать описание', DESCRIPTION, note),
+      el('h3', { text: 'Аудитория и тон' }), el('p', { class: 'muted', text: 'Владельцы и водители спецтехники, небольшие подрядчики, арендаторы, любители «железа». Тон простой и уверенный, без воды и кликбейта.' }),
+      el('h3', { text: 'Как подаём бота' }), el('p', { class: 'muted', text: 'Бот-диспетчер: человек выбирает тип техники и получает только отфильтрованные заявки. Без обещаний лёгких денег. Призыв в каждом третьем материале.' }),
+      note,
+    ]));
+    wrap.append(el('section', { class: 'card stack stack--tight' }, [el('h3', { text: 'Картинки' }), el('ul', { class: 'hist' }, ASSETS.map(([t, f]) => el('li', {}, [el('a', { href: f, download: f.split('/').pop(), text: `Скачать: ${t}` })])))]));
+    const items = NOT_CHECKED.map(([k, t]) => {
+      const on = !!settings.checks[k];
+      const b = el('button', { type: 'button', class: 'task__check', role: 'checkbox', 'aria-checked': String(on), 'aria-label': `Проверено: ${t}` });
+      b.addEventListener('click', () => saveSettings({ checks: { ...settings.checks, [k]: !on } }));
+      return el('li', { class: 'task' }, [b, el('span', { class: 'task__text' }, [el('span', { class: on ? 'task__title qdone' : 'task__title', text: t })]), el('span')]);
+    });
+    wrap.append(el('section', { class: 'card stack stack--tight' }, [el('h3', { text: 'Не проверено' }), el('p', { class: 'muted', text: 'Отметь пункт, когда сам проверишь по официальной справке площадки.' }), el('ul', { class: 'tasks' }, items)]));
+    wrap.append(el('p', { class: 'sched-note', text: 'Автоперенос из Telegram в Дзен: не настроено (по твоей просьбе кросспостинг выключен).' }));
+  }
+
+  function settingsPage() {
+    wrap.append(el('div', { class: 'listhead' }, [el('h2', { text: 'Настройки «Рупора»' })]));
+    const site = el('button', { type: 'button', class: 'btn btn--s', role: 'switch', 'aria-checked': String(settings.siteReady), text: settings.siteReady ? 'Сайт готов: включено' : 'Сайт готов: выключено' });
+    site.addEventListener('click', () => saveSettings({ siteReady: !settings.siteReady }));
+    const dz = sel('Поле тегов в редакторе Дзена', settings.dzenTags, [['unknown', 'Ещё не проверено'], ['field', 'Есть поле тегов'], ['text', 'Поля нет, теги в конце текста']], (v) => saveSettings({ dzenTags: v }));
+    wrap.append(el('section', { class: 'card stack' }, [
+      el('h3', { text: 'Сайт' }), el('p', { class: 'muted', text: 'Пока сайт компании в разработке, в постах каналов его не упоминаем, только бота. Включи, когда сайт будет готов: тогда решим, куда добавить ссылку и метку.' }), site,
+      el('h3', { text: 'Теги в Дзене' }), el('p', { class: 'muted', text: 'При первой публикации посмотри, есть ли в редакторе Дзена поле тегов. От ответа зависит, какая кнопка копирования тегов показывается на вкладке Дзена.' }), dz,
+    ]));
+  }
+
+  const subnav = el('div', { class: 'seg seg--s', role: 'group', 'aria-label': 'Раздел Рупора' }, [['posts', 'Посты'], ['channel', 'Канал'], ['settings', 'Настройки']].map(([k, t]) => {
+    const b = el('button', { type: 'button', 'aria-pressed': String(sub === k), text: t });
+    b.addEventListener('click', () => setUi({ rSub: k, rPost: null }));
+    return b;
+  }));
   const post = ui.rPost ? posts.find((p) => p.id === ui.rPost) : null;
-  if (post) detail(post);
+  if (sub === 'channel') channel();
+  else if (sub === 'settings') settingsPage();
+  else if (post) detail(post);
   else list();
+  if (!post || sub !== 'posts') wrap.prepend(subnav);
   return wrap;
 }

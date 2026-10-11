@@ -6,6 +6,10 @@ import { nextDue, lamp } from './subs-calc.js';
 import { dueText, money, dateText, periodText, lampNode, logoNode } from './subs-parts.js';
 import { pairRow } from './schedule-view.js';
 import { loadSchedule, onSchedule, getScheduleState, pairsOn, pairPhase, isStale, withGaps } from './schedule-data.js';
+import { load, save } from './storage.js';
+import { loadProjects, onProjects } from './projects-data.js';
+import { ruporPosts } from './rupor-view.js';
+import { pendingPost, publishedCount, recOf, dayNeed } from './rupor-calc.js';
 import { groupTasks, openTasksTab, INBOX_OLD_DAYS, MAIN_LIMIT } from './tasks-view.js';
 
 const WEEKDAYS_FULL = ['воскресенье', 'понедельник', 'вторник', 'среда', 'четверг', 'пятница', 'суббота'];
@@ -13,7 +17,7 @@ const MONTHS_GEN = ['января', 'февраля', 'марта', 'апрел�
 
 export function todayView({ store, subscribe }) {
   const root = el('section', { class: 'view' });
-  const keys = ['inbox', 'tasks', 'goals', 'subs'];
+  const keys = ['inbox', 'tasks', 'goals', 'subs', 'rupor', 'rposts'];
   const signature = () => keys.map((m) => store.list(m).map((it) => `${it.id}:${it.updatedAt}`).join(',')).join('|');
   let sig = '';
   let shown = '';
@@ -119,6 +123,26 @@ export function todayView({ store, subscribe }) {
       root.append(tile('Цели', ul, goTo('#/tasks', { id: 'goals', label: 'Все цели' })));
     }
 
+    // Рупор: что публиковать сегодня и сколько площадок уже готово
+    const rp = ruporPosts(store);
+    if (rp.length) {
+      const recs = store.list('rupor');
+      const need = dayNeed(today) === 'article' ? 'нужна статья' : 'нужен пост';
+      const dayName = WEEKDAYS_FULL[d.getDay()];
+      const body = [el('p', { class: 'muted', text: `Сегодня ${dayName}, ${need}.` })];
+      const pp = pendingPost(rp, recs, today);
+      if (pp) {
+        const open = el('button', { type: 'button', class: 'btn btn--primary btn--s', text: 'Открыть' });
+        open.addEventListener('click', () => {
+          const ui = load('hub.projectsUi', {}) || {};
+          save('hub.projectsUi', { ...ui, tab: 'rupor', rSub: 'posts', rPost: pp.id });
+          location.hash = '#/projects';
+        });
+        body.push(el('p', { text: `${pp.title}, опубликовано ${publishedCount(recOf(recs, pp.id))} из 3` }), open);
+      } else body.push(el('p', { class: 'muted', text: 'Всё, что было подготовлено, опубликовано.' }));
+      root.append(tile('Рупор', body));
+    }
+
     // Ближайшие списания
     const subs = store.list('subs').filter((x) => x.status === 'active').sort((a, b) => (nextDue(a, today) || '9').localeCompare(nextDue(b, today) || '9')).slice(0, 3);
     if (subs.length) {
@@ -168,6 +192,8 @@ export function todayView({ store, subscribe }) {
     } else if (seen) offSched();
   });
   loadSchedule();
+  loadProjects({ refresh: false });
+  const offP = onProjects(() => { if (root.isConnected) render(); else offP(); });
   subscribe(() => {
     const next = signature();
     if (next !== sig) render();

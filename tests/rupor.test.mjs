@@ -104,3 +104,24 @@ ok('repeats by topic and source', () => {
   assert.equal(repeatedTopics([a, b, c, d], c).length, 1);
 });
 console.log(passed, 'passed');
+import { pendingPost, pendingPosts, dayNeed, settingsOf } from '../js/rupor-calc.js';
+ok('pending post for Today', () => {
+  const posts = [mk('2026-10-09'), mk('2026-10-10'), mk('2026-10-12')];
+  assert.equal(pendingPost(posts, [], '2026-10-11').date, '2026-10-10');
+  assert.equal(pendingPost(posts, [], '2026-10-12').date, '2026-10-12');
+  const done = { status: { dzen: 'published', vk: 'published', tg: 'published' } };
+  assert.equal(pendingPosts(posts, [{ postId: '2026-10-10', ...done }], '2026-10-11').length, 1);
+  assert.equal(pendingPost([], [], '2026-10-11'), null);
+});
+ok('day need: article on Wed and Sat', () => {
+  assert.equal(dayNeed('2026-10-14'), 'article');
+  assert.equal(dayNeed('2026-10-17'), 'article');
+  assert.equal(dayNeed('2026-10-11'), 'post');
+});
+ok('settings defaults', () => {
+  const s = settingsOf([]);
+  assert.equal(s.siteReady, false);
+  assert.equal(s.dzenTags, 'unknown');
+  assert.equal(settingsOf([{ postId: '__settings', status: {}, siteReady: true }]).siteReady, true);
+});
+console.log(passed, 'passed (всего)');

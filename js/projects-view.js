@@ -7,11 +7,12 @@ import { logoNode, dateText } from './subs-parts.js';
 import { loadProjects, onProjects, getProjectsState, saveCard, deleteCard } from './projects-data.js';
 import { fmtTime } from './ui.js';
 import { feedBoard } from './feed-view.js';
-import { ruporBoard } from './rupor-view.js';
+import { ruporBoard, ruporPosts } from './rupor-view.js';
+import { pendingPosts } from './rupor-calc.js';
 import { STATUS_LABEL, STATUS_ORDER, SORTS, GROUPS, NO_COMPANY, NO_TYPE, normalizeProject, filterProjects, sortProjects, groupProjects, companies, typeOptions, parseTags, lastActivity, colorIndex, gaps } from './projects-calc.js';
 
 const KEY = 'hub.projectsUi';
-const ui0 = { group: 'none', sort: 'recent', mode: 'tiles', company: null, type: null, status: null, tab: 'cards', qStatus: 'open', qGroup: 'project', qProject: null, fProject: null, rPost: null, rTab: 'dzen', rRubric: null, rType: null, rStatus: null };
+const ui0 = { group: 'none', sort: 'recent', mode: 'tiles', company: null, type: null, status: null, tab: 'cards', qStatus: 'open', qGroup: 'project', qProject: null, fProject: null, rPost: null, rSub: 'posts', rTab: 'dzen', rRubric: null, rType: null, rStatus: null };
 
 function select(label, value, options, onChange) {
   const s = el('select', { class: 'field', 'aria-label': label }, options.map(([v, t]) => el('option', { value: v, text: t })));
@@ -184,8 +185,9 @@ export function projectsView({ store, subscribe }) {
   }
 
   function tabs(list) {
+    const pend = pendingPosts(ruporPosts(store), store.list('rupor'), todayYmd()).length;
     return el('div', { class: 'seg', role: 'group', 'aria-label': 'Раздел проектов' }, [['cards', 'Карточки'], ['feed', 'Лента'], ['rupor', 'Рупор']].map(([k, t]) => {
-      const b = el('button', { type: 'button', 'aria-pressed': String(ui.tab === k), text: t });
+      const b = el('button', { type: 'button', 'aria-pressed': String(ui.tab === k), text: k === 'rupor' && pend ? `${t} · ${pend}` : t, ...(k === 'rupor' && pend ? { 'aria-label': `Рупор, не опубликовано везде: ${pend}` } : {}) });
       b.addEventListener('click', () => set({ tab: k }));
       return b;
     }));
@@ -249,7 +251,7 @@ export function projectsView({ store, subscribe }) {
 
   let sig = '';
   let dirty = false;
-  const signature = () => [...store.list('projects'), ...store.list('rupor')].map((s) => `${s.id}:${s.updatedAt}`).join(',');
+  const signature = () => [...store.list('projects'), ...store.list('rupor'), ...store.list('rposts')].map((s) => `${s.id}:${s.updatedAt}`).join(',');
   subscribe(() => {
     const n = signature();
     if (n !== sig) { sig = n; if (!document.querySelector('dialog[open]')) render(); else dirty = true; }

@@ -86,3 +86,29 @@ export function botCounter(posts) {
 }
 
 export const repeatedTopics = (posts, post) => posts.filter((p) => p.id !== post.id && ((post.topic && p.topic && p.topic.toLowerCase() === post.topic.toLowerCase()) || post.sources.some((s) => s.url && p.sources.some((x) => x.url === s.url))));
+
+// «Сегодня»: какой материал сейчас нужно опубликовать. Берём пост на сегодня, иначе самый свежий из прошедших, который опубликован не везде.
+export function pendingPosts(posts, records, today) {
+  return posts.filter((p) => p.date <= today && !isDone(recOf(records, p.id))).sort((a, b) => b.date.localeCompare(a.date));
+}
+export function pendingPost(posts, records, today) {
+  const list = pendingPosts(posts, records, today);
+  return list.find((p) => p.date === today) || list[0] || null;
+}
+// По средам и субботам нужна статья (правило задачи).
+export function dayNeed(today) {
+  const d = new Date(`${today}T12:00:00Z`).getUTCDay();
+  return d === 3 || d === 6 ? 'article' : 'post';
+}
+export const SETTINGS_ID = '__settings';
+export const defaultSettings = () => ({ siteReady: false, dzenTags: 'unknown', checks: {} });
+export function settingsOf(records) {
+  const r = records.find((x) => x.postId === SETTINGS_ID);
+  return { ...defaultSettings(), ...(r ? { siteReady: !!r.siteReady, dzenTags: r.dzenTags || 'unknown', checks: r.checks || {} } : {}) };
+}
+export const NOT_CHECKED = [
+  ['monetization', 'Условия монетизации Дзена (в плане взяты из стороннего обзора)'],
+  ['limits', 'Лимиты описаний каналов на площадках'],
+  ['prices', 'Цены на рекламу в VK Рекламе и Telegram Ads'],
+  ['marking', 'Маркировка рекламы (erid) и штрафы'],
+];
