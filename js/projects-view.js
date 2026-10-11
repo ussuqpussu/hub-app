@@ -7,11 +7,12 @@ import { logoNode, dateText } from './subs-parts.js';
 import { loadProjects, onProjects, getProjectsState, saveCard, deleteCard } from './projects-data.js';
 import { fmtTime } from './ui.js';
 import { questionsBoard, allQuestions } from './questions-view.js';
+import { feedBoard } from './feed-view.js';
 import { countOpen } from './questions-calc.js';
 import { STATUS_LABEL, STATUS_ORDER, SORTS, GROUPS, NO_COMPANY, NO_TYPE, normalizeProject, filterProjects, sortProjects, groupProjects, companies, typeOptions, parseTags, lastActivity, colorIndex, gaps } from './projects-calc.js';
 
 const KEY = 'hub.projectsUi';
-const ui0 = { group: 'none', sort: 'recent', mode: 'tiles', company: null, type: null, status: null, tab: 'cards', qStatus: 'open', qGroup: 'project', qProject: null };
+const ui0 = { group: 'none', sort: 'recent', mode: 'tiles', company: null, type: null, status: null, tab: 'cards', qStatus: 'open', qGroup: 'project', qProject: null, fProject: null };
 
 function select(label, value, options, onChange) {
   const s = el('select', { class: 'field', 'aria-label': label }, options.map(([v, t]) => el('option', { value: v, text: t })));
@@ -184,7 +185,7 @@ export function projectsView({ store, subscribe }) {
 
   function tabs(list) {
     const n = countOpen(allQuestions(store, list));
-    return el('div', { class: 'seg', role: 'group', 'aria-label': 'Раздел проектов' }, [['cards', 'Карточки'], ['questions', `Открытые вопросы${n ? ` ${n}` : ''}`]].map(([k, t]) => {
+    return el('div', { class: 'seg', role: 'group', 'aria-label': 'Раздел проектов' }, [['cards', 'Карточки'], ['questions', `Вопросы${n ? ` ${n}` : ''}`], ['feed', 'Лента']].map(([k, t]) => {
       const b = el('button', { type: 'button', 'aria-pressed': String(ui.tab === k), text: t });
       b.addEventListener('click', () => set({ tab: k }));
       return b;
@@ -193,6 +194,7 @@ export function projectsView({ store, subscribe }) {
 
   function render() {
     const list = all();
+    if (ui.tab === 'feed') return void body.replaceChildren(el('div', { class: 'stack' }, [tabs(list), feedBoard({ projects: list, ui, setUi: set })]));
     if (ui.tab === 'questions') return void body.replaceChildren(el('div', { class: 'stack' }, [tabs(list), questionsBoard({ store, projects: list, ui, setUi: set, mark })]));
     const cs = companies(list);
     const ts = typeOptions(list).filter((t) => list.some((p) => p.types.includes(t)));

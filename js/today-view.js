@@ -6,6 +6,11 @@ import { nextDue, lamp } from './subs-calc.js';
 import { dueText, money, dateText, periodText, lampNode, logoNode } from './subs-parts.js';
 import { pairRow } from './schedule-view.js';
 import { loadSchedule, onSchedule, getScheduleState, pairsOn, pairPhase, isStale, withGaps } from './schedule-data.js';
+import { mergedProjects } from './projects-view.js';
+import { onProjects, loadProjects, getProjectsState } from './projects-data.js';
+import { load, save } from './storage.js';
+import { buildFeed } from './feed-calc.js';
+import { feedLine } from './feed-view.js';
 import { groupTasks, openTasksTab, INBOX_OLD_DAYS, MAIN_LIMIT } from './tasks-view.js';
 
 const WEEKDAYS_FULL = ['воскресенье', 'понедельник', 'вторник', 'среда', 'четверг', 'пятница', 'суббота'];
@@ -13,7 +18,7 @@ const MONTHS_GEN = ['января', 'февраля', 'марта', 'апрел�
 
 export function todayView({ store, subscribe }) {
   const root = el('section', { class: 'view' });
-  const keys = ['inbox', 'tasks', 'goals', 'subs'];
+  const keys = ['inbox', 'tasks', 'goals', 'subs', 'projects'];
   const signature = () => keys.map((m) => store.list(m).map((it) => `${it.id}:${it.updatedAt}`).join(',')).join('|');
   let sig = '';
   let shown = '';
@@ -141,8 +146,16 @@ export function todayView({ store, subscribe }) {
       root.append(tile('Ближайшие платежи', ul, el('a', { class: 'tile__link', href: '#/subscriptions', text: 'Все подписки' })));
     }
 
+    // Лента проектов: пять последних событий
+    const feed = buildFeed(mergedProjects(store)).slice(0, 5);
+    if (feed.length) {
+      const all = el('a', { class: 'tile__link', href: '#/projects', text: 'Вся лента' });
+      all.addEventListener('click', () => save('hub.projectsUi', { ...(load('hub.projectsUi', {}) || {}), tab: 'feed', fProject: null }));
+      root.append(tile('Лента проектов', el('ul', { class: 'feedlist' }, feed.map((i) => feedLine(i))), all));
+    }
+
     // Источники, которых ещё нет
-    root.append(el('p', { class: 'muted', text: 'Пока не подключено: проекты и следующие шаги (этап 6), погода (этап 17).' }));
+    root.append(el('p', { class: 'muted', text: 'Пока не подключено: погода (этап 17).' }));
 
     // Смена суток: в полночь экран обновляется сам
     const next = new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1, 0, 0, 5);
@@ -158,6 +171,8 @@ export function todayView({ store, subscribe }) {
       render();
     } else if (seen) offSched();
   });
+  const offProj = onProjects(() => { if (root.isConnected) render(); else offProj(); });
+  if (!getProjectsState().loaded) loadProjects();
   loadSchedule();
   subscribe(() => {
     const next = signature();

@@ -549,3 +549,10 @@
 .qtile__sel { min-height: 2.25rem; font-size: 0.8rem; padding-top: 0; padding-bottom: 0; }
 .qtile__del { position: absolute; top: 2px; right: 2px; width: 2rem; height: 2rem; border: 0; background: transparent; color: var(--c-dim); font-size: 1.2rem; cursor: pointer; }
 .qtile[data-status="resolved"] .qtile__text { text-decoration: line-through; color: var(--c-dim); }
+/* Лента событий */
+.feedlist { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--sp-1); }
+.feedline { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--sp-2); min-height: var(--tap); padding: var(--sp-1) 0; border-bottom: var(--border) var(--border-style) var(--c-line); }
+.feedline__proj { font: inherit; font-weight: 700; border: 0; background: transparent; padding: 0; cursor: default; text-align: left; }
+button.feedline__proj { cursor: pointer; }
+.feedline__text { color: inherit; text-decoration: none; overflow-wrap: anywhere; flex: 1 1 12rem; }
+.feedline__text:hover, .feedline__text:focus-visible { text-decoration: underline; }
