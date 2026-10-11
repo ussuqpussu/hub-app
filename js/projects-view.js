@@ -6,10 +6,12 @@ import { openSheet, confirmSheet, readLogoFile } from './subs-form.js';
 import { logoNode, dateText } from './subs-parts.js';
 import { loadProjects, onProjects, getProjectsState, saveCard, deleteCard } from './projects-data.js';
 import { fmtTime } from './ui.js';
+import { questionsBoard, allQuestions } from './questions-view.js';
+import { countOpen } from './questions-calc.js';
 import { STATUS_LABEL, STATUS_ORDER, SORTS, GROUPS, NO_COMPANY, NO_TYPE, normalizeProject, filterProjects, sortProjects, groupProjects, companies, typeOptions, parseTags, lastActivity, colorIndex, gaps } from './projects-calc.js';
 
 const KEY = 'hub.projectsUi';
-const ui0 = { group: 'none', sort: 'recent', mode: 'tiles', company: null, type: null, status: null };
+const ui0 = { group: 'none', sort: 'recent', mode: 'tiles', company: null, type: null, status: null, tab: 'cards', qStatus: 'open', qGroup: 'project', qProject: null };
 
 function select(label, value, options, onChange) {
   const s = el('select', { class: 'field', 'aria-label': label }, options.map(([v, t]) => el('option', { value: v, text: t })));
@@ -180,8 +182,18 @@ export function projectsView({ store, subscribe }) {
     return b;
   }
 
+  function tabs(list) {
+    const n = countOpen(allQuestions(store, list));
+    return el('div', { class: 'seg', role: 'group', 'aria-label': 'Раздел проектов' }, [['cards', 'Карточки'], ['questions', `Открытые вопросы${n ? ` ${n}` : ''}`]].map(([k, t]) => {
+      const b = el('button', { type: 'button', 'aria-pressed': String(ui.tab === k), text: t });
+      b.addEventListener('click', () => set({ tab: k }));
+      return b;
+    }));
+  }
+
   function render() {
     const list = all();
+    if (ui.tab === 'questions') return void body.replaceChildren(el('div', { class: 'stack' }, [tabs(list), questionsBoard({ store, projects: list, ui, setUi: set })]));
     const cs = companies(list);
     const ts = typeOptions(list).filter((t) => list.some((p) => p.types.includes(t)));
     const shown = sortProjects(filterProjects(list, { company: ui.company, type: ui.type, status: ui.status, query }), ui.sort);
@@ -193,6 +205,7 @@ export function projectsView({ store, subscribe }) {
     const ps = getProjectsState();
     const refresh = el('button', { type: 'button', class: 'btn btn--ghost btn--s', text: ps.busy ? 'Обновляю…' : 'Обновить', ...(ps.busy ? { disabled: '' } : {}) });
     refresh.addEventListener('click', () => loadProjects());
+    wrap.append(tabs(list));
     wrap.append(el('div', { class: 'listhead' }, [el('h2', { text: 'Карточки' }), el('span', { class: 'listhead__count', text: String(shown.length) }), refresh, add]), search);
     const line = ps.error ? `Obsidian: ${ps.error}.${ps.cards.length ? ` Показана копия от ${fmtTime(Date.parse(ps.fetchedAt))}.` : ''}` : ps.fetchedAt ? `Из Obsidian: ${ps.cards.length}, обновлено ${fmtTime(Date.parse(ps.fetchedAt))}.${ps.skipped ? ` Заметок без блока свойств пропущено: ${ps.skipped}.` : ''}` : 'Obsidian: ещё не загружено.';
     wrap.append(el('p', { class: ps.error ? 'err' : 'sched-note', role: ps.error ? 'alert' : 'status', text: line }));
@@ -235,7 +248,7 @@ export function projectsView({ store, subscribe }) {
 
   let sig = '';
   let dirty = false;
-  const signature = () => store.list('projects').map((s) => `${s.id}:${s.updatedAt}`).join(',');
+  const signature = () => [...store.list('projects'), ...store.list('questions')].map((s) => `${s.id}:${s.updatedAt}`).join(',');
   subscribe(() => {
     const n = signature();
     if (n !== sig) { sig = n; if (!document.querySelector('dialog[open]')) render(); else dirty = true; }

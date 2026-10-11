@@ -123,6 +123,7 @@ export function projectPage({ store, subscribe }, id) {
       const bar = el('div', { class: 'archbar' }, [
         btn('Добавить плашку', '', () => { const r = addNode(arch); arch = r.arch; ed.draft = arch; ed.node = r.node.id; ed.edge = null; render(); }),
         btn('Соединить стрелкой', ed.link ? 'btn--primary' : '', () => { ed.link = !ed.link; ed.from = null; ed.node = null; ed.edge = null; ed.msg = ed.link ? 'Нажми на плашку, откуда идёт стрелка.' : ''; render(); }, ed.link),
+        btn('Расставить сами', '', () => { arch = { ...arch, nodes: arch.nodes.map(({ x, y, ...n }) => n) }; ed.draft = arch; render(); }),
         save,
         btn('Отмена', 'btn--ghost', () => { Object.assign(ed, { on: false, draft: null, node: null, edge: null, link: false, from: null, msg: '', busy: false }); render(); }),
       ]);

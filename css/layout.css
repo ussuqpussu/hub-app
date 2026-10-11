@@ -523,3 +523,10 @@
 .relchip__t b, .relchip__t span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .relwrap { display: flex; align-items: center; gap: var(--sp-1); min-width: 0; }
 .relwrap .relchip { flex: 1; }
+/* Доска вопросов */
+.qlist { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--sp-2); }
+.qrow { display: grid; gap: var(--sp-2); }
+.qrow__text { font-weight: 600; overflow-wrap: anywhere; }
+.qrow__meta { font-size: var(--fs-s); }
+.qrow[data-status="resolved"] .qrow__text { text-decoration: line-through; color: var(--c-dim); }
+.qrow .task-form__row .field { flex: 1 1 9rem; }
