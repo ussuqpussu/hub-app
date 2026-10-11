@@ -7,12 +7,13 @@ import { el, ICONS, fmtTime } from './ui.js';
 import { tasksView } from './tasks-view.js';
 import { scheduleView, sourceLine } from './schedule-view.js';
 import { subsView } from './subs-view.js';
+import { projectsView } from './projects-view.js';
 import { getScheduleState, loadSchedule, onSchedule } from './schedule-data.js';
 import { todayView } from './today-view.js';
 
 export { ICONS, fmtTime };
 
-export const VERSION = '0.8.1 (этап 5: подписки как в старом приложении)';
+export const VERSION = '0.9.0 (этап 6: проекты)';
 
 // Вкладки. group: main (в нижней панели телефона), more (внутри «Ещё»).
 export const TABS = [
@@ -271,6 +272,7 @@ export function renderRoute(route, ctx) {
   if (route === 'tasks') return tasksView(ctx);
   if (route === 'schedule') return scheduleView(ctx);
   if (route === 'subscriptions') return subsView(ctx);
+  if (route === 'projects') return projectsView(ctx);
   if (route === 'today') return todayView(ctx);
   if (route === 'more') return moreView();
   if (PLACEHOLDERS[route]) return placeholderView(route);
