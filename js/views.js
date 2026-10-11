@@ -5,12 +5,13 @@ import { createGithub } from './data/github.js';
 import { load } from './storage.js';
 import { el, ICONS, fmtTime } from './ui.js';
 import { tasksView } from './tasks-view.js';
-import { scheduleView } from './schedule-view.js';
+import { scheduleView, sourceLine } from './schedule-view.js';
+import { getScheduleState, loadSchedule, onSchedule } from './schedule-data.js';
 import { todayView } from './today-view.js';
 
 export { ICONS, fmtTime };
 
-export const VERSION = '0.6.1 (этап 3: ядро)';
+export const VERSION = '0.7.0 (этап 4: расписание)';
 
 // Вкладки. group: main (в нижней панели телефона), more (внутри «Ещё»).
 export const TABS = [
@@ -245,12 +246,20 @@ function settingsView({ onLockNow, store, subscribe }) {
   );
 
   // О системе
+  loadSchedule();
+  const srcDd = el('dd');
+  const paintSrc = () => {
+    const st = getScheduleState();
+    srcDd.textContent = `расписание: ${st.data ? sourceLine(st) : 'нет данных'}; проекты, умный дом: не подключены`;
+  };
+  paintSrc();
+  onSchedule(paintSrc);
   root.append(
     el('div', { class: 'settings-group' }, [
       el('h2', { text: 'О системе' }),
       el('dl', { class: 'kv' }, [
         el('dt', { text: 'Версия' }), el('dd', { text: VERSION }),
-        el('dt', { text: 'Источники' }), el('dd', { text: 'расписание, проекты, умный дом: не подключены' }),
+        el('dt', { text: 'Источники' }), srcDd,
       ]),
     ]),
   );

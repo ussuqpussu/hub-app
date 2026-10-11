@@ -2,6 +2,8 @@
 // Источники, которых ещё нет (расписание, подписки, погода, проекты), показываются одной честной строкой.
 import { el } from './ui.js';
 import { todayYmd, fromYmd, fmtDay, dueLabel, weekType } from './dates.js';
+import { pairRow } from './schedule-view.js';
+import { loadSchedule, onSchedule, getScheduleState, pairsOn, pairPhase, isStale } from './schedule-data.js';
 import { groupTasks, openTasksTab, INBOX_OLD_DAYS, MAIN_LIMIT } from './tasks-view.js';
 
 const WEEKDAYS_FULL = ['воскресенье', 'понедельник', 'вторник', 'среда', 'четверг', 'пятница', 'суббота'];
@@ -54,7 +56,21 @@ export function todayView({ store, subscribe }) {
     );
 
     // Расписание на сегодня
-    root.append(tile('Расписание', el('p', { class: 'muted', text: 'Расписание колледжа не подключено (этап 4).' })));
+    const sst = getScheduleState();
+    const day = sst.data ? pairsOn(sst.data, today) : null;
+    let schedBody;
+    if (!sst.data) schedBody = el('p', { class: 'muted', text: sst.loaded ? 'Расписания пока нет. Оно появится после первого автоматического обновления.' : 'Загружаю расписание…' });
+    else if (!day) schedBody = el('p', { class: 'muted', text: 'Для этой недели данных нет.' });
+    else {
+      const parts = [];
+      if (!day.pairs.length) parts.push(el('p', { class: 'muted', text: 'Сегодня пар нет.' }));
+      else parts.push(el('ul', { class: 'pairs' }, day.pairs.map((p) => pairRow(p, day.exact ? pairPhase(p, today) : ''))));
+      if (!day.exact) parts.push(el('p', { class: 'sched-note', text: 'По шаблону, может измениться.' }));
+      if (day.status === 'kept') parts.push(el('p', { class: 'sched-note sched-note--warn', text: 'Показана прошлая версия таблицы.' }));
+      if (isStale(sst.data)) parts.push(el('p', { class: 'sched-note sched-note--warn', text: 'Расписание не обновлялось больше недели.' }));
+      schedBody = parts;
+    }
+    root.append(tile('Расписание', schedBody, el('a', { class: 'tile__link', href: '#/schedule', text: 'Неделя' })));
 
     // Главные задачи
     const mains = tasks.filter((t) => t.main && !t.done).sort((a, b) => a.created - b.created).slice(0, MAIN_LIMIT);
@@ -111,6 +127,14 @@ export function todayView({ store, subscribe }) {
     }, Math.max(1000, next - new Date()));
   }
 
+  let seen = false;
+  const offSched = onSchedule(() => {
+    if (root.isConnected) {
+      seen = true;
+      render();
+    } else if (seen) offSched();
+  });
+  loadSchedule();
   subscribe(() => {
     const next = signature();
     if (next !== sig) render();
