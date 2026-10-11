@@ -1,57 +1,39 @@
-// PIN-экран. Важно: на этапе 1 в приложении нет личных данных, и PIN защищает
-// только вход в оболочку на этом устройстве. Защита данных (токен, шифрование)
-// появится на этапе 2.
+// PIN-экран. С этапа 2 PIN открывает ключ данных (PBKDF2 + AES-GCM), а не просто сверяется с хэшем.
+// Режимы: enter (вход), setup (первый запуск), restore (по коду восстановления), recovery (показ кода).
 import { load, save, clearHubKeys } from './storage.js';
+import { dbClear } from './data/db.js';
+import {
+  vaultExists,
+  legacyPinExists,
+  createVault,
+  unlockVault,
+  lockVault,
+  codeToRaw,
+  showCodeForRaw,
+  wipeEverything,
+} from './data/vault.js';
 
-const KEY_PIN = 'hub.pin';
 const KEY_AUTOLOCK = 'hub.autolock';
 const KEY_LOCKED_UNTIL = 'hub.lockedUntil';
-const ITERATIONS = 150000;
+const LEGACY = 'hub.pin';
 const MAX_FAILS = 5;
 const PENALTY_MS = 30000;
 
 const enc = new TextEncoder();
+const toHex = (buf) => [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, '0')).join('');
+const fromHex = (hex) => Uint8Array.from(hex.match(/.{2}/g).map((h) => parseInt(h, 16)));
 
-function toHex(buf) {
-  return [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, '0')).join('');
-}
-
-function fromHex(hex) {
-  const out = new Uint8Array(hex.length / 2);
-  for (let i = 0; i < out.length; i += 1) out[i] = parseInt(hex.slice(i * 2, i * 2 + 2), 16);
-  return out;
-}
-
-async function derive(pin, saltHex) {
-  const keyMaterial = await crypto.subtle.importKey('raw', enc.encode(pin), 'PBKDF2', false, ['deriveBits']);
+// Проверка PIN этапа 1 (хэш), нужна один раз для переноса на ключ данных.
+async function checkLegacyPin(pin) {
+  const p = load(LEGACY);
+  if (!p) return false;
+  const material = await crypto.subtle.importKey('raw', enc.encode(pin), 'PBKDF2', false, ['deriveBits']);
   const bits = await crypto.subtle.deriveBits(
-    { name: 'PBKDF2', hash: 'SHA-256', salt: fromHex(saltHex), iterations: ITERATIONS },
-    keyMaterial,
+    { name: 'PBKDF2', hash: 'SHA-256', salt: fromHex(p.salt), iterations: p.iter || 150000 },
+    material,
     256,
   );
-  return toHex(bits);
-}
-
-export function hasPin() {
-  const p = load(KEY_PIN);
-  return !!(p && p.hash && p.salt);
-}
-
-export async function setPin(pin) {
-  const salt = toHex(crypto.getRandomValues(new Uint8Array(16)));
-  const hash = await derive(pin, salt);
-  save(KEY_PIN, { salt, hash, iter: ITERATIONS });
-}
-
-export async function checkPin(pin) {
-  const p = load(KEY_PIN);
-  if (!p) return false;
-  const hash = await derive(pin, p.salt);
-  return hash === p.hash;
-}
-
-export function resetAll() {
-  clearHubKeys();
+  return toHex(bits) === p.hash;
 }
 
 export const AUTOLOCK_OPTIONS = [
@@ -70,8 +52,7 @@ export function setAutolock(min) {
   save(KEY_AUTOLOCK, min);
 }
 
-// Экран блокировки. Возвращает объект с методами lock() и onUnlock.
-export function createLock(root, { onUnlock }) {
+export function createLock(root, { onUnlock, onLock }) {
   const state = { fails: 0, hiddenAt: 0, unlocked: false };
   const $ = (s) => root.querySelector(s);
   const title = $('#lock-title');
@@ -80,11 +61,16 @@ export function createLock(root, { onUnlock }) {
   const input = $('#lock-pin');
   const input2 = $('#lock-pin2');
   const label2 = $('#lock-pin2-label');
+  const codeWrap = $('#lock-code-wrap');
+  const codeInput = $('#lock-code');
   const err = $('#lock-err');
   const submit = $('#lock-submit');
   const forgot = $('#lock-forgot');
+  const restoreLink = $('#lock-restore');
+  const recovery = $('#lock-recovery');
+  const recoveryCode = $('#lock-recovery-code');
   let mode = 'enter';
-  let firstPin = '';
+  let pendingRaw = null; // ключ из кода восстановления, пока не задан PIN
 
   const valid = (v) => /^\d{4,6}$/.test(v);
 
@@ -93,15 +79,26 @@ export function createLock(root, { onUnlock }) {
     err.textContent = '';
     input.value = '';
     input2.value = '';
-    label2.hidden = true;
-    input2.hidden = true;
-    forgot.hidden = mode === 'setup';
+    codeInput.value = '';
+    const isSetup = mode === 'setup' || mode === 'restore';
+    form.hidden = mode === 'recovery';
+    recovery.hidden = mode !== 'recovery';
+    label2.hidden = !isSetup;
+    input2.hidden = !isSetup;
+    codeWrap.hidden = mode !== 'restore';
+    forgot.hidden = isSetup || mode === 'recovery';
+    restoreLink.hidden = mode !== 'setup';
     if (mode === 'setup') {
       title.textContent = 'Придумай PIN';
-      hint.textContent = 'От 4 до 6 цифр. Он защищает вход в приложение на этом устройстве.';
-      label2.hidden = false;
-      input2.hidden = false;
+      hint.textContent = 'От 4 до 6 цифр. Он открывает ключ, которым шифруются твои данные на этом устройстве.';
       submit.textContent = 'Сохранить PIN';
+    } else if (mode === 'restore') {
+      title.textContent = 'Восстановление';
+      hint.textContent = 'Введи код восстановления и придумай PIN для этого устройства.';
+      submit.textContent = 'Восстановить';
+    } else if (mode === 'recovery') {
+      title.textContent = 'Код восстановления';
+      hint.textContent = 'Сохрани его в надёжном месте. Без него данные на новом устройстве или после сброса не открыть. Позже код можно показать в настройках по PIN.';
     } else {
       title.textContent = 'Введи PIN';
       hint.textContent = '';
@@ -110,15 +107,20 @@ export function createLock(root, { onUnlock }) {
     root.hidden = false;
     state.unlocked = false;
     document.getElementById('app').hidden = true;
-    input.focus();
+    if (mode !== 'recovery') (mode === 'restore' ? codeInput : input).focus();
   }
 
-  function unlock() {
+  function finishUnlock() {
     state.unlocked = true;
     state.fails = 0;
     root.hidden = true;
     document.getElementById('app').hidden = false;
     onUnlock();
+  }
+
+  function doLock() {
+    lockVault();
+    onLock && onLock();
   }
 
   async function onSubmit(e) {
@@ -129,18 +131,31 @@ export function createLock(root, { onUnlock }) {
       err.textContent = 'PIN: от 4 до 6 цифр.';
       return;
     }
-    if (mode === 'setup') {
+    if (mode === 'setup' || mode === 'restore') {
       if (input2.value.trim() !== pin) {
         err.textContent = 'PIN не совпал, повтори ещё раз.';
         return;
       }
       try {
-        await setPin(pin);
+        if (mode === 'restore') {
+          let raw;
+          try {
+            raw = await codeToRaw(codeInput.value);
+          } catch (_) {
+            err.textContent = 'Код не распознан. Проверь, что он введён полностью.';
+            return;
+          }
+          await createVault(pin, raw);
+          finishUnlock();
+          return;
+        }
+        pendingRaw = await createVault(pin);
+        recoveryCode.textContent = await showCodeForRaw(pendingRaw);
+        show('recovery');
+        recoveryCode.textContent = await showCodeForRaw(pendingRaw);
       } catch (_) {
-        err.textContent = 'Не удалось сохранить PIN: браузер не даёт нужную защиту. Открой приложение по https.';
-        return;
+        err.textContent = 'Не удалось сохранить PIN: браузеру нужен защищённый адрес (https).';
       }
-      unlock();
       return;
     }
     const until = load(KEY_LOCKED_UNTIL, 0);
@@ -150,14 +165,26 @@ export function createLock(root, { onUnlock }) {
     }
     let ok = false;
     try {
-      ok = await checkPin(pin);
-    } catch (_) {
-      err.textContent = 'Не удалось проверить PIN в этом браузере.';
-      return;
+      if (vaultExists()) {
+        await unlockVault(pin);
+        ok = true;
+      } else if (legacyPinExists() && (await checkLegacyPin(pin))) {
+        // Перенос PIN этапа 1: создаём ключ данных и показываем код восстановления.
+        pendingRaw = await createVault(pin);
+        save(KEY_LOCKED_UNTIL, 0);
+        show('recovery');
+        recoveryCode.textContent = await showCodeForRaw(pendingRaw);
+        return;
+      }
+    } catch (ex) {
+      if (!(ex && ex.message === 'wrong-pin')) {
+        err.textContent = 'Не удалось проверить PIN в этом браузере.';
+        return;
+      }
     }
     if (ok) {
       save(KEY_LOCKED_UNTIL, 0);
-      unlock();
+      finishUnlock();
       return;
     }
     state.fails += 1;
@@ -173,14 +200,32 @@ export function createLock(root, { onUnlock }) {
   }
 
   form.addEventListener('submit', onSubmit);
+  restoreLink.addEventListener('click', () => show('restore'));
+
+  $('#lock-recovery-copy').addEventListener('click', async () => {
+    try {
+      await navigator.clipboard.writeText(recoveryCode.textContent);
+      $('#lock-recovery-copy').textContent = 'Скопировано';
+    } catch (_) {
+      $('#lock-recovery-copy').textContent = 'Выдели код и скопируй вручную';
+    }
+  });
+
+  $('#lock-recovery-done').addEventListener('click', () => {
+    pendingRaw = null;
+    recoveryCode.textContent = '';
+    finishUnlock();
+  });
 
   forgot.addEventListener('click', () => {
     const box = $('#lock-reset');
     box.hidden = !box.hidden;
   });
 
-  $('#lock-reset-yes').addEventListener('click', () => {
-    resetAll();
+  $('#lock-reset-yes').addEventListener('click', async () => {
+    wipeEverything();
+    clearHubKeys();
+    await dbClear();
     $('#lock-reset').hidden = true;
     show('setup');
   });
@@ -189,7 +234,6 @@ export function createLock(root, { onUnlock }) {
     $('#lock-reset').hidden = true;
   });
 
-  // Автоблокировка при сворачивании.
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) {
       state.hiddenAt = Date.now();
@@ -197,16 +241,20 @@ export function createLock(root, { onUnlock }) {
     }
     const min = getAutolock();
     if (state.unlocked && min > 0 && state.hiddenAt && Date.now() - state.hiddenAt > min * 60000) {
+      doLock();
       show('enter');
     }
   });
 
   return {
     start() {
-      show(hasPin() ? 'enter' : 'setup');
+      show(vaultExists() || legacyPinExists() ? 'enter' : 'setup');
     },
     lockNow() {
-      if (hasPin()) show('enter');
+      if (vaultExists()) {
+        doLock();
+        show('enter');
+      }
     },
   };
 }

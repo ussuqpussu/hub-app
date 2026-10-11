@@ -8,6 +8,11 @@ html {
   -webkit-text-size-adjust: 100%;
 }
 
+/* Атрибут hidden всегда выигрывает у display из классов. */
+[hidden] {
+  display: none !important;
+}
+
 body {
   margin: 0;
   background: var(--c-bg);
@@ -70,7 +75,8 @@ button:disabled { cursor: not-allowed; }
   justify-content: center;
   gap: var(--sp-2);
   min-height: var(--tap);
-  padding: 0 var(--sp-4);
+  padding: var(--sp-2) var(--sp-4);
+  text-align: center;
   border: var(--border) solid var(--c-line);
   border-radius: var(--radius-pill);
   background: var(--c-surface);
@@ -86,6 +92,7 @@ button:disabled { cursor: not-allowed; }
 
 .btn--ghost { background: transparent; }
 .btn:disabled { opacity: 0.5; }
+.btn:focus-within { outline: calc(var(--border) * 2) solid var(--c-accent); outline-offset: calc(var(--border) * 2); }
 
 .field {
   display: block;

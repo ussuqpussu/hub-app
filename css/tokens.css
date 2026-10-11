@@ -87,6 +87,7 @@
   --pin-w: 15rem;
   --theme-card-w: 14rem;
   --ls-pin: 0.4em;
+  --chip-max: 11rem;
 
   /* Движение */
   --dur: 0.18s;

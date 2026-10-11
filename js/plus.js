@@ -1,8 +1,8 @@
 import { load, save } from './storage.js';
 
-// Типы записей по разделу 6F плана. Сохранение появится на этапе 2:
-// сейчас писать некуда, и кнопка честно отключена.
-const TYPES = [
+// Типы записей по разделу 6F плана. С этапа 2 запись сохраняется во «Входящие»
+// (зашифрованно, с отправкой в репозиторий данных).
+export const TYPES = [
   { id: 'task', name: 'Задача' },
   { id: 'note', name: 'Заметка' },
   { id: 'event', name: 'Событие' },
@@ -11,10 +11,11 @@ const TYPES = [
 ];
 const KEY = 'hub.plusType';
 
-export function initPlus({ button, dialog }) {
+export function initPlus({ button, dialog, store }) {
   const chips = dialog.querySelector('.chips');
   const closeBtn = dialog.querySelector('[data-close]');
   const input = dialog.querySelector('#plus-text');
+  const note = dialog.querySelector('#plus-note');
   let active = load(KEY, 'task');
   if (!TYPES.some((t) => t.id === active)) active = 'task';
 
@@ -37,6 +38,7 @@ export function initPlus({ button, dialog }) {
 
   button.addEventListener('click', () => {
     render();
+    note.textContent = '';
     if (typeof dialog.showModal === 'function') dialog.showModal();
     else dialog.setAttribute('open', '');
     input.focus();
@@ -45,5 +47,27 @@ export function initPlus({ button, dialog }) {
   dialog.addEventListener('click', (e) => {
     if (e.target === dialog) dialog.close();
   });
-  dialog.querySelector('form').addEventListener('submit', (e) => e.preventDefault());
+
+  dialog.querySelector('form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const text = input.value.trim();
+    if (!text) {
+      note.textContent = 'Напиши хотя бы одну строку.';
+      return;
+    }
+    try {
+      await store.add('inbox', { type: active, text });
+    } catch (_) {
+      note.textContent = 'Не удалось сохранить: приложение заблокировано.';
+      return;
+    }
+    input.value = '';
+    const st = store.getStatus();
+    if (st.state === 'notoken') {
+      note.textContent = 'Сохранено на этом устройстве. Токен GitHub не подключён, в репозиторий запись пока не уходит (Настройки → Данные).';
+    } else {
+      note.textContent = 'Сохранено. Отправится в репозиторий в ближайшие секунды.';
+    }
+    input.focus();
+  });
 }

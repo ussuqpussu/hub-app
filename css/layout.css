@@ -141,6 +141,41 @@
 .chip[aria-pressed="true"] { background: var(--c-accent); color: var(--c-on-accent); border-style: solid; border-color: var(--c-accent); }
 .sheet__form { display: grid; gap: var(--sp-3); }
 
+/* Статус синхронизации */
+.topbar__right { display: flex; align-items: center; gap: var(--sp-2); min-width: 0; }
+
+.sync-chip {
+  max-width: var(--chip-max);
+  min-height: var(--tap);
+  padding: 0 var(--sp-2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--fs-xs);
+  color: var(--c-dim);
+  text-align: right;
+}
+
+.sync-chip[data-state="error"] { color: var(--c-danger); }
+.sync-chip--side { display: none; max-width: 100%; text-align: left; padding: 0 var(--sp-3); }
+
+/* Входящие */
+.inbox { display: grid; gap: var(--sp-2); margin: 0; padding: 0; list-style: none; }
+
+.inbox__item {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: var(--sp-1) var(--sp-3);
+  align-items: center;
+  padding: var(--sp-3) var(--sp-4);
+  background: var(--c-surface);
+  border: var(--border) var(--border-style) var(--c-line);
+  border-radius: var(--radius-m);
+}
+
+.inbox__meta { grid-column: 1 / -1; font-size: var(--fs-xs); color: var(--c-dim); }
+.inbox__text { overflow-wrap: anywhere; }
+
 /* Блокировка по PIN */
 .lock {
   position: fixed;
@@ -155,6 +190,7 @@
 .lock__box { width: min(100%, var(--pin-w)); display: grid; gap: var(--sp-3); text-align: center; }
 .lock__pin { text-align: center; letter-spacing: var(--ls-pin); font-family: var(--font-mono); font-size: var(--fs-l); }
 .lock__err { color: var(--c-danger); min-height: calc(var(--lh) * 1em); font-size: var(--fs-s); }
+.lock__code { padding: var(--sp-4); border: var(--border) var(--border-style) var(--c-line); border-radius: var(--radius-m); background: var(--c-surface); overflow-wrap: anywhere; user-select: all; text-align: center; letter-spacing: 0.05em; }
 .lock__link { color: var(--c-dim); font-size: var(--fs-s); text-decoration: underline; }
 
 /* Настройки */
@@ -223,6 +259,7 @@
   .nav__item[aria-current="page"] { background: var(--c-fill); }
   .nav__sep { display: block; flex: 1; }
   .nav__gear-side { display: flex; }
+  .sync-chip--side { display: block; }
 
   .main { padding: var(--sp-6) var(--sp-6); padding-bottom: var(--sp-7); }
   .fab { right: var(--sp-6); bottom: var(--sp-6); }

@@ -20,6 +20,10 @@
       <h1 id="lock-title">Хаб</h1>
       <p class="muted" id="lock-hint"></p>
       <form id="lock-form" class="stack" autocomplete="off">
+        <div id="lock-code-wrap" class="stack" hidden>
+          <label class="sr-only" for="lock-code">Код восстановления</label>
+          <input class="field mono" id="lock-code" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="Код восстановления">
+        </div>
         <label class="sr-only" for="lock-pin">PIN</label>
         <input class="field lock__pin" id="lock-pin" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="off" placeholder="PIN">
         <label class="sr-only" for="lock-pin2" id="lock-pin2-label" hidden>Повтори PIN</label>
@@ -27,9 +31,15 @@
         <p class="lock__err" id="lock-err" role="alert"></p>
         <button class="btn btn--primary" id="lock-submit" type="submit">Открыть</button>
       </form>
+      <div class="stack" id="lock-recovery" hidden>
+        <p class="lock__code mono" id="lock-recovery-code"></p>
+        <button class="btn" id="lock-recovery-copy" type="button">Скопировать код</button>
+        <button class="btn btn--primary" id="lock-recovery-done" type="button">Я сохранил код, продолжить</button>
+      </div>
+      <button class="lock__link" id="lock-restore" type="button" hidden>У меня уже есть код восстановления</button>
       <button class="lock__link" id="lock-forgot" type="button">Забыл PIN</button>
       <div class="card stack" id="lock-reset" hidden>
-        <p>Сброс удалит настройки приложения на этом устройстве и попросит придумать новый PIN. Данных в приложении пока нет.</p>
+        <p>Сброс удалит PIN, токен и неотправленные записи на этом устройстве. Данные в репозитории не тронутся: доступ к ним вернётся по коду восстановления.</p>
         <div class="row">
           <button class="btn" id="lock-reset-no" type="button">Отмена</button>
           <button class="btn btn--primary" id="lock-reset-yes" type="button">Сбросить</button>
@@ -41,7 +51,10 @@
   <div class="app" id="app" hidden>
     <header class="topbar">
       <h1 class="topbar__title" id="topbar-title">Хаб</h1>
-      <a class="iconbtn" id="gear" href="#/settings" aria-label="Настройки"></a>
+      <div class="topbar__right">
+        <button class="sync-chip" type="button" data-sync aria-live="polite"></button>
+        <a class="iconbtn" id="gear" href="#/settings" aria-label="Настройки"></a>
+      </div>
     </header>
     <nav class="nav" id="nav" aria-label="Основная навигация"></nav>
     <main class="main" id="main" tabindex="-1"></main>
@@ -58,8 +71,8 @@
     <form class="sheet__form">
       <label class="sr-only" for="plus-text">Одна строка</label>
       <input class="field" id="plus-text" type="text" placeholder="Одна строка">
-      <button class="btn btn--primary" type="submit" disabled>Сохранить</button>
-      <p class="muted">Сохранение появится на этапе 2: сейчас писать некуда, ничего не сохранится.</p>
+      <button class="btn btn--primary" type="submit">Сохранить</button>
+      <p class="muted" id="plus-note" role="status"></p>
     </form>
   </dialog>
 

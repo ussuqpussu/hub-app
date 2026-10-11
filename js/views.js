@@ -1,7 +1,11 @@
 import { THEMES, currentTheme, setTheme } from './theme.js';
-import { AUTOLOCK_OPTIONS, getAutolock, setAutolock, checkPin, setPin } from './pin.js';
+import { AUTOLOCK_OPTIONS, getAutolock, setAutolock } from './pin.js';
+import { verifyPin, changePin, getRecoveryCode, setToken, clearToken, getSession } from './data/vault.js';
+import { createGithub } from './data/github.js';
+import { TYPES } from './plus.js';
+import { load } from './storage.js';
 
-export const VERSION = '0.1.0 (этап 1: каркас)';
+export const VERSION = '0.2.0 (этап 2: данные)';
 
 // Свои простые значки (линия, без заимствованных наборов).
 const ico = (d) =>
@@ -37,7 +41,7 @@ export const TABS = [
 const PLACEHOLDERS = {
   today: ['Сегодня', 'Здесь появятся расписание на день, главные задачи и ближайшие списания.', 'Данных пока нет: чтение и запись данных будут на этапе 2, «Сегодня» наполнится на этапе 3.'],
   calendar: ['Календарь', 'Месяц, неделя и день, свои события и расписание колледжа.', 'Данных пока нет: календарь наполнится на этапах 3 и 4.'],
-  tasks: ['Задачи и цели', 'Задачи со сроками, привычки и цели, а также «Входящие».', 'Данных пока нет: вкладка наполнится на этапе 3.'],
+  tasks: ['Задачи и цели', 'Задачи со сроками, привычки и цели, а также «Входящие».', 'Задач, привычек и целей пока нет: они появятся на этапе 3.'],
   projects: ['Проекты', 'Карточки проектов, лента событий и открытые вопросы.', 'Данных пока нет: проекты из Obsidian подключатся на этапе 6.'],
   'smart-home': ['Умный дом', 'Управление устройствами, комнатами и сценариями.', 'Нет связи с сервером умного дома: он ещё не подключён (этап 14).'],
   subscriptions: ['Подписки', 'Список подписок и ближайшие списания.', 'Данных пока нет: подписки переедут в хаб на этапе 5.'],
@@ -72,7 +76,53 @@ function moreView() {
   return el('section', { class: 'view' }, [el('div', { class: 'view__head' }, [el('h1', { text: 'Ещё' })]), list]);
 }
 
-function settingsView({ onLockNow }) {
+export function fmtTime(ms) {
+  const d = new Date(ms);
+  const p = (n) => String(n).padStart(2, '0');
+  return `${p(d.getDate())}.${p(d.getMonth() + 1)} ${p(d.getHours())}:${p(d.getMinutes())}`;
+}
+
+export function statusText(st) {
+  if (st.state === 'notoken') return 'Данные только на этом устройстве';
+  if (st.state === 'syncing') return 'Синхронизация…';
+  if (st.state === 'offline') return st.pending ? `Нет связи · ждёт отправки: ${st.pending}` : 'Нет связи';
+  if (st.state === 'error') return `Ошибка: ${st.error ? st.error.message : 'синхронизация'}`;
+  if (st.pending) return `Ждёт отправки: ${st.pending}`;
+  return st.lastSync ? `Обновлено: ${fmtTime(st.lastSync)}` : 'Ещё не синхронизировано';
+}
+
+function tasksView({ store, subscribe }) {
+  const root = el('section', { class: 'view' }, [
+    el('div', { class: 'view__head' }, [el('h1', { text: 'Задачи и цели' }), el('p', { class: 'muted', text: 'Задачи со сроками, привычки и цели появятся на этапе 3.' })]),
+  ]);
+  const box = el('div', { class: 'stack' });
+  const typeName = (id) => (TYPES.find((t) => t.id === id) || { name: id }).name;
+  function render() {
+    box.replaceChildren(el('h2', { text: 'Входящие' }));
+    const items = store.list('inbox');
+    if (!items.length) {
+      box.append(el('div', { class: 'empty' }, [el('strong', { text: 'Входящих нет' }), el('span', { text: 'Записи из кнопки «+» появятся здесь.' })]));
+      return;
+    }
+    const ul = el('ul', { class: 'inbox' });
+    items.forEach((it) => {
+      const del = el('button', { class: 'iconbtn', type: 'button', 'aria-label': 'Удалить запись', html: ICONS.close });
+      del.addEventListener('click', () => store.remove('inbox', it.id));
+      ul.append(el('li', { class: 'inbox__item' }, [
+        el('span', { class: 'inbox__text', text: it.text }),
+        del,
+        el('span', { class: 'inbox__meta', text: `${typeName(it.type)} · ${fmtTime(it.created)}` }),
+      ]));
+    });
+    box.append(ul);
+  }
+  render();
+  subscribe(render);
+  root.append(box);
+  return root;
+}
+
+function settingsView({ onLockNow, store, subscribe }) {
   const root = el('section', { class: 'view' }, [el('div', { class: 'view__head' }, [el('h1', { text: 'Настройки' })])]);
 
   // Оформление
@@ -96,6 +146,103 @@ function settingsView({ onLockNow }) {
   renderThemes();
   root.append(el('div', { class: 'settings-group' }, [el('h2', { text: 'Оформление' }), themesBox, el('p', { class: 'muted', text: 'Остальные темы появятся на этапе 15.' })]));
 
+  // Данные
+  const pinField = (label) => el('input', { class: 'field', type: 'password', inputmode: 'numeric', pattern: '[0-9]*', maxlength: '6', autocomplete: 'off', placeholder: label, 'aria-label': label });
+  const dataBox = el('div', { class: 'settings-group' });
+  const dataMsg = el('p', { class: 'muted', role: 'status' });
+  let kvEl = null;
+  function kvRows() {
+    const sess = getSession();
+    const st = store.getStatus();
+    const connected = !!(sess.token && sess.repo);
+    return [
+      el('dt', { text: 'Репозиторий' }), el('dd', { text: connected ? sess.repo : 'не подключён' }),
+      el('dt', { text: 'Состояние' }), el('dd', { text: statusText(st) }),
+      el('dt', { text: 'Ждёт отправки' }), el('dd', { text: String(st.pending) }),
+      el('dt', { text: 'Последняя синхронизация' }), el('dd', { text: st.lastSync ? fmtTime(st.lastSync) : 'ещё не было' }),
+    ];
+  }
+  function renderData() {
+    const sess = getSession();
+    const connected = !!(sess.token && sess.repo);
+    const kv = el('dl', { class: 'kv' }, kvRows());
+    kvEl = kv;
+    const repoIn = el('input', { class: 'field', type: 'text', autocomplete: 'off', spellcheck: 'false', placeholder: 'владелец/репозиторий данных', 'aria-label': 'Репозиторий данных', value: sess.repo || '' });
+    const tokIn = el('input', { class: 'field', type: 'password', autocomplete: 'off', spellcheck: 'false', placeholder: 'Токен GitHub', 'aria-label': 'Токен GitHub' });
+    const connect = el('form', { class: 'stack' }, [repoIn, tokIn, el('button', { class: 'btn', type: 'submit', text: connected ? 'Заменить токен' : 'Подключить' })]);
+    connect.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const repo = repoIn.value.trim();
+      const token = tokIn.value.trim();
+      if (!/^[\w.-]+\/[\w.-]+$/.test(repo) || !token) {
+        dataMsg.textContent = 'Укажи репозиторий в виде владелец/название и токен.';
+        return;
+      }
+      dataMsg.textContent = 'Проверяю доступ…';
+      try {
+        const api = load('hub.apiBase') || undefined;
+        const info = await createGithub({ repo, token, apiBase: api }).checkAccess();
+        if (!info.private) {
+          dataMsg.textContent = 'Этот репозиторий публичный. Данные должны лежать в приватном: токен не сохранён.';
+          return;
+        }
+        await setToken(token, repo);
+        tokIn.value = '';
+        dataMsg.textContent = 'Подключено. Токен хранится на этом устройстве в зашифрованном виде.';
+        store.syncNow();
+      } catch (ex) {
+        dataMsg.textContent = ex && ex.kind === 'auth' ? 'GitHub не принял токен или нет доступа к репозиторию.' : ex && ex.kind === 'notfound' ? 'Репозиторий не найден или у токена нет к нему доступа.' : 'Не удалось проверить доступ: нет связи или ошибка GitHub.';
+      }
+      renderData();
+    });
+    const syncBtn = el('button', { class: 'btn', type: 'button', text: 'Синхронизировать сейчас' });
+    syncBtn.addEventListener('click', () => store.syncNow());
+    const unlink = el('button', { class: 'btn btn--ghost', type: 'button', text: 'Отключить токен' });
+    unlink.addEventListener('click', () => {
+      clearToken();
+      dataMsg.textContent = 'Токен удалён с этого устройства. Отозвать его нужно ещё на github.com.';
+      renderData();
+    });
+    const expBtn = el('button', { class: 'btn', type: 'button', text: 'Экспорт данных (файл)' });
+    expBtn.addEventListener('click', async () => {
+      const data = await store.exportAll();
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `hub-export-${new Date().toISOString().slice(0, 10)}.json`;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+      dataMsg.textContent = 'Файл содержит данные в открытом виде: храни его осторожно.';
+    });
+    const impIn = el('input', { class: 'sr-only', type: 'file', accept: 'application/json,.json', 'aria-label': 'Импорт данных из файла' });
+    impIn.addEventListener('change', async () => {
+      const file = impIn.files && impIn.files[0];
+      if (!file) return;
+      try {
+        const n = await store.importAll(JSON.parse(await file.text()));
+        dataMsg.textContent = `Импортировано записей: ${n}.`;
+      } catch (ex) {
+        dataMsg.textContent = ex && ex.message && !(ex instanceof SyntaxError) ? ex.message : 'Это не файл экспорта хаба или он повреждён.';
+      }
+      impIn.value = '';
+    });
+    const impBtn = el('label', { class: 'btn' }, [el('span', { text: 'Импорт из файла' }), impIn]);
+    dataBox.replaceChildren(
+      el('h2', { text: 'Данные' }),
+      kv,
+      connect,
+      el('div', { class: 'row' }, connected ? [syncBtn, unlink] : [syncBtn]),
+      el('div', { class: 'row' }, [expBtn, impBtn]),
+      dataMsg,
+      el('p', { class: 'muted', text: 'Личные записи шифруются на устройстве и лежат в репозитории в зашифрованном виде. История изменений и откат делаются через git.' }),
+    );
+  }
+  renderData();
+  subscribe(() => {
+    if (kvEl) kvEl.replaceChildren(...kvRows());
+  });
+  root.append(dataBox);
+
   // Безопасность
   const sel = el('select', { class: 'field', id: 'autolock', 'aria-label': 'Автоблокировка' });
   AUTOLOCK_OPTIONS.forEach((o) => sel.append(el('option', { value: String(o.min), text: o.label })));
@@ -103,8 +250,8 @@ function settingsView({ onLockNow }) {
   sel.addEventListener('change', () => setAutolock(Number(sel.value)));
 
   const msg = el('p', { class: 'muted', role: 'status' });
-  const oldPin = el('input', { class: 'field', type: 'password', inputmode: 'numeric', pattern: '[0-9]*', maxlength: '6', autocomplete: 'off', placeholder: 'Текущий PIN', 'aria-label': 'Текущий PIN' });
-  const newPin = el('input', { class: 'field', type: 'password', inputmode: 'numeric', pattern: '[0-9]*', maxlength: '6', autocomplete: 'off', placeholder: 'Новый PIN (4–6 цифр)', 'aria-label': 'Новый PIN' });
+  const oldPin = pinField('Текущий PIN');
+  const newPin = pinField('Новый PIN (4–6 цифр)');
   const change = el('form', { class: 'stack' }, [oldPin, newPin, el('button', { class: 'btn', type: 'submit', text: 'Сменить PIN' }), msg]);
   change.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -114,18 +261,40 @@ function settingsView({ onLockNow }) {
       return;
     }
     try {
-      if (!(await checkPin(oldPin.value))) {
+      if (!(await verifyPin(oldPin.value))) {
         msg.textContent = 'Текущий PIN неверный.';
         return;
       }
-      await setPin(newPin.value);
+      await changePin(oldPin.value, newPin.value);
       oldPin.value = '';
       newPin.value = '';
-      msg.textContent = 'PIN изменён.';
+      msg.textContent = 'PIN изменён. Данные остались доступны.';
     } catch (_) {
       msg.textContent = 'Не удалось изменить PIN в этом браузере.';
     }
   });
+
+  const codePin = pinField('PIN, чтобы показать код');
+  const codeOut = el('p', { class: 'lock__code mono', hidden: '' });
+  const codeMsg = el('p', { class: 'muted', role: 'status' });
+  const codeForm = el('form', { class: 'stack' }, [codePin, el('button', { class: 'btn', type: 'submit', text: 'Показать код восстановления' }), codeOut, codeMsg]);
+  codeForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    codeMsg.textContent = '';
+    try {
+      codeOut.textContent = await getRecoveryCode(codePin.value);
+      codeOut.hidden = false;
+      codePin.value = '';
+      setTimeout(() => {
+        codeOut.hidden = true;
+        codeOut.textContent = '';
+      }, 60000);
+      codeMsg.textContent = 'Код скроется через минуту.';
+    } catch (_) {
+      codeMsg.textContent = 'PIN неверный.';
+    }
+  });
+
   const lockBtn = el('button', { class: 'btn', type: 'button', text: 'Заблокировать сейчас' });
   lockBtn.addEventListener('click', onLockNow);
   root.append(
@@ -133,8 +302,9 @@ function settingsView({ onLockNow }) {
       el('h2', { text: 'Безопасность' }),
       el('label', { class: 'stack' }, [el('span', { text: 'Автоблокировка при сворачивании' }), sel]),
       change,
+      codeForm,
       lockBtn,
-      el('p', { class: 'muted', text: 'Сейчас PIN защищает только вход в приложение на этом устройстве. В приложении пока нет личных данных; защита данных (токен и шифрование) появится на этапе 2.' }),
+      el('p', { class: 'muted', text: 'PIN открывает ключ, которым шифруются личные записи. Если устройство потеряно: отзови токен на github.com (Settings → Developer settings). Без кода восстановления данные на новом устройстве не открыть.' }),
     ]),
   );
 
@@ -144,8 +314,7 @@ function settingsView({ onLockNow }) {
       el('h2', { text: 'О системе' }),
       el('dl', { class: 'kv' }, [
         el('dt', { text: 'Версия' }), el('dd', { text: VERSION }),
-        el('dt', { text: 'Данные' }), el('dd', { text: 'не подключены (этап 2)' }),
-        el('dt', { text: 'Источники' }), el('dd', { text: 'не подключены' }),
+        el('dt', { text: 'Источники' }), el('dd', { text: 'расписание, проекты, умный дом: не подключены' }),
       ]),
     ]),
   );
@@ -154,6 +323,7 @@ function settingsView({ onLockNow }) {
 
 export function renderRoute(route, ctx) {
   if (route === 'settings') return settingsView(ctx);
+  if (route === 'tasks') return tasksView(ctx);
   if (route === 'more') return moreView();
   if (PLACEHOLDERS[route]) return placeholderView(route);
   return el('section', { class: 'view' }, [
