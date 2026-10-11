@@ -10,6 +10,7 @@ import { load, save } from './storage.js';
 import { loadProjects, onProjects } from './projects-data.js';
 import { ruporPosts } from './rupor-view.js';
 import { pendingPost, publishedCount, recOf, dayNeed } from './rupor-calc.js';
+import { liveSummary, ensureSnapshot } from './weekly-view.js';
 import { groupTasks, openTasksTab, INBOX_OLD_DAYS, MAIN_LIMIT } from './tasks-view.js';
 
 const WEEKDAYS_FULL = ['воскресенье', 'понедельник', 'вторник', 'среда', 'четверг', 'пятница', 'суббота'];
@@ -173,6 +174,12 @@ export function todayView({ store, subscribe }) {
       if (hidden > 0) items.push(el('p', { class: 'muted', text: `И ещё: ${hidden}` }));
       root.append(tile('Ближайшие задачи', items, goTo('#/tasks', { id: 'tasks', label: 'Все задачи' })));
     }
+
+    // Итоги недели: ссылка и коротко, сколько сделано; в воскресенье вечером итог сохраняется
+    try { ensureSnapshot(store); } catch (_) { /* итог сохранится при следующем открытии */ }
+    const ws = liveSummary(store, today);
+    const sunEve = new Date().getDay() === 0 && new Date().getHours() >= 18;
+    root.append(tile(sunEve ? 'Итоги недели готовы' : 'Итоги недели', el('p', { class: ws.hasData ? '' : 'muted', text: ws.hasData ? `Закрыто задач: ${ws.tasks.closed.length}. Опубликовано в «Рупоре»: ${ws.rupor.total}. Событий проектов: ${ws.events.length}.` : 'За эту неделю пока нет данных.' }), el('a', { class: 'tile__link', href: '#/weekly', text: 'Открыть' })));
 
     // Источники, которых ещё нет
     root.append(el('p', { class: 'muted', text: 'Пока не подключено: погода (этап 17).' }));

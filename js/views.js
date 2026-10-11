@@ -9,12 +9,13 @@ import { scheduleView, sourceLine } from './schedule-view.js';
 import { subsView } from './subs-view.js';
 import { projectsView } from './projects-view.js';
 import { projectPage } from './project-page.js';
+import { weeklyView } from './weekly-view.js';
 import { getScheduleState, loadSchedule, onSchedule } from './schedule-data.js';
 import { todayView } from './today-view.js';
 
 export { ICONS, fmtTime };
 
-export const VERSION = '0.15.0 (Рупор: вставка из документа, канал, настройки, Сегодня)';
+export const VERSION = '0.16.0 (Итоги недели, этап 11)';
 
 // Вкладки. group: main (в нижней панели телефона), more (внутри «Ещё»).
 export const TABS = [
@@ -24,6 +25,7 @@ export const TABS = [
   { id: 'projects', name: 'Проекты', icon: 'projects', group: 'main' },
   { id: 'smart-home', name: 'Умный дом', icon: 'home', group: 'more' },
   { id: 'subscriptions', name: 'Подписки', icon: 'subs', group: 'more' },
+  { id: 'weekly', name: 'Итоги недели', icon: 'calendar', group: 'more' },
   { id: 'notes', name: 'Заметки и ссылки', icon: 'notes', group: 'more' },
   { id: 'knowledge', name: 'Знания', icon: 'knowledge', group: 'more' },
 ];
@@ -291,6 +293,7 @@ export function renderRoute(route, ctx) {
   if (route === 'settings') return settingsView(ctx);
   if (route === 'tasks') return tasksView(ctx);
   if (route === 'schedule') return scheduleView(ctx);
+  if (route === 'weekly') return weeklyView(ctx);
   if (route === 'subscriptions') return subsView(ctx);
   if (route === 'projects') return ctx.param ? projectPage(ctx, ctx.param) : projectsView(ctx);
   if (route === 'today') return todayView(ctx);

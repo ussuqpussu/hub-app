@@ -44,11 +44,11 @@ export function tagWarnings(post) {
   return w;
 }
 
-export const emptyRec = (postId) => ({ postId, status: { dzen: 'new', vk: 'new', tg: 'new' }, urls: { dzen: '', vk: '', tg: '' }, noteRead: false });
+export const emptyRec = (postId) => ({ postId, status: { dzen: 'new', vk: 'new', tg: 'new' }, urls: { dzen: '', vk: '', tg: '' }, at: {}, noteRead: false });
 export function recOf(records, postId) {
   const r = records.find((x) => x.postId === postId);
   if (!r) return emptyRec(postId);
-  return { ...emptyRec(postId), ...r, status: { ...emptyRec().status, ...(r.status || {}) }, urls: { ...emptyRec().urls, ...(r.urls || {}) } };
+  return { ...emptyRec(postId), ...r, status: { ...emptyRec().status, ...(r.status || {}) }, urls: { ...emptyRec().urls, ...(r.urls || {}) }, at: { ...(r.at || {}) } };
 }
 export const publishedCount = (rec) => PLATFORMS.filter(([k]) => rec.status[k] === 'published').length;
 export const isDone = (rec) => publishedCount(rec) === 3;

@@ -72,10 +72,15 @@ export function ruporBoard({ store, ui, setUi }) {
 
   function saveRec(post, patch) {
     const cur = recOf(records, post.id);
-    const next = { ...cur, ...patch, status: { ...cur.status, ...(patch.status || {}) }, urls: { ...cur.urls, ...(patch.urls || {}) } };
+    const next = { ...cur, ...patch, status: { ...cur.status, ...(patch.status || {}) }, urls: { ...cur.urls, ...(patch.urls || {}) }, at: { ...cur.at } };
+    // Время публикации нужно для «Итогов недели»: ставится, когда статус стал «Опубликован», и снимается, если вернули назад.
+    Object.keys(patch.status || {}).forEach((k) => {
+      if (next.status[k] === 'published' && cur.status[k] !== 'published') next.at[k] = Date.now();
+      else if (next.status[k] !== 'published') delete next.at[k];
+    });
     const stored = records.find((r) => r.postId === post.id);
-    if (stored) store.update('rupor', stored.id, { status: next.status, urls: next.urls, noteRead: next.noteRead });
-    else store.add('rupor', { postId: post.id, status: next.status, urls: next.urls, noteRead: next.noteRead });
+    if (stored) store.update('rupor', stored.id, { status: next.status, urls: next.urls, at: next.at, noteRead: next.noteRead });
+    else store.add('rupor', { postId: post.id, status: next.status, urls: next.urls, at: next.at, noteRead: next.noteRead });
   }
 
   function row(p) {

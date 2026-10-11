@@ -1,6 +1,6 @@
 // Service worker: оболочка открывается без сети.
 // При изменении любого файла оболочки увеличивай VERSION, чтобы кэш обновился.
-const VERSION = 'hub-shell-v37';
+const VERSION = 'hub-shell-v38';
 const SHELL = [
   './',
   './index.html',
@@ -28,6 +28,8 @@ const SHELL = [
   './js/projects-view.js',
   './js/rupor-parse.js',
   './js/rupor-import.js',
+  './js/weekly-calc.js',
+  './js/weekly-view.js',
   './js/rupor-calc.js',
   './js/rupor-view.js',
   './js/projects-parse.js',
