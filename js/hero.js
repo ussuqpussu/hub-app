@@ -6,12 +6,20 @@ import { asciiFrame, ASCII_NAMES } from './ascii-scenes.js';
 
 export const PAGE_INDEX = { today: 0, schedule: 1, tasks: 2, projects: 3, 'smart-home': 4, subscriptions: 5, notes: 6, knowledge: 7, settings: 8 };
 
+// Номер сцены (0..3) на странице: выбор человека, иначе значение по умолчанию из темы.
+export function sceneIndex(themeId, pg) {
+  const th = SCENE_THEMES[themeId];
+  const mine = (getAppearance().scenes || {})[themeId];
+  const v = Array.isArray(mine) ? mine[pg] : null;
+  if (Number.isInteger(v) && v >= 0 && v < 4) return v;
+  return ((th && th.tm) || [0, 1, 2, 3, 0, 1, 2, 3, 0])[pg] || 0;
+}
 export const sceneInfo = (themeId, route) => {
   const th = SCENE_THEMES[themeId];
   const pg = PAGE_INDEX[route];
   if (themeId === 'creation' && pg != null) return { pg, name: ASCII_NAMES[pg] || 'Сцена', ascii: true };
   if (!th || pg == null) return null;
-  const k = (th.tm || [0, 1, 2, 3, 0, 1, 2, 3, 0])[pg] || 0;
+  const k = sceneIndex(themeId, pg);
   return { pg, name: (SCENE_NAMES[th.ts] || [])[k] || 'Сцена' };
 };
 
@@ -30,7 +38,7 @@ function drawAscii(c, t) {
   const h = el.clientHeight;
   if (w && h) el.style.fontSize = `${Math.max(2, Math.min(w / (cols * 0.6), h / lines.length)).toFixed(2)}px`;
 }
-function drawFrame(c, t) { if (c.ascii) drawAscii(c, t); else renderScene(c.cv, c.theme, c.pg, t); }
+function drawFrame(c, t) { if (c.ascii) drawAscii(c, t); else { const th = SCENE_THEMES[c.theme]; const tm = (th.tm || [0, 1, 2, 3, 0, 1, 2, 3, 0]).slice(); tm[c.pg] = sceneIndex(c.theme, c.pg); renderScene(c.cv, c.theme, c.pg, t, 2, null, { ...th, tm }); } }
 
 function loop(now) {
   const c = current;

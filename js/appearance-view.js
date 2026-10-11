@@ -1,5 +1,7 @@
 // Блок «Оформление» в настройках: плитки тем, своя тема, обои, живые обои, заставка, звуки.
 import { el } from './ui.js';
+import { SCENE_THEMES, SCENE_NAMES } from './scenes.js';
+import { PAGE_INDEX, sceneIndex } from './hero.js';
 import { THEMES, CUSTOM, currentTheme, setTheme, getCustom, setCustom } from './theme.js';
 import { getAppearance, setAppearance, LIVE_OPTIONS, saveWallpaperFile, removeWallpaper, hasWallpaper, playSound, reducedMotion } from './appearance.js';
 
@@ -87,12 +89,48 @@ export function appearanceBlock() {
   live.addEventListener('change', () => setAppearance({ live: live.value }));
   const vol = el('input', { type: 'range', class: 'field', min: '0', max: '100', step: '5', value: String(a.volume), 'aria-label': 'Громкость звуков' });
   vol.addEventListener('change', () => { setAppearance({ volume: Number(vol.value) }); playSound('done'); });
+
+  // Анимация по страницам: у каждой темы четыре сцены, на каждой странице можно выбрать свою.
+  const PAGE_NAMES = { today: 'Сегодня', schedule: 'Расписание', tasks: 'Задачи', projects: 'Проекты', 'smart-home': 'Умный дом', subscriptions: 'Подписки', notes: 'Заметки', knowledge: 'Знания', settings: 'Настройки' };
+  const scenesBox = el('div', { class: 'scenes-box' });
+  function renderScenes() {
+    const tid = document.documentElement.dataset.theme;
+    const th = SCENE_THEMES[tid];
+    if (!root.isConnected && scenesBox.dataset.ready) return;
+    scenesBox.dataset.ready = '1';
+    const kids = [el('h3', { text: 'Анимация по страницам' })];
+    if (tid === 'creation') kids.push(el('p', { class: 'muted', text: 'У «Сотворения» на каждой странице своя ASCII-анимация, выбор не предусмотрен.' }));
+    else if (!th) kids.push(el('p', { class: 'muted', text: 'У этой темы нет анимаций сверху страниц.' }));
+    else {
+      const names = SCENE_NAMES[th.ts] || [];
+      const apply = (pg, k) => {
+        const cur = Array.isArray(getAppearance().scenes[tid]) ? getAppearance().scenes[tid].slice() : Array.from({ length: 9 }, (_, i) => sceneIndex(tid, i));
+        if (pg === 'all') cur.fill(k); else cur[pg] = k;
+        setAppearance({ scenes: { ...getAppearance().scenes, [tid]: cur } });
+        renderScenes();
+      };
+      const allSel = el('select', { class: 'field', 'aria-label': 'Одна сцена на все страницы' }, [el('option', { value: '', text: 'Выбрать для всех…' }), ...names.map((n, i) => el('option', { value: String(i), text: n }))]);
+      allSel.addEventListener('change', () => { if (allSel.value !== '') apply('all', Number(allSel.value)); });
+      kids.push(el('p', { class: 'muted', text: 'Анимация сверху страницы. Выбор хранится на этом устройстве.' }), allSel);
+      Object.keys(PAGE_INDEX).forEach((r) => {
+        const pg = PAGE_INDEX[r];
+        const sel = el('select', { class: 'field', 'aria-label': `Анимация на странице «${PAGE_NAMES[r]}»` }, names.map((n, i) => el('option', { value: String(i), text: n })));
+        sel.value = String(sceneIndex(tid, pg));
+        sel.addEventListener('change', () => apply(pg, Number(sel.value)));
+        kids.push(el('label', { class: 'row' }, [el('span', { text: PAGE_NAMES[r] }), sel]));
+      });
+    }
+    scenesBox.replaceChildren(...kids);
+  }
+  renderScenes();
+  new MutationObserver(() => { if (root.isConnected) renderScenes(); }).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
   root.append(
     el('h3', { text: 'Эффекты' }),
     toggle('Эффекты (живые обои, заставка)', 'effects'),
     el('label', { class: 'field-label', text: 'Живые обои' }), live,
     toggle('Анимация темы сверху страниц', 'hero'),
     toggle('Небо и погода в плитке «Погода»', 'sky'),
+    scenesBox,
     toggle('Заставка при входе', 'splash'),
     el('h3', { text: 'Звуки' }),
     toggle('Тихие звуки (вход, добавление, готово)', 'sounds', (on) => { if (on) playSound('unlock'); }),

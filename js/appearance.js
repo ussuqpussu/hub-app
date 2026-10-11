@@ -4,7 +4,7 @@ import { load, save } from './storage.js';
 import { dbGet, dbSet, dbDelete } from './data/db.js';
 
 const KEY = 'hub.appearance';
-const DEFAULTS = { effects: true, live: 'auto', splash: true, hero: true, sky: true, sounds: false, volume: 30, wpOn: true, wpDim: 40 };
+const DEFAULTS = { effects: true, live: 'auto', splash: true, hero: true, sky: true, sounds: false, volume: 30, wpOn: true, wpDim: 40, scenes: {} };
 export const LIVE_OPTIONS = [
   { id: 'auto', name: 'Как у темы' },
   { id: 'stars', name: 'Звёзды' },
@@ -31,6 +31,8 @@ export function getAppearance() {
     volume: Number.isFinite(s.volume) ? Math.min(100, Math.max(0, s.volume)) : DEFAULTS.volume,
     wpOn: s.wpOn !== false,
     wpDim: Number.isFinite(s.wpDim) ? Math.min(90, Math.max(0, s.wpDim)) : DEFAULTS.wpDim,
+    // выбранные сцены по страницам: { themeId: [номер сцены 0..3 для каждой из 9 страниц] }
+    scenes: s.scenes && typeof s.scenes === 'object' && !Array.isArray(s.scenes) ? s.scenes : {},
   };
 }
 export function setAppearance(patch) {
