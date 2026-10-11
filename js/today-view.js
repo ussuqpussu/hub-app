@@ -11,7 +11,7 @@ import { loadProjects, onProjects } from './projects-data.js';
 import { ruporPosts } from './rupor-view.js';
 import { pendingPost, publishedCount, recOf, dayNeed } from './rupor-calc.js';
 import { liveSummary, ensureSnapshot } from './weekly-view.js';
-import { drawSky, bodyPos } from './sky.js';
+import { mountSky, bodyPos } from './sky.js';
 import { getWeather, refreshWeather } from './bot-sync.js';
 import { weatherState, cityLine, dayLine } from './weather-calc.js';
 import { getAppearance } from './appearance.js';
@@ -66,16 +66,6 @@ export function todayView({ store, subscribe }) {
       ]),
     );
 
-    // Небо за окном (по времени суток)
-    if (getAppearance().sky) {
-      const now = new Date();
-      const cv = el('canvas', { class: 'sky', width: '480', height: '120', role: 'img', 'aria-label': `Небо за окном: сейчас ${bodyPos(now.getHours() + now.getMinutes() / 60).day ? 'день' : 'ночь'}, по времени на этом устройстве` });
-      const ws = weatherState(getWeather());
-      const city = ws && ws.cities.find((c) => c.name === load('hub.weatherCity', 'Москва')) || (ws && ws.cities[0]);
-      drawSky(cv, now, city && !ws.stale ? city.kind : 'clear');
-      root.append(cv);
-    }
-
     // Погода (данные приходят от облачной функции)
     {
       const ws = weatherState(getWeather());
@@ -94,6 +84,13 @@ export function todayView({ store, subscribe }) {
         body.push(el('p', { text: `${sel.name}: ${cityLine(sel)}` }), el('p', { class: 'muted', text: dayLine(sel) }));
         if (ws.stale) body.push(el('p', { class: 'sched-note sched-note--warn', text: 'Данные устарели, облачная функция давно не обновляла погоду.' }));
         else if (ws.fetchedAt) body.push(el('p', { class: 'sched-note', text: `Обновлено ${new Date(ws.fetchedAt).toLocaleString('ru-RU', { hour: '2-digit', minute: '2-digit' })}` }));
+      }
+      if (getAppearance().sky) {
+        const sel2 = ws && (ws.cities.find((c) => c.name === load('hub.weatherCity', 'Москва')) || ws.cities[0]);
+        const now = new Date();
+        const cv = el('canvas', { class: 'sky', role: 'img', 'aria-label': `Небо за окном: сейчас ${bodyPos(now.getHours() + now.getMinutes() / 60).day ? 'день' : 'ночь'}${sel2 && !ws.stale ? `, ${String(sel2.text).toLowerCase()}` : ''}` });
+        mountSky(cv, () => { const w2 = weatherState(getWeather()); const c2 = w2 && (w2.cities.find((c) => c.name === load('hub.weatherCity', 'Москва')) || w2.cities[0]); return c2 && !w2.stale ? c2.kind : 'clear'; });
+        body.unshift(cv);
       }
       root.append(tile('Погода', body));
     }

@@ -645,3 +645,8 @@ html[data-wp] body::after { content: ""; position: fixed; inset: 0; z-index: -2;
 input[type="color"].colorpick { width: var(--tap); height: var(--tap); padding: 0; border: var(--border) solid var(--c-line); background: var(--c-surface); border-radius: var(--radius-s); }
 input[type="range"].field { padding: 0; }
 .field-label { color: var(--c-dim); font-size: var(--fs-s); }
+
+/* Сцена темы сверху страницы */
+.hero { display: block; width: 100%; height: var(--hero-h); margin-bottom: var(--sp-4); background: var(--c-surface); border: var(--border) solid var(--c-line); border-radius: var(--radius-m); }
+@media (min-width: 48rem) { .hero { height: var(--hero-h-wide); } }
+pre.hero { display: flex; justify-content: center; align-items: center; overflow: hidden; margin: 0 0 var(--sp-4); white-space: pre; line-height: 1; font-family: var(--font-mono); color: var(--c-text); text-align: left; }

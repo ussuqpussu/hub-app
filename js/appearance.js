@@ -4,7 +4,7 @@ import { load, save } from './storage.js';
 import { dbGet, dbSet, dbDelete } from './data/db.js';
 
 const KEY = 'hub.appearance';
-const DEFAULTS = { effects: true, live: 'auto', splash: true, sky: true, sounds: false, volume: 30, wpOn: true, wpDim: 40 };
+const DEFAULTS = { effects: true, live: 'auto', splash: true, hero: true, sky: true, sounds: false, volume: 30, wpOn: true, wpDim: 40 };
 export const LIVE_OPTIONS = [
   { id: 'auto', name: 'Как у темы' },
   { id: 'stars', name: 'Звёзды' },
@@ -25,6 +25,7 @@ export function getAppearance() {
     effects: s.effects !== false,
     live: LIVE_OPTIONS.some((o) => o.id === s.live) ? s.live : DEFAULTS.live,
     splash: s.splash !== false,
+    hero: s.hero !== false,
     sky: s.sky !== false,
     sounds: s.sounds === true,
     volume: Number.isFinite(s.volume) ? Math.min(100, Math.max(0, s.volume)) : DEFAULTS.volume,

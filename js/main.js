@@ -8,6 +8,8 @@ import { createStore } from './data/store.js';
 import { getSession } from './data/vault.js';
 import { applyAppearance, showSplash, playSound } from './appearance.js';
 import { initFx } from './fx.js';
+import { sceneHero, initHero } from './hero.js';
+import { initSky } from './sky.js';
 import { importInbox, refreshPulse, refreshWeather, sendBotConfig, reportHubErrors } from './bot-sync.js';
 import { onProjects, getProjectsState } from './projects-data.js';
 import { mergedProjects } from './projects-view.js';
@@ -15,6 +17,8 @@ import { mergedProjects } from './projects-view.js';
 applyTheme(currentTheme());
 applyAppearance();
 initFx();
+initHero();
+initSky();
 
 const nav = document.getElementById('nav');
 const main = document.getElementById('main');
@@ -83,6 +87,16 @@ function currentRoute() {
   return r || 'today';
 }
 
+// Смена темы: сцену сверху страницы пересоздаём, остальной экран не трогаем.
+new MutationObserver(() => {
+  const old = main.querySelector(':scope > .hero');
+  if (old) old.remove();
+  const full = currentRoute();
+  if (full.includes('/')) return;
+  const h = sceneHero(document.documentElement.dataset.theme, full);
+  if (h) main.prepend(h);
+}).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+
 function route() {
   subs.forEach((off) => off());
   subs = [];
@@ -95,7 +109,9 @@ function route() {
   } catch (_) {
     param = '';
   }
-  main.replaceChildren(renderRoute(id, { onLockNow: () => lock.lockNow(), store, subscribe, param }));
+  const view = renderRoute(id, { onLockNow: () => lock.lockNow(), store, subscribe, param });
+  const hero = param ? null : sceneHero(document.documentElement.dataset.theme, id);
+  main.replaceChildren(...(hero ? [hero, view] : [view]));
   const tab = TABS.find((t) => t.id === id);
   title.textContent = id === 'settings' ? 'Настройки' : id === 'more' ? 'Ещё' : tab ? tab.name : 'Хаб';
   document.title = `${title.textContent} · Хаб`;
