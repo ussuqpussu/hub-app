@@ -13,7 +13,7 @@ import { todayView } from './today-view.js';
 
 export { ICONS, fmtTime };
 
-export const VERSION = '0.9.2 (этап 6: правка карточек Obsidian)';
+export const VERSION = '0.9.3 (этап 6: правка карточек Obsidian)';
 
 // Вкладки. group: main (в нижней панели телефона), more (внутри «Ещё»).
 export const TABS = [
@@ -262,9 +262,28 @@ function settingsView({ onLockNow, store, subscribe }) {
         el('dt', { text: 'Версия' }), el('dd', { text: VERSION }),
         el('dt', { text: 'Источники' }), srcDd,
       ]),
+      updateButton(),
     ]),
   );
   return root;
+}
+
+// Сбрасывает кэш оболочки и перезагружает страницу. Данные (задачи, подписки, проекты) не затрагиваются.
+function updateButton() {
+  const msg = el('p', { class: 'muted', role: 'status' });
+  const b = el('button', { type: 'button', class: 'btn', text: 'Обновить приложение' });
+  b.addEventListener('click', async () => {
+    b.disabled = true;
+    msg.textContent = 'Обновляю…';
+    try {
+      if ('caches' in window) await Promise.all((await caches.keys()).map((k) => caches.delete(k)));
+      if ('serviceWorker' in navigator) await Promise.all((await navigator.serviceWorker.getRegistrations()).map((r) => r.unregister()));
+    } catch (_) {
+      /* перезагрузка всё равно возьмёт свежие файлы */
+    }
+    location.reload();
+  });
+  return el('div', { class: 'stack stack--tight' }, [b, msg, el('p', { class: 'muted', text: 'Если после выхода новой версии на экране всё по-старому, нажми эту кнопку. Данные не удаляются.' })]);
 }
 
 export function renderRoute(route, ctx) {
