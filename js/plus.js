@@ -1,5 +1,6 @@
 import { load, save } from './storage.js';
 import { parseQuick, dueLabel } from './dates.js';
+import { normalizeUrl } from './notes-calc.js';
 
 // Типы записей по разделу 6F плана. «Задача» создаёт настоящую задачу, остальные типы
 // сохраняются во «Входящие» (зашифрованно, с отправкой в репозиторий данных).
@@ -8,6 +9,7 @@ export const TYPES = [
   { id: 'note', name: 'Заметка' },
   { id: 'question', name: 'Открытый вопрос' },
   { id: 'idea', name: 'Идея' },
+  { id: 'link', name: 'Ссылка' },
 ];
 const KEY = 'hub.plusType';
 
@@ -61,6 +63,14 @@ export function initPlus({ button, dialog, store }) {
         // «з завтра 15:00 сдать лабу» превращается в задачу со сроком
         const q = parseQuick(text);
         created = await store.add('tasks', { title: q.title, due: q.due, time: q.time, project: '', done: false, main: false });
+      } else if (active === 'link') {
+        const url = normalizeUrl(text);
+        if (!url) { note.textContent = 'Нужен адрес сайта, например example.com/страница.'; return; }
+        await store.add('notes', { kind: 'link', title: '', text: '', url, tags: [] });
+        note.textContent = 'Ссылка сохранена в «Заметки и ссылки».';
+        input.value = '';
+        input.focus();
+        return;
       } else {
         await store.add('inbox', { type: active, text });
       }

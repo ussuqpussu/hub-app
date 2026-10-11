@@ -10,12 +10,13 @@ import { subsView } from './subs-view.js';
 import { projectsView } from './projects-view.js';
 import { projectPage } from './project-page.js';
 import { weeklyView } from './weekly-view.js';
+import { notesView } from './notes-view.js';
 import { getScheduleState, loadSchedule, onSchedule } from './schedule-data.js';
 import { todayView } from './today-view.js';
 
 export { ICONS, fmtTime };
 
-export const VERSION = '0.16.0 (Итоги недели, этап 11)';
+export const VERSION = '0.17.0 (Заметки и ссылки, общий поиск, этап 12)';
 
 // Вкладки. group: main (в нижней панели телефона), more (внутри «Ещё»).
 export const TABS = [
@@ -34,7 +35,6 @@ const PLACEHOLDERS = {
   tasks: ['Задачи и цели', 'Задачи со сроками, привычки и цели, а также «Входящие».', 'Задач, привычек и целей пока нет: они появятся на этапе 3.'],
   projects: ['Проекты', 'Карточки проектов, лента событий и открытые вопросы.', 'Данных пока нет: проекты из Obsidian подключатся на этапе 6.'],
   'smart-home': ['Умный дом', 'Управление устройствами, комнатами и сценариями.', 'Нет связи с сервером умного дома: он ещё не подключён (этап 14).'],
-  notes: ['Заметки и ссылки', 'Быстрые заметки, закладки с тегами и поиск.', 'Данных пока нет: вкладка наполнится на этапе 12.'],
   knowledge: ['Знания', 'Хроника сессий и промпты со скиллами.', 'Данных пока нет: вкладка появится на этапе 14.'],
 };
 
@@ -294,6 +294,7 @@ export function renderRoute(route, ctx) {
   if (route === 'tasks') return tasksView(ctx);
   if (route === 'schedule') return scheduleView(ctx);
   if (route === 'weekly') return weeklyView(ctx);
+  if (route === 'notes') return notesView(ctx);
   if (route === 'subscriptions') return subsView(ctx);
   if (route === 'projects') return ctx.param ? projectPage(ctx, ctx.param) : projectsView(ctx);
   if (route === 'today') return todayView(ctx);

@@ -2,6 +2,7 @@ import { applyTheme, currentTheme } from './theme.js';
 import { createLock } from './pin.js';
 import { TABS, ICONS, renderRoute, statusText } from './views.js';
 import { initPlus } from './plus.js';
+import { initSearch } from './search-view.js';
 import { load } from './storage.js';
 import { createStore } from './data/store.js';
 import { getSession } from './data/vault.js';
@@ -52,6 +53,12 @@ function buildNav() {
   chip.className = 'sync-chip sync-chip--side';
   chip.dataset.sync = '';
   nav.append(chip);
+  const sb = document.createElement('button');
+  sb.type = 'button';
+  sb.className = 'nav__item nav__item--desktop nav__gear-side';
+  sb.id = 'search-side';
+  sb.innerHTML = `${ICONS.search}<span class="nav__label">Поиск</span>`;
+  nav.append(sb);
   nav.append(navItem('settings', 'Настройки', 'gear', 'nav__item--desktop nav__gear-side'));
 }
 
@@ -98,9 +105,11 @@ function route() {
 
 buildNav();
 document.getElementById('gear').innerHTML = ICONS.gear;
+document.getElementById('search-btn').innerHTML = ICONS.search;
 document.getElementById('fab').innerHTML = `${ICONS.plus}<span class="sr-only">Добавить запись</span>`;
 document.getElementById('plus-close').innerHTML = `${ICONS.close}<span class="sr-only">Закрыть</span>`;
 initPlus({ button: document.getElementById('fab'), dialog: document.getElementById('plus'), store });
+initSearch({ store, button: document.getElementById('search-btn'), extraButtons: [document.getElementById('search-side')] });
 
 store.on(renderStatus);
 document.addEventListener('click', (e) => {

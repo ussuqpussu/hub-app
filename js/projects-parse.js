@@ -9,6 +9,7 @@ const KEYS = {
   nextAction: ['next', 'nextaction', 'следующее действие', 'дальше'],
   title: ['title', 'название'],
   related: ['related', 'связано', 'связи', 'связанные'],
+  role: ['role', 'роль', 'что я делаю'],
 };
 const STATUS_ALIAS = { 'идёт': 'active', 'идет': 'active', 'в работе': 'active', active: 'active', paused: 'paused', 'на паузе': 'paused', pause: 'paused', waiting: 'waiting', 'ждёт заказчика': 'waiting', 'ждет заказчика': 'waiting', done: 'done', 'сдан': 'done', archive: 'archive', archived: 'archive', 'архив': 'archive' };
 
@@ -101,6 +102,7 @@ export function parseCard(path, text) {
     tags: list(pick(props, KEYS.tags)),
     nextAction: noWiki(unq(pick(props, KEYS.nextAction) || '')),
     related: list(pick(props, KEYS.related)).map(noWiki),
+    role: noWiki(unq(pick(props, KEYS.role) || '')),
     summary: noWiki(sec(s, 'сводка').join('\n').trim()).slice(0, 600),
     events,
     questions: bullets(sec(s, 'открытые вопросы')),

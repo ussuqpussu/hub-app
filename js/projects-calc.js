@@ -23,6 +23,7 @@ export function normalizeProject(p) {
     tags: Array.isArray(p.tags) ? p.tags : [],
     summary: p.summary || '',
     nextAction: p.nextAction || '',
+    role: p.role || '',
     events: (Array.isArray(p.events) ? p.events : []).filter((e) => e && typeof e.date === 'string' && typeof e.text === 'string').sort((a, b) => b.date.localeCompare(a.date) || (b.at || 0) - (a.at || 0)),
     links: Array.isArray(p.links) ? p.links : [],
   };
