@@ -1,0 +1,94 @@
+/* Токены оформления. Все цвета и размеры приложения берутся только отсюда.
+   Темы: minimal («Минимализм») и creation («Сотворение»).
+   Исходные значения взяты из превью тем (previews/theme-previews.html). */
+
+:root,
+[data-theme="minimal"] {
+  color-scheme: light;
+
+  /* Цвета */
+  --c-bg: #fafafa;
+  --c-surface: #ffffff;
+  --c-text: #111111;
+  --c-accent: #111111;
+  --c-on-accent: #fafafa;
+  --c-dim: #6b6b6b;
+  --c-line: #e2e2e2;
+  --c-fill: #eeeeee;
+  --c-danger: #b3261e;
+  --c-overlay: rgb(17 17 17 / 45%);
+
+  /* Шрифты */
+  --font-ui: "Outfit", "Geist", "Segoe UI Variable", "Segoe UI", system-ui, sans-serif;
+  --font-head: var(--font-ui);
+  --font-mono: ui-monospace, Consolas, "Courier New", monospace;
+  --fw-head: 600;
+  --ls-head: -0.01em;
+
+  /* Скругления и линии (Минимализм: прямые углы) */
+  --radius-s: 0;
+  --radius-m: 0;
+  --radius-pill: 0;
+  --border: 1px;
+  --border-style: solid;
+}
+
+[data-theme="creation"] {
+  color-scheme: dark;
+
+  --c-bg: #050505;
+  --c-surface: #101010;
+  --c-text: #d4d4d4;
+  --c-accent: #f2f2f2;
+  --c-on-accent: #050505;
+  --c-dim: #9a9a9a;
+  --c-line: #242424;
+  --c-fill: #181818;
+  --c-danger: #ff8a80;
+  --c-overlay: rgb(0 0 0 / 65%);
+
+  --font-head: Georgia, "PT Serif", serif;
+  --fw-head: 600;
+  --ls-head: -0.01em;
+
+  --radius-s: 0.5rem;
+  --radius-m: 0.9rem;
+  --radius-pill: 99px;
+  --border-style: dashed;
+}
+
+:root {
+  /* Отступы */
+  --sp-1: 0.25rem;
+  --sp-2: 0.5rem;
+  --sp-3: 0.75rem;
+  --sp-4: 1rem;
+  --sp-5: 1.5rem;
+  --sp-6: 2rem;
+  --sp-7: 3rem;
+
+  /* Размеры текста */
+  --fs-xs: 0.75rem;
+  --fs-s: 0.875rem;
+  --fs-m: 1rem;
+  --fs-l: 1.25rem;
+  --fs-xl: 1.75rem;
+  --lh: 1.5;
+
+  /* Размеры элементов */
+  --tap: 2.75rem;
+  --header-h: 3.5rem;
+  --nav-h: 3.5rem;
+  --side-w: 15rem;
+  --fab: 3.5rem;
+  --content-max: 60rem;
+  --sheet-max: 28rem;
+  --icon: 1.5rem;
+  --pin-w: 15rem;
+  --theme-card-w: 14rem;
+  --ls-pin: 0.4em;
+
+  /* Движение */
+  --dur: 0.18s;
+  --ease: ease-out;
+}

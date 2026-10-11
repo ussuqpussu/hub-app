@@ -1,0 +1,130 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--c-bg);
+  color: var(--c-text);
+  font: 400 var(--fs-m) / var(--lh) var(--font-ui);
+  min-height: 100dvh;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-head);
+  font-weight: var(--fw-head);
+  letter-spacing: var(--ls-head);
+  margin: 0;
+  line-height: 1.2;
+  color: var(--c-accent);
+}
+
+h1 { font-size: var(--fs-xl); }
+h2 { font-size: var(--fs-l); }
+h3 { font-size: var(--fs-m); }
+
+p { margin: 0; }
+
+a { color: inherit; }
+
+button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+}
+
+button:disabled { cursor: not-allowed; }
+
+:focus-visible {
+  outline: calc(var(--border) * 2) solid var(--c-accent);
+  outline-offset: calc(var(--border) * 2);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.muted { color: var(--c-dim); }
+.mono { font-family: var(--font-mono); }
+
+/* Кнопки */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  min-height: var(--tap);
+  padding: 0 var(--sp-4);
+  border: var(--border) solid var(--c-line);
+  border-radius: var(--radius-pill);
+  background: var(--c-surface);
+  color: var(--c-text);
+  transition: background var(--dur) var(--ease);
+}
+
+.btn--primary {
+  background: var(--c-accent);
+  color: var(--c-on-accent);
+  border-color: var(--c-accent);
+}
+
+.btn--ghost { background: transparent; }
+.btn:disabled { opacity: 0.5; }
+
+.field {
+  display: block;
+  width: 100%;
+  min-height: var(--tap);
+  padding: 0 var(--sp-3);
+  background: var(--c-bg);
+  color: var(--c-text);
+  border: var(--border) solid var(--c-line);
+  border-radius: var(--radius-s);
+  font: inherit;
+}
+
+/* Карточки и заглушки */
+.card {
+  background: var(--c-surface);
+  border: var(--border) var(--border-style) var(--c-line);
+  border-radius: var(--radius-m);
+  padding: var(--sp-4);
+}
+
+.empty {
+  display: grid;
+  gap: var(--sp-2);
+  padding: var(--sp-5);
+  border: var(--border) var(--border-style) var(--c-line);
+  border-radius: var(--radius-m);
+  color: var(--c-dim);
+}
+
+.empty strong { color: var(--c-text); font-weight: 600; }
+
+.stack { display: grid; gap: var(--sp-4); }
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}

@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="ru" data-theme="minimal">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Хаб</title>
+  <meta name="description" content="Личный хаб">
+  <meta name="theme-color" content="#fafafa">
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon-180.png">
+  <link rel="stylesheet" href="css/tokens.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/layout.css">
+</head>
+<body>
+  <div class="lock" id="lock" role="dialog" aria-modal="true" aria-labelledby="lock-title">
+    <div class="lock__box">
+      <h1 id="lock-title">Хаб</h1>
+      <p class="muted" id="lock-hint"></p>
+      <form id="lock-form" class="stack" autocomplete="off">
+        <label class="sr-only" for="lock-pin">PIN</label>
+        <input class="field lock__pin" id="lock-pin" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="off" placeholder="PIN">
+        <label class="sr-only" for="lock-pin2" id="lock-pin2-label" hidden>Повтори PIN</label>
+        <input class="field lock__pin" id="lock-pin2" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="off" placeholder="Повтори" hidden>
+        <p class="lock__err" id="lock-err" role="alert"></p>
+        <button class="btn btn--primary" id="lock-submit" type="submit">Открыть</button>
+      </form>
+      <button class="lock__link" id="lock-forgot" type="button">Забыл PIN</button>
+      <div class="card stack" id="lock-reset" hidden>
+        <p>Сброс удалит настройки приложения на этом устройстве и попросит придумать новый PIN. Данных в приложении пока нет.</p>
+        <div class="row">
+          <button class="btn" id="lock-reset-no" type="button">Отмена</button>
+          <button class="btn btn--primary" id="lock-reset-yes" type="button">Сбросить</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="app" id="app" hidden>
+    <header class="topbar">
+      <h1 class="topbar__title" id="topbar-title">Хаб</h1>
+      <a class="iconbtn" id="gear" href="#/settings" aria-label="Настройки"></a>
+    </header>
+    <nav class="nav" id="nav" aria-label="Основная навигация"></nav>
+    <main class="main" id="main" tabindex="-1"></main>
+  </div>
+
+  <button class="fab" id="fab" type="button" aria-label="Добавить запись"></button>
+
+  <dialog class="sheet" id="plus" aria-labelledby="plus-title">
+    <div class="sheet__head">
+      <h2 id="plus-title">Новая запись</h2>
+      <button class="iconbtn" id="plus-close" type="button" data-close aria-label="Закрыть"></button>
+    </div>
+    <div class="chips" role="group" aria-label="Тип записи"></div>
+    <form class="sheet__form">
+      <label class="sr-only" for="plus-text">Одна строка</label>
+      <input class="field" id="plus-text" type="text" placeholder="Одна строка">
+      <button class="btn btn--primary" type="submit" disabled>Сохранить</button>
+      <p class="muted">Сохранение появится на этапе 2: сейчас писать некуда, ничего не сохранится.</p>
+    </form>
+  </dialog>
+
+  <noscript>Для работы приложения нужен JavaScript.</noscript>
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
