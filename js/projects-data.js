@@ -119,7 +119,9 @@ export async function saveCard(card, fields) {
     const f = await gh.getFile(card.path);
     if (!f) throw new Error('Заметки уже нет в репозитории. Нажми «Обновить»');
     const before = parseCard(card.path, f.text) || card;
-    const next = updateCardText(f.text, before, fields);
+    // Связи не трогаем, если человек их не менял (в копии карточки их могло ещё не быть).
+    const same = JSON.stringify(fields.related || []) === JSON.stringify(card.related || []);
+    const next = updateCardText(f.text, before, same ? { ...fields, related: before.related } : fields);
     if (next !== f.text) await gh.putFile(card.path, next, f.sha, `Хаб: ${card.name}`);
     const fresh = parseCard(card.path, next) || { ...card, ...fields };
     await persist(state.cards.map((c) => (c.path === card.path ? fresh : c)));

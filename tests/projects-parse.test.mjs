@@ -94,4 +94,17 @@ ok2('special chars quoted', () => {
   const out = updateCardText(note, fields(orig), { ...fields(orig), nextAction: 'Сделать: срочно' });
   assert.equal(reparse(out).nextAction, 'Сделать: срочно');
 });
+{
+  const t = '---\ncompany: X\nstatus: active\n---\n## Сводка\nТекст\n';
+  const before = parseCard('A.md', t);
+  assert.deepEqual(before.related, []);
+  const out = updateCardText(t, before, { ...before, related: ['Б', 'В Г'] });
+  assert.ok(out.includes('related: [Б, В Г]'), out);
+  assert.deepEqual(parseCard('A.md', out).related, ['Б', 'В Г']);
+  const ru = parseCard('A.md', '---\nстатус: active\nсвязано: [Б]\n---\n');
+  assert.deepEqual(ru.related, ['Б']);
+  const out2 = updateCardText('---\nстатус: active\nсвязано: [Б]\n---\n', ru, { ...ru, related: [] });
+  assert.ok(out2.includes('связано: []') && !out2.includes('Б'), out2);
+  p2 += 1;
+}
 console.log(`${p2} write-back passed`);

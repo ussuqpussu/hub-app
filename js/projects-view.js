@@ -119,7 +119,7 @@ export function projectSheet({ project, companyList, types, onSave, onDelete, ex
       if (ls.some((l) => !/^https?:\/\//i.test(l.url))) return void ((err.textContent = 'Каждая ссылка должна начинаться с http:// или https://.'), links.focus());
       saveBtn.disabled = true;
       try {
-        await onSave({ name: nm, company: company.value.trim(), types: [...chosen], status: status.value, tags: parseTags(tags.value), summary: summary.value.trim(), nextAction: next.value.trim(), events, links: ls, logo, questions: project && project.questions ? project.questions : [] }, project);
+        await onSave({ name: nm, company: company.value.trim(), types: [...chosen], status: status.value, tags: parseTags(tags.value), summary: summary.value.trim(), nextAction: next.value.trim(), events, links: ls, logo, questions: project && project.questions ? project.questions : [], related: project && project.related ? project.related : [] }, project);
         close();
       } catch (ex) {
         err.textContent = ex.message || 'Не удалось сохранить';
@@ -134,17 +134,25 @@ export const mergedProjects = (store) => [...store.list('projects').map((p) => n
 
 const alertSheet = (m) => confirmSheet({ title: 'Не получилось', text: m, action: 'Понятно', onConfirm: () => {} });
 
-// Окно правки карточки (своей или из Obsidian). onGone вызывается после удаления.
+// Сохранение и удаление карточки (своей или из Obsidian). Общие для окна правки и для правки прямо на странице проекта.
+export async function saveFields(store, project, fields) {
+  if (project && project.source === 'obsidian') return saveCard(project, fields);
+  const { questions, ...rest } = fields;
+  return project ? store.update('projects', project.id, { ...rest, questions }) : store.add('projects', { ...rest, questions });
+}
+
+export function askDelete(store, project, onGone) {
+  if (project.source === 'obsidian') {
+    return confirmSheet({ title: 'Удалить карточку из Obsidian?', text: `Файл «${project.path}» будет удалён из репозитория hub-projects. На компьютере он исчезнет после git pull. Вернуть можно из истории GitHub.`, action: 'Удалить', onConfirm: async () => { try { await deleteCard(project); if (onGone) onGone(); } catch (ex) { alertSheet(ex.message); } } });
+  }
+  return confirmSheet({ title: 'Удалить проект?', text: `Карточка «${project.name}» исчезнет. Это нельзя отменить.`, action: 'Удалить', onConfirm: async () => { await store.remove('projects', project.id); if (onGone) onGone(); } });
+}
+
+// Окно правки карточки (для новой карточки). onGone вызывается после удаления.
 export function openEditor(store, project, { onGone } = {}) {
   const list = mergedProjects(store);
   const base = { companyList: companies(list), types: typeOptions(list) };
-  if (project && project.source === 'obsidian') {
-    const askDeleteCard = (p) => confirmSheet({ title: 'Удалить карточку из Obsidian?', text: `Файл «${p.path}» будет удалён из репозитория hub-projects. На компьютере он исчезнет после git pull. Вернуть можно из истории GitHub.`, action: 'Удалить', onConfirm: async () => { try { await deleteCard(p); if (onGone) onGone(); } catch (ex) { alertSheet(ex.message); } } });
-    return projectSheet({ ...base, project, external: true, onSave: (fields) => saveCard(project, fields), onDelete: askDeleteCard });
-  }
-  const askDelete = (p) => confirmSheet({ title: 'Удалить проект?', text: `Карточка «${p.name}» исчезнет. Это нельзя отменить.`, action: 'Удалить', onConfirm: async () => { await store.remove('projects', p.id); if (onGone) onGone(); } });
-  const onSave = async (fields, prev) => { const { questions, ...rest } = fields; return prev ? store.update('projects', prev.id, rest) : store.add('projects', rest); };
-  return projectSheet({ ...base, project, onSave, onDelete: askDelete });
+  return projectSheet({ ...base, project, external: !!(project && project.source === 'obsidian'), onSave: (fields, prev) => saveFields(store, prev, fields), onDelete: (p) => askDelete(store, p, onGone) });
 }
 
 export function projectsView({ store, subscribe }) {

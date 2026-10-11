@@ -515,3 +515,11 @@
 .fieldrow__label { font-size: var(--fs-s); color: var(--c-dim); }
 .nodeeditor .task-form__row > * { flex: 1 1 0; min-width: 0; }
 [aria-label="Схема проекта"] .listhead .btn { margin-left: auto; }
+/* Связанные проекты */
+.relgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr)); gap: var(--sp-2); }
+.relchip { display: flex; align-items: center; gap: var(--sp-2); padding: var(--sp-2); min-height: var(--tap); border: var(--border) var(--border-style) var(--c-line); border-radius: var(--radius-s); color: inherit; text-decoration: none; min-width: 0; }
+.relchip:hover, .relchip:focus-visible { border-color: var(--c-accent); }
+.relchip__t { display: grid; min-width: 0; }
+.relchip__t b, .relchip__t span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.relwrap { display: flex; align-items: center; gap: var(--sp-1); min-width: 0; }
+.relwrap .relchip { flex: 1; }

@@ -8,6 +8,7 @@ const KEYS = {
   tags: ['tags', 'tag', 'теги'],
   nextAction: ['next', 'nextaction', 'следующее действие', 'дальше'],
   title: ['title', 'название'],
+  related: ['related', 'связано', 'связи', 'связанные'],
 };
 const STATUS_ALIAS = { 'идёт': 'active', 'идет': 'active', 'в работе': 'active', active: 'active', paused: 'paused', 'на паузе': 'paused', pause: 'paused', waiting: 'waiting', 'ждёт заказчика': 'waiting', 'ждет заказчика': 'waiting', done: 'done', 'сдан': 'done', archive: 'archive', archived: 'archive', 'архив': 'archive' };
 
@@ -99,6 +100,7 @@ export function parseCard(path, text) {
     status: STATUS_LABEL[st] ? st : 'active',
     tags: list(pick(props, KEYS.tags)),
     nextAction: noWiki(unq(pick(props, KEYS.nextAction) || '')),
+    related: list(pick(props, KEYS.related)).map(noWiki),
     summary: noWiki(sec(s, 'сводка').join('\n').trim()).slice(0, 600),
     events,
     questions: bullets(sec(s, 'открытые вопросы')),
@@ -110,14 +112,14 @@ export function parseCard(path, text) {
 // ---------- Обратная запись: правим только то, что изменилось, остальное в заметке не трогаем ----------
 const GROUP_OF = {};
 Object.entries(KEYS).forEach(([g, names]) => names.forEach((n) => { GROUP_OF[n] = g; }));
-const DEFAULT_KEY = { company: 'company', types: 'type', status: 'status', tags: 'tags', nextAction: 'next' };
+const DEFAULT_KEY = { company: 'company', types: 'type', status: 'status', tags: 'tags', nextAction: 'next', related: 'related' };
 const SECTION_TITLE = { summary: 'Сводка', events: 'Последние события', questions: 'Открытые вопросы', links: 'Ссылки' };
 const SECTION_START = { summary: ['сводка'], events: ['последние события', 'события'], questions: ['открытые вопросы'], links: ['ссылки'] };
 
 const q = (v) => (/[:#\[\]{},]|^\s|\s$/.test(v) ? `"${v.replace(/"/g, "'")}"` : v);
 const inline = (a) => `[${a.map(q).join(', ')}]`;
 function fmValue(group, v) {
-  if (group === 'types' || group === 'tags') return inline(v);
+  if (group === 'types' || group === 'tags' || group === 'related') return inline(v);
   return v ? q(v) : '';
 }
 
@@ -139,7 +141,7 @@ export function updateCardText(text, before, after) {
   let body = m ? t.slice(m[0].length) : t;
 
   // Блок свойств
-  for (const group of ['company', 'types', 'status', 'tags', 'nextAction']) {
+  for (const group of ['company', 'types', 'status', 'tags', 'nextAction', 'related']) {
     if (same(before[group], after[group])) continue;
     const value = fmValue(group, after[group]);
     let idx = -1;

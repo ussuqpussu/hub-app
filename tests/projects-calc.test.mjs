@@ -28,4 +28,15 @@ ok('group status order', () => assert.deepEqual(groupProjects(all, 'status').map
 ok('group none', () => assert.equal(groupProjects(all, 'none')[0].items.length, 3));
 ok('colorIndex stable 1..7', () => { assert.equal(colorIndex('Хаб'), colorIndex('Хаб')); assert.ok(colorIndex('Рупор') >= 1 && colorIndex('Рупор') <= 7); });
 ok('gaps', () => assert.deepEqual(gaps(c), ['компания', 'тип']));
+import { relatedProjects, refKey, refOf } from '../js/projects-calc.js';
+const L = [n({ id: '1', name: 'Impulse Group сайт', company: 'Impulse Group' }), n({ id: '2', name: 'Impulse Group бот', company: 'impulse  group' }), n({ id: '3', name: 'Рупор', company: 'Личное', related: ['Impulse Group сайт', 'Нет такого'] }), n({ id: '4', name: 'Хаб', company: '' }), n({ id: '5', name: 'Вектор', company: 'Vector', related: ['Хаб'] })];
+ok('related: same company ignores case and spaces, excludes self', () => { const r = relatedProjects(L, L[0]); assert.deepEqual(r.sameCompany.map((x) => x.id), ['2']); });
+ok('related: manual, missing, backlinks', () => {
+  const r = relatedProjects(L, L[2]);
+  assert.deepEqual(r.manual.map((x) => x.id), ['1']); assert.deepEqual(r.missing, ['Нет такого']);
+  assert.deepEqual(relatedProjects(L, L[0]).back.map((x) => x.id), ['3']);
+  assert.deepEqual(relatedProjects(L, L[3]).back.map((x) => x.id), ['5']);
+});
+ok('related: no duplicates between groups', () => { const l2 = [n({ id: 'a', name: 'A', company: 'X' }), n({ id: 'b', name: 'B', company: 'X', related: ['A'] })]; const r = relatedProjects(l2, l2[1]); assert.equal(r.sameCompany.length, 1); assert.equal(r.manual.length, 0); assert.equal(r.back.length, 0); });
+ok('refOf strips commas', () => assert.equal(refOf({ name: 'А, Б  В' }), 'А Б В'));
 console.log(`${passed} passed`);

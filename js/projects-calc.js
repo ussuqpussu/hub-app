@@ -84,3 +84,20 @@ export function colorIndex(name) {
 }
 
 export const gaps = (p) => [!p.company && 'компания', !p.types.length && 'тип'].filter(Boolean);
+
+// Связи между карточками. Ссылка на карточку = её название (без запятых и лишних пробелов, регистр не важен).
+export const refKey = (s) => String(s || '').toLowerCase().replace(/[,\s]+/g, ' ').trim();
+export const refOf = (p) => String(p.name || '').replace(/,/g, ' ').replace(/\s+/g, ' ').trim();
+
+// Кто связан с карточкой p: та же компания (сама), связи, записанные в этой карточке, и те, кто ссылается на неё.
+export function relatedProjects(list, p) {
+  const me = refKey(p.name);
+  const others = list.filter((x) => x.id !== p.id);
+  const sameCompany = p.company ? others.filter((x) => refKey(x.company) === refKey(p.company)) : [];
+  const taken = new Set(sameCompany.map((x) => x.id));
+  const manual = (p.related || []).map((r) => others.find((x) => refKey(x.name) === refKey(r))).filter((x) => x && !taken.has(x.id));
+  manual.forEach((x) => taken.add(x.id));
+  const back = others.filter((x) => !taken.has(x.id) && (x.related || []).some((r) => refKey(r) === me));
+  const missing = (p.related || []).filter((r) => !others.some((x) => refKey(x.name) === refKey(r)));
+  return { sameCompany, manual: [...new Set(manual)], back, missing };
+}
