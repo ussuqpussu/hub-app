@@ -18,7 +18,7 @@ import { todayView } from './today-view.js';
 
 export { ICONS, fmtTime };
 
-export const VERSION = '0.20.0 (Темы, обои, эффекты, этап 15)';
+export const VERSION = '0.21.0 (Погода, этап 17)';
 
 // Вкладки. group: main (в нижней панели телефона), more (внутри «Ещё»).
 export const TABS = [

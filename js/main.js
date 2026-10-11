@@ -8,7 +8,7 @@ import { createStore } from './data/store.js';
 import { getSession } from './data/vault.js';
 import { applyAppearance, showSplash, playSound } from './appearance.js';
 import { initFx } from './fx.js';
-import { importInbox, refreshPulse, sendBotConfig, reportHubErrors } from './bot-sync.js';
+import { importInbox, refreshPulse, refreshWeather, sendBotConfig, reportHubErrors } from './bot-sync.js';
 import { onProjects, getProjectsState } from './projects-data.js';
 import { mergedProjects } from './projects-view.js';
 
@@ -128,6 +128,8 @@ async function inboxTick() {
   const r = await importInbox({ store });
   if (r && r.imported) store.syncNow();
   refreshPulse();
+  await refreshWeather();
+  if (location.hash === '#/today' && !main.contains(document.activeElement)) route();
 }
 // Список проектов и ошибка загрузки проектов уходят боту, когда меняются.
 onProjects((st) => {

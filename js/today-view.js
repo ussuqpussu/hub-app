@@ -12,6 +12,8 @@ import { ruporPosts } from './rupor-view.js';
 import { pendingPost, publishedCount, recOf, dayNeed } from './rupor-calc.js';
 import { liveSummary, ensureSnapshot } from './weekly-view.js';
 import { drawSky, bodyPos } from './sky.js';
+import { getWeather, refreshWeather } from './bot-sync.js';
+import { weatherState, cityLine, dayLine } from './weather-calc.js';
 import { getAppearance } from './appearance.js';
 import { groupTasks, openTasksTab, INBOX_OLD_DAYS, MAIN_LIMIT } from './tasks-view.js';
 
@@ -68,8 +70,32 @@ export function todayView({ store, subscribe }) {
     if (getAppearance().sky) {
       const now = new Date();
       const cv = el('canvas', { class: 'sky', width: '480', height: '120', role: 'img', 'aria-label': `Небо за окном: сейчас ${bodyPos(now.getHours() + now.getMinutes() / 60).day ? 'день' : 'ночь'}, по времени на этом устройстве` });
-      drawSky(cv, now);
+      const ws = weatherState(getWeather());
+      const city = ws && ws.cities.find((c) => c.name === load('hub.weatherCity', 'Москва')) || (ws && ws.cities[0]);
+      drawSky(cv, now, city && !ws.stale ? city.kind : 'clear');
       root.append(cv);
+    }
+
+    // Погода (данные приходят от облачной функции)
+    {
+      const ws = weatherState(getWeather());
+      const body = [];
+      if (!ws) body.push(el('p', { class: 'muted', text: 'Данных о погоде пока нет. Их получает облачная функция бота раз в полчаса; пока она не развёрнута или не достучалась до сервиса погоды, здесь пусто.' }));
+      else {
+        const sel = ws.cities.find((c) => c.name === load('hub.weatherCity', 'Москва')) || ws.cities[0];
+        if (ws.cities.length > 1) {
+          const seg = el('div', { class: 'seg', role: 'group', 'aria-label': 'Город для погоды' }, ws.cities.map((c) => {
+            const b = el('button', { type: 'button', text: c.name, 'aria-pressed': String(c.name === sel.name) });
+            b.addEventListener('click', () => { save('hub.weatherCity', c.name); sig = ''; render(); });
+            return b;
+          }));
+          body.push(seg);
+        }
+        body.push(el('p', { text: `${sel.name}: ${cityLine(sel)}` }), el('p', { class: 'muted', text: dayLine(sel) }));
+        if (ws.stale) body.push(el('p', { class: 'sched-note sched-note--warn', text: 'Данные устарели, облачная функция давно не обновляла погоду.' }));
+        else if (ws.fetchedAt) body.push(el('p', { class: 'sched-note', text: `Обновлено ${new Date(ws.fetchedAt).toLocaleString('ru-RU', { hour: '2-digit', minute: '2-digit' })}` }));
+      }
+      root.append(tile('Погода', body));
     }
 
     // Расписание на сегодня

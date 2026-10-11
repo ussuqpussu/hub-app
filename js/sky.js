@@ -33,7 +33,7 @@ export function bodyPos(hour) {
   return { day, x: clamp(k, 0, 1), y: 1 - Math.sin(clamp(k, 0, 1) * Math.PI) };
 }
 
-export function drawSky(canvas, date = new Date()) {
+export function drawSky(canvas, date = new Date(), kind = 'clear') {
   const c = canvas.getContext('2d');
   const w = canvas.width;
   const h = canvas.height;
@@ -65,6 +65,16 @@ export function drawSky(canvas, date = new Date()) {
   c.arc(x, y, rad, 0, 6.3);
   c.fill();
   if (!b.day) { c.fillStyle = `rgb(${s.top})`; c.beginPath(); c.arc(x + rad * 0.45, y - rad * 0.2, rad * 0.9, 0, 6.3); c.fill(); }
+  if (kind === 'rain' || kind === 'storm') {
+    c.strokeStyle = 'rgba(200,220,255,.55)';
+    for (let i = 0; i < 28; i += 1) { const x = (i * 37) % w; const y = (i * 53) % (h * 0.8); c.beginPath(); c.moveTo(x, y); c.lineTo(x - 4, y + 11); c.stroke(); }
+  } else if (kind === 'snow') {
+    c.fillStyle = 'rgba(255,255,255,.85)';
+    for (let i = 0; i < 30; i += 1) c.fillRect((i * 41) % w, (i * 29) % (h * 0.85), 2, 2);
+  } else if (kind === 'cloud' || kind === 'fog') {
+    c.fillStyle = kind === 'fog' ? 'rgba(220,225,232,.55)' : 'rgba(235,238,245,.45)';
+    [[0.2, 0.3, 0.14], [0.45, 0.22, 0.17], [0.75, 0.34, 0.15]].forEach(([fx, fy, fr]) => { c.beginPath(); c.arc(w * fx, h * fy, h * fr, 0, 6.3); c.arc(w * fx + h * 0.2, h * fy + 3, h * fr * 0.8, 0, 6.3); c.fill(); });
+  }
   // холмы
   c.fillStyle = `rgba(${mix(s.top, [20, 40, 30], 0.7)},.9)`;
   c.beginPath();

@@ -1,6 +1,6 @@
 // Блок «Бот и входящие» в настройках: последний разбор inbox/, свои слова-действия, ручной запуск.
 import { el, fmtTime } from './ui.js';
-import { getLast, getActions, setActions, importInbox, refreshPulse, sendBotConfig } from './bot-sync.js';
+import { getLast, getActions, setActions, importInbox, refreshPulse, refreshWeather, sendBotConfig } from './bot-sync.js';
 import { parseActions } from './bot-calc.js';
 import { getProjectsState } from './projects-data.js';
 import { mergedProjects } from './projects-view.js';
@@ -27,6 +27,7 @@ export function botSettings({ store }) {
     status.textContent = 'Разбираю…';
     await importInbox({ store, force: true });
     await refreshPulse();
+    await refreshWeather();
     status.textContent = lastText();
     run.disabled = false;
   });

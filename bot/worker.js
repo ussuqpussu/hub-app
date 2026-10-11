@@ -3,6 +3,7 @@
 // Переменные (не секретные): DATA_REPO (логин/hub-data), TZ_OFFSET_MIN (смещение от UTC в минутах, по умолчанию 180).
 import { classify, describe, toInbox, validInbox, reclassify, DEFAULT_ACTIONS } from './classify.js';
 import { evaluatePulse, checkTarget } from './pulse.js';
+import { buildWeather } from './weather.js';
 
 const enc = new TextEncoder();
 const dec = new TextDecoder();
@@ -169,6 +170,18 @@ export async function runPulse(env, fetchImpl = fetch, now = Date.now()) {
   return { checked: checks.length, sent: messages.length };
 }
 
+// Погода раз в 30 минут (запуск по расписанию каждые 5 минут, погоду берём на :00 и :30).
+export async function runWeather(env, fetchImpl = fetch, now = Date.now()) {
+  const api = gh(env, fetchImpl);
+  const f = await api.get('weather.json').catch(() => null);
+  let prev = null;
+  try { prev = f ? JSON.parse(f.text) : null; } catch (_) { prev = null; }
+  const { fresh, data } = await buildWeather(prev, fetchImpl, now);
+  if (!fresh) return { fresh: 0 }; // ничего нового: старый файл не трогаем
+  await api.put('weather.json', JSON.stringify(data, null, 2), f ? f.sha : null, 'weather: обновление');
+  return { fresh };
+}
+
 export default {
   async fetch(req, env, ctx) {
     const url = new URL(req.url);
@@ -188,7 +201,8 @@ export default {
     }
     return new Response('not found', { status: 404 });
   },
-  async scheduled(_event, env, ctx) {
+  async scheduled(event, env, ctx) {
     ctx.waitUntil(runPulse(env).catch(() => {}));
+    if (new Date(event.scheduledTime || Date.now()).getMinutes() % 30 < 5) ctx.waitUntil(runWeather(env).catch(() => {}));
   },
 };

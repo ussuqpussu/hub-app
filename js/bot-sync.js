@@ -10,6 +10,7 @@ const KEY_LAST = 'hub.inboxLast';
 const KEY_PULSE = 'hub.pulse';
 const KEY_CFG = 'hub.botConfigSent';
 const KEY_HUBERR = 'hub.hubErrSent';
+const KEY_WEATHER = 'hub.weather';
 const KEY_ACTIONS = 'hub.botActions';
 const apiBase = () => load('hub.apiBase') || 'https://api.github.com';
 
@@ -109,5 +110,20 @@ export async function reportHubErrors(errors, { gh = client() } = {}) {
     return true;
   } catch (_) {
     return false;
+  }
+}
+
+// Погода: файл weather.json кладёт облачная функция. Последний ответ хранится на устройстве для офлайна.
+export const getWeather = () => load(KEY_WEATHER, null);
+export async function refreshWeather({ gh = client() } = {}) {
+  if (!gh) return getWeather();
+  try {
+    const f = await gh.getFile('weather.json');
+    if (!f) return getWeather();
+    const w = JSON.parse(f.text);
+    save(KEY_WEATHER, w);
+    return w;
+  } catch (_) {
+    return getWeather();
   }
 }
