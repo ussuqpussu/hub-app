@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { parseCsv, parsePeriod, parseDayCell, parseDiscipline, parseTab, buildSchedule } from '../js/schedule-parse.js';
+import { sheetCsvUrl, parseCsv, parsePeriod, parseDayCell, parseDiscipline, parseTab, buildSchedule } from '../js/schedule-parse.js';
 
 let n = 0;
 const t = (name, fn) => { fn(); n += 1; console.log('ok', name); };
@@ -66,5 +66,15 @@ t('keep previous when unrecognized', () => {
   assert.ok(second.warnings.some((w) => w.code === 'kept-previous'));
   const none = buildSchedule({ csv: {}, config: { group: 'ИК-32/9' }, errors: { upper: 'x', lower: 'y' } });
   assert.equal(none.weeks.upper.status, 'missing');
+});
+t('sheet url by gid and name', () => {
+  assert.ok(sheetCsvUrl('ID', '123').endsWith('&gid=123'));
+  assert.ok(sheetCsvUrl('ID', 'Верхняя').includes('sheet=%D0%'));
+});
+// реальная раскладка: строка заголовков выше строки с группами
+t('header row above group row', () => {
+  const c = ['Дни недели,Пара,Название дисциплины,Дни недели,Пара,Название дисциплины', ',,,,,ИК-32/9', 'ПОНЕДЕЛЬНИК,1. 09.20 - 10.50,,ПОНЕДЕЛЬНИК,1. 09.20 - 10.50,Тест (пр.)'].join('\n');
+  const r = parseTab(c, 'ИК-32/9');
+  assert.equal(r.ok, true); assert.equal(r.days[0].pairs[0].subject, 'Тест');
 });
 console.log(`${n} passed`);

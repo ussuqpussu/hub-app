@@ -189,6 +189,8 @@ export function buildSchedule({ csv, config, previous = null, now = new Date(), 
   return out;
 }
 
+// tab: название вкладки или число (gid из адреса таблицы, после gid=)
 export function sheetCsvUrl(sheetId, tab) {
-  return `https://docs.google.com/spreadsheets/d/${encodeURIComponent(sheetId)}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(tab)}`;
+  const by = /^\d+$/.test(String(tab)) ? `gid=${tab}` : `sheet=${encodeURIComponent(tab)}`;
+  return `https://docs.google.com/spreadsheets/d/${encodeURIComponent(sheetId)}/gviz/tq?tqx=out:csv&${by}`;
 }
