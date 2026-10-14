@@ -678,7 +678,7 @@ pre.hero { display: flex; justify-content: center; align-items: center; overflow
 @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
 
 /* страницы: новая страница въезжает снизу и проявляется; внутренние перерисовки анимацию не повторяют */
-#main > .view { animation: view-in var(--dur-m) var(--ease-out) both; }
+#main > .view { animation: view-in var(--dur-m) var(--ease-out) backwards; }
 @keyframes view-in { from { opacity: 0; transform: translateY(0.5rem); } to { opacity: 1; transform: none; } }
 .hero--stage { animation: fade-in var(--dur-l) var(--ease-out) both; }
 
@@ -747,3 +747,31 @@ body, .card, .tile, .sheet, .field, .nav, .topbar { transition: background-color
   .sched-day--today { box-shadow: 0 0 0 1px var(--c-accent); }
 }
 .task-form .err:empty { display: none; }
+
+/* Фокус после перехода не рисует рамку вокруг всей колонки */
+.main:focus, .main:focus-visible { outline: none; }
+
+/* Положение анимации темы: сбоку, фоном или сверху (по умолчанию сверху на узких экранах) */
+@media (min-width: 70rem) {
+  html[data-hero-pos="side"] .main { max-width: calc(var(--content-max) + 25rem + var(--sp-5)); display: grid; grid-template-columns: minmax(0, 1fr) 24rem; column-gap: var(--sp-5); align-items: start; }
+  html[data-hero-pos="side"] .main > :not(.hero) { grid-column: 1; }
+  html[data-hero-pos="side"] .main > .hero { grid-column: 2; grid-row: 1 / span 30; position: sticky; top: var(--sp-5); height: 26rem; margin: 0; }
+}
+html[data-hero-pos="bg"] .main > .hero { position: fixed; inset: 0; width: 100%; height: 100%; margin: 0; z-index: -1; opacity: .15; pointer-events: none; border-radius: 0; }
+html[data-hero-pos="bg"] .hero__frame { pointer-events: none; }
+
+/* Кот сидит на кнопке «+» */
+.fab-cat { position: fixed; z-index: 10; right: calc(var(--sp-4) + (var(--fab) - 3.8em) / 2); bottom: calc(var(--nav-h) + var(--sp-4) + var(--fab) - .35em + env(safe-area-inset-bottom)); font-size: 16px; width: 3.8em; pointer-events: none; }
+.fab-cat[hidden] { display: none; }
+.fab-cat .pet { display: block; width: 3.8em; height: 3.09em; overflow: visible; filter: drop-shadow(0 0 .3px rgba(0,0,0,.75)) drop-shadow(0 0 .8px rgba(0,0,0,.25)); }
+.fab-cat .pet .pb { fill: var(--pb); } .fab-cat .pet .ps { fill: var(--ps); } .fab-cat .pet .pt { fill: var(--pt); } .fab-cat .pet .pe { fill: var(--pe); } .fab-cat .pet .pn { fill: var(--pn); }
+.fab-cat .cl-eyes { transform-box: fill-box; transform-origin: 50% 50%; animation: catblink2 4.6s infinite; }
+.fab-cat .cl-tail { transform-box: fill-box; transform-origin: 0% 100%; animation: tailsw2 3.4s ease-in-out infinite; }
+@keyframes catblink2 { 0%, 89%, 100% { transform: scaleY(1); } 92%, 96% { transform: scaleY(.12); } }
+@keyframes tailsw2 { 0%, 100% { transform: rotate(-6deg); } 50% { transform: rotate(9deg); } }
+html[data-effects="off"] .fab-cat .pet *, .fab-cat .pet[data-still] * { animation: none !important; }
+@media (min-width: 48rem) { .fab-cat { right: calc(var(--sp-6) + (var(--fab) - 3.8em) / 2); bottom: calc(var(--sp-6) + var(--fab) - .35em); } }
+/* Цитата дня на широком экране: в правом нижнем углу, рядом с кнопкой «+» */
+@media (min-width: 70rem) {
+  html[data-hero-pos="side"] .tile--quote { position: fixed; right: calc(var(--sp-6) + var(--fab) + var(--sp-3)); bottom: var(--sp-6); width: 21rem; z-index: 5; background: var(--c-surface); }
+}

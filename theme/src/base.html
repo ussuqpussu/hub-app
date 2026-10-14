@@ -2178,7 +2178,7 @@ function dConst(g,sx,sy,t){var M=mapAU(sx,sy,76,28),S=tkS(t),Q=[[8,18],[18,8],[2
  if(S.fin){var q2=(t%2.2)/2.2,sx2=M.X(4+q2*68),sy2=M.Y(2+q2*8);g.strokeStyle="rgba(255,255,255,.85)";g.lineWidth=M.sc*.5;g.beginPath();g.moveTo(sx2-M.sc*7,sy2-M.sc*2.2);g.lineTo(sx2,sy2);g.stroke();g.fillStyle="#fff";g.beginPath();g.arc(sx2,sy2,M.sc*.5,0,6.2832);g.fill()}}
 ASH_D[2]=function(g,sx,sy,t,lab){([dTree,dGlass,dConst,dTrack][(+ATSK||3)-1]||dTrack)(g,sx,sy,t,lab)};
 /* шестерёнка в стиле значка «Настройки» iOS: мелкие зубцы, обод, спицы, ступица */
-function dGearIOS(g,sx,sy,t){var M=mapAU(sx,sy,76,28),cx=M.X(38),cy=M.Y(14),u=M.sc,R=11.8*u,n=24,a0=t*.18,i;
+function dGearDraw(g,sx,sy,t){var M=mapAU(sx,sy,76,28),cx=M.X(38),cy=M.Y(14),u=M.sc,R=11.8*u,n=24,a0=t*.18,i;
  g.save();g.translate(cx,cy);g.rotate(a0);
  function grad(r0,r1,a,b){var q=g.createLinearGradient(-r1*.7,-r1*.9,r1*.7,r1*.9);q.addColorStop(0,"rgba(255,255,255,"+a+")");q.addColorStop(1,"rgba(255,255,255,"+b+")");return q}
  g.beginPath();for(i=0;i<n;i++){var a=i/n*6.2832,w=6.2832/n;var p=[[a-w*.5,R*.84],[a-w*.3,R*.84],[a-w*.2,R],[a+w*.2,R],[a+w*.3,R*.84],[a+w*.5,R*.84]];p.forEach(function(q,k){var x=Math.cos(q[0])*q[1],y=Math.sin(q[0])*q[1];if(!i&&!k)g.moveTo(x,y);else g.lineTo(x,y)})}g.closePath();
@@ -2191,6 +2191,7 @@ function dGearIOS(g,sx,sy,t){var M=mapAU(sx,sy,76,28),cx=M.X(38),cy=M.Y(14),u=M.
  g.strokeStyle="rgba(255,255,255,.9)";g.lineWidth=u*.3;g.beginPath();g.arc(0,0,R*.13,0,6.2832);g.stroke();
  g.restore();
  var sh=g.createRadialGradient(cx-R*.35,cy-R*.45,0,cx-R*.35,cy-R*.45,R*.9);sh.addColorStop(0,"rgba(255,255,255,.22)");sh.addColorStop(1,"rgba(255,255,255,0)");g.fillStyle=sh;g.globalCompositeOperation="source-atop";g.fillRect(cx-R,cy-R,2*R,2*R);g.globalCompositeOperation="source-over"}
+function dGearIOS(g,sx,sy,t){var cv=g.canvas,o=document.createElement("canvas");o.width=cv.width;o.height=cv.height;var og=o.getContext("2d");og.setTransform(g.getTransform());dGearDraw(og,sx,sy,t);g.save();g.setTransform(1,0,0,1,0,0);g.drawImage(o,0,0);g.restore()}
 delete ASH_F[8];ASH_D[8]=dGearIOS;
 function SV(css,inner,vb,par){return '<svg viewBox="'+(vb||"0 0 200 100")+'" preserveAspectRatio="'+(par||"xMidYMax slice")+'" style="position:absolute;'+css+'">'+inner+'</svg>'}
 function treesRow(y,h,w,n,col){var p="",i;for(i=0;i<n;i++){var x=i*(200/n)+rnd(-3,3),hh=h*rnd(.7,1.2);p+="M"+x.toFixed(1)+" "+y+" L"+(x+w/2).toFixed(1)+" "+(y-hh).toFixed(1)+" L"+(x+w).toFixed(1)+" "+y+" Z ";}return '<path d="'+p+'" fill="'+col+'"/><rect x="0" y="'+(y-.5)+'" width="200" height="'+(101-y)+'" fill="'+col+'"/>'}

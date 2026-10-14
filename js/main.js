@@ -8,6 +8,7 @@ import { createStore } from './data/store.js';
 import { getSession } from './data/vault.js';
 import { applyAppearance, showSplash, playSound } from './appearance.js';
 import { initFx } from './fx.js';
+import { initCat } from './cat.js';
 import { sceneHero, initHero, setHeroTheme, setHeroProjects } from './hero.js';
 import { initSky } from './sky.js';
 import { importInbox, refreshPulse, refreshWeather, sendBotConfig, reportHubErrors } from './bot-sync.js';
@@ -20,6 +21,7 @@ applyAppearance();
 window.addEventListener('storage', (e) => { if (e.key === 'hub.themeOvr') { applyTheme(currentTheme()); setHeroTheme(currentTheme(), currentRoute()); } });
 initFx();
 initHero();
+initCat();
 initSky();
 
 const nav = document.getElementById('nav');

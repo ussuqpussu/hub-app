@@ -4,7 +4,7 @@ import { load, save } from './storage.js';
 import { dbGet, dbSet, dbDelete } from './data/db.js';
 
 const KEY = 'hub.appearance';
-const DEFAULTS = { effects: true, live: 'auto', splash: true, hero: true, sky: true, sounds: false, volume: 30, wpOn: true, wpDim: 40 };
+const DEFAULTS = { effects: true, live: 'auto', splash: true, hero: true, heroPos: 'side', sky: true, sounds: false, volume: 30, wpOn: true, wpDim: 40 };
 export const LIVE_OPTIONS = [
   { id: 'auto', name: 'Как у темы' },
   { id: 'stars', name: 'Звёзды' },
@@ -26,6 +26,7 @@ export function getAppearance() {
     live: LIVE_OPTIONS.some((o) => o.id === s.live) ? s.live : DEFAULTS.live,
     splash: s.splash !== false,
     hero: s.hero !== false,
+    heroPos: ['top', 'side', 'bg'].includes(s.heroPos) ? s.heroPos : DEFAULTS.heroPos,
     sky: s.sky !== false,
     sounds: s.sounds === true,
     volume: Number.isFinite(s.volume) ? Math.min(100, Math.max(0, s.volume)) : DEFAULTS.volume,
@@ -73,6 +74,7 @@ export async function applyAppearance() {
   const a = getAppearance();
   root.style.setProperty('--wp-dim', `${a.wpDim}%`);
   root.dataset.effects = motionAllowed() ? 'on' : 'off';
+  root.dataset.heroPos = a.heroPos;
   let blob = null;
   try { blob = a.wpOn ? await dbGet('files', 'wallpaper') : null; } catch (_) { blob = null; }
   if (wpUrl) { URL.revokeObjectURL(wpUrl); wpUrl = null; }

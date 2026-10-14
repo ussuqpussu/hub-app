@@ -90,6 +90,10 @@ export function appearanceBlock() {
   LIVE_OPTIONS.forEach((o) => live.append(el('option', { value: o.id, text: o.name })));
   live.value = a.live;
   live.addEventListener('change', () => setAppearance({ live: live.value }));
+  const heroPos = el('select', { class: 'field', 'aria-label': 'Где показывать анимацию' });
+  [['side', 'Сбоку (на узком экране сверху)'], ['top', 'Сверху'], ['bg', 'Фоном за содержимым']].forEach(([v, t]) => heroPos.append(el('option', { value: v, text: t })));
+  heroPos.value = a.heroPos;
+  heroPos.addEventListener('change', () => setAppearance({ heroPos: heroPos.value }));
   const vol = el('input', { type: 'range', class: 'field', min: '0', max: '100', step: '5', value: String(a.volume), 'aria-label': 'Громкость звуков' });
   vol.addEventListener('change', () => { setAppearance({ volume: Number(vol.value) }); playSound('done'); });
 
@@ -97,7 +101,8 @@ export function appearanceBlock() {
     el('h3', { text: 'Эффекты' }),
     toggle('Эффекты (живые обои, заставка)', 'effects'),
     el('label', { class: 'field-label', text: 'Живые обои' }), live,
-    toggle('Анимация темы сверху страниц', 'hero'),
+    toggle('Анимация темы на страницах', 'hero'),
+    el('label', { class: 'field-label', text: 'Где показывать анимацию' }), heroPos,
     toggle('Небо и погода в плитке «Погода»', 'sky'),
     toggle('Заставка при входе', 'splash'),
     el('h3', { text: 'Звуки' }),

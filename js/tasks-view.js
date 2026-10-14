@@ -146,7 +146,7 @@ export function tasksView({ store, subscribe }) {
     let kind = 'task';
     const form = el('form', { class: 'task-form card' });
     const seg = el('div', { class: 'seg seg--s', role: 'group', 'aria-label': 'Что добавить' });
-    const title = el('input', { class: 'field', type: 'text', 'aria-label': 'Название задачи', placeholder: 'Что сделать, например: завтра 15:00 сдать лабу', maxlength: '200' });
+    const title = el('input', { class: 'field', type: 'text', 'aria-label': 'Название задачи', placeholder: 'Что сделать? «завтра 15:00 лаба»', maxlength: '200' });
     const due = el('input', { class: 'field', type: 'date', 'aria-label': 'Срок' });
     const time = el('input', { class: 'field', type: 'time', 'aria-label': 'Время' });
     const dueRow = el('div', { class: 'task-form__row' }, [due, time]);
@@ -163,7 +163,7 @@ export function tasksView({ store, subscribe }) {
         return b;
       }));
       title.setAttribute('aria-label', kind === 'task' ? 'Название задачи' : 'Новый вопрос');
-      title.placeholder = kind === 'task' ? 'Что сделать, например: завтра 15:00 сдать лабу' : 'Что нужно выяснить';
+      title.placeholder = kind === 'task' ? 'Что сделать? «завтра 15:00 лаба»' : 'Что нужно выяснить';
       dueRow.hidden = kind !== 'task';
       who.hidden = kind !== 'question';
       submit.textContent = kind === 'task' ? 'Добавить' : 'Добавить вопрос';

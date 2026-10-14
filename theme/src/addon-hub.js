@@ -58,7 +58,16 @@
   if (typeof z33Sync === 'function') z33Sync();
   renderBig();
 
-  function rerender() { if (typeof z33Sync === 'function') z33Sync(); renderBig(); }
+  // Кот темы (тот же рисунок и настройки, что в превью): отправляем хабу, он сажает кота на кнопку «+».
+  function sendCat() {
+    try {
+      var th = getT(cur);
+      var c = th.cat || (th.L === 'adam' ? { p: 'tuxedo', b: '#a9a9a9', s: '#f2f2f2', t: '#f2f2f2', e: '#111', n: '#8a8a8a' } : null);
+      var svg = c ? String(petSvg(c) || '') : '';
+      parent.postMessage({ type: 'hub-cat', theme: T[cur].n, svg: svg }, '*');
+    } catch (e) { /* без кота */ }
+  }
+  function rerender() { if (typeof z33Sync === 'function') z33Sync(); renderBig(); sendCat(); }
   window.addEventListener('storage', function (e) { if (e.key === KEY && loadOvr()) rerender(); });
   window.addEventListener('message', function (e) {
     var d = e.data;
@@ -78,5 +87,6 @@
     // правки каталога сохраняются сразу; хаб подхватывает их через событие storage
     setInterval(saveOvr, 300);
   }
+  sendCat();
   try { parent.postMessage({ type: 'hub-engine-ready', mode: MODE }, '*'); } catch (e) { /* без родителя */ }
 })();
