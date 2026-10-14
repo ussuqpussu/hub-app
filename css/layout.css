@@ -706,3 +706,20 @@ pre.hero { display: flex; justify-content: center; align-items: center; overflow
 body, .card, .tile, .sheet, .field, .nav, .topbar { transition: background-color var(--dur-m) var(--ease), border-color var(--dur-m) var(--ease), color var(--dur-m) var(--ease); }
 
 .skill .row { display: flex; flex-wrap: wrap; gap: var(--sp-2); }
+
+/* «Сегодня»: плитки разного размера (бенто). Главные задачи и «Входящие» — отдельные компактные плитки. */
+.bento { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--sp-3); grid-auto-flow: dense; align-items: stretch; }
+.bento > .tile { align-content: start; min-width: 0; margin: 0; }
+.tile--w2 { grid-column: span 2; }
+.tile--h2 { grid-row: span 2; }
+@media (min-width: 48rem) { .bento { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+.tile--main, .tile--inbox { min-height: 9.5rem; align-content: start; grid-template-rows: auto 1fr auto auto; gap: var(--sp-2); }
+.tile__kicker { font-size: 0.7rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--c-dim); }
+.tile__big { margin: 0; font-family: var(--font-head); font-weight: var(--fw-head); font-size: var(--fs-m); line-height: 1.25; overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+.tile__num { margin: 0; font-family: var(--font-head); font-weight: var(--fw-head); font-size: 3rem; line-height: 1; color: var(--c-accent); }
+.tile__meta { margin: 0; font-size: var(--fs-s); }
+.tile--main .btn, .tile--inbox .btn { justify-self: start; }
+.tile--main::before { content: ''; display: block; height: 3px; width: 2rem; border-radius: var(--radius-pill); background: var(--c-accent); }
+.tile--main { grid-template-rows: auto auto 1fr auto auto; }
+.tile--warn { border-color: var(--c-danger); }
+@media (hover: hover) { .bento > .tile { transition: transform var(--dur) var(--ease-out), border-color var(--dur) var(--ease-out); } .bento > .tile:hover { transform: translateY(-2px); } }

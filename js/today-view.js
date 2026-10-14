@@ -28,10 +28,26 @@ export function todayView({ store, subscribe }) {
   const wsBefore = JSON.stringify(getWeather());
   let shown = '';
 
-  function tile(title, children, link) {
+  // size: 'w2' — на две колонки, 'h2' — на две строки (раскладка «бенто», см. .bento в layout.css)
+  function tile(title, children, link, size = '') {
     const head = el('div', { class: 'tile__head' }, [el('h2', { text: title })]);
     if (link) head.append(link);
-    return el('section', { class: 'card tile' }, [head, ...[].concat(children)]);
+    return el('section', { class: `card tile${size ? ` ${size.split(' ').map((x) => `tile--${x}`).join(' ')}` : ''}` }, [head, ...[].concat(children)]);
+  }
+
+  // Главная задача отдельной плиткой: крупное название, проект и срок, кнопка «Готово».
+  function mainTile(t, today, i) {
+    const meta = [];
+    if (t.due) meta.push(`${dueLabel(t.due, today)}${t.time ? ` ${t.time}` : ''}`);
+    if (t.project) meta.push(t.project);
+    const done = el('button', { type: 'button', class: 'btn btn--s', text: 'Готово', 'aria-label': `Выполнено: ${t.title}` });
+    done.addEventListener('click', () => store.update('tasks', t.id, { done: true, doneAt: Date.now(), main: false }));
+    return el('section', { class: 'card tile tile--main', 'data-n': String(i + 1) }, [
+      el('span', { class: 'tile__kicker', text: `Главная ${i + 1}` }),
+      el('p', { class: 'tile__big', text: t.title }),
+      el('p', { class: 'muted tile__meta', text: meta.length ? meta.join(' · ') : 'Без срока' }),
+      done,
+    ]);
   }
 
   function goTo(hash, tab) {
@@ -66,6 +82,8 @@ export function todayView({ store, subscribe }) {
         el('p', { class: 'muted', text: `${weekType(today)[0].toUpperCase()}${weekType(today).slice(1)} неделя` }),
       ]),
     );
+    const grid = el('div', { class: 'bento' });
+    root.append(grid);
 
     // Погода (хаб сам спрашивает Open-Meteo; нет сети — последний ответ)
     {
@@ -93,7 +111,7 @@ export function todayView({ store, subscribe }) {
         mountSky(cv, () => { const w2 = weatherState(getWeather()); const c2 = w2 && (w2.cities.find((c) => c.name === load('hub.weatherCity', 'Москва')) || w2.cities[0]); return c2 && !w2.stale ? c2.kind : 'clear'; });
         body.unshift(cv);
       }
-      root.append(tile('Погода', body));
+      grid.append(tile('Погода', body, null, 'w2'));
     }
 
     // Расписание на сегодня
@@ -111,14 +129,12 @@ export function todayView({ store, subscribe }) {
       if (isStale(sst.data)) parts.push(el('p', { class: 'sched-note sched-note--warn', text: 'Расписание не обновлялось больше недели.' }));
       schedBody = parts;
     }
-    root.append(tile('Расписание', schedBody, el('a', { class: 'tile__link', href: '#/schedule', text: 'Неделя' })));
+    grid.append(tile('Расписание', schedBody, el('a', { class: 'tile__link', href: '#/schedule', text: 'Неделя' }), 'w2 h2'));
 
     // Главные задачи
     const mains = tasks.filter((t) => t.main && !t.done).sort((a, b) => a.created - b.created).slice(0, MAIN_LIMIT);
-    const mainBody = mains.length
-      ? el('ul', { class: 'tasks' }, mains.map((t) => taskLine(t, today)))
-      : el('p', { class: 'muted', text: `Отметь звёздочкой до ${MAIN_LIMIT} главных задач в разделе «Задачи».` });
-    root.append(tile(`Главные задачи${mains.length ? ` · ${mains.length}` : ''}`, mainBody, goTo('#/tasks', { id: 'tasks', label: 'Все задачи' })));
+    if (mains.length) mains.forEach((t, i) => grid.append(mainTile(t, today, i)));
+    else grid.append(tile('Главные задачи', el('p', { class: 'muted', text: `Отметь звёздочкой до ${MAIN_LIMIT} главных задач в разделе «Задачи».` }), goTo('#/tasks', { id: 'tasks', label: 'Все задачи' }), 'w2'));
 
     // Задачи на сегодня и просроченные
     const rest = [...g.overdue, ...g.today].filter((t) => !t.main);
@@ -126,7 +142,7 @@ export function todayView({ store, subscribe }) {
       const ul = el('ul', { class: 'tasks' }, rest.slice(0, 6).map((t) => taskLine(t, today)));
       const more = rest.length > 6 ? el('p', { class: 'muted', text: `И ещё: ${rest.length - 6}` }) : null;
       const title = g.overdue.some((t) => !t.main) ? `На сегодня · просрочено: ${g.overdue.filter((t) => !t.main).length}` : 'На сегодня';
-      root.append(tile(title, more ? [ul, more] : ul, goTo('#/tasks', { id: 'tasks', label: 'Все задачи' })));
+      grid.append(tile(title, more ? [ul, more] : ul, goTo('#/tasks', { id: 'tasks', label: 'Все задачи' }), 'w2'));
     }
 
     // Входящие
@@ -134,13 +150,14 @@ export function todayView({ store, subscribe }) {
     const oldest = inbox.reduce((m, it) => Math.min(m, it.created), Infinity);
     const days = inbox.length ? Math.floor((Date.now() - oldest) / (24 * 3600 * 1000)) : 0;
     const old = inbox.length && days >= INBOX_OLD_DAYS;
-    root.append(
-      tile(
-        `Входящие: ${inbox.length}`,
-        el('p', { class: old ? 'today-warn' : 'muted', text: !inbox.length ? 'Всё разобрано.' : old ? `Самая старая запись висит ${days} дн. Пора разобрать.` : 'Есть неразобранные записи.' }),
-        goTo('#/tasks', { id: 'inbox', label: 'Разобрать' }),
-      ),
-    );
+    const toInbox = el('a', { class: 'btn btn--s', href: '#/tasks', text: 'Разобрать' });
+    toInbox.addEventListener('click', () => openTasksTab('inbox'));
+    grid.append(el('section', { class: `card tile tile--inbox${old ? ' tile--warn' : ''}` }, [
+      el('span', { class: 'tile__kicker', text: 'Входящие' }),
+      el('p', { class: 'tile__num', text: String(inbox.length) }),
+      el('p', { class: old ? 'today-warn tile__meta' : 'muted tile__meta', text: !inbox.length ? 'Всё разобрано' : old ? `Старой записи ${days} дн.` : 'Есть неразобранные' }),
+      toInbox,
+    ]));
 
     // Цели
     const goals = store.list('goals').filter((x) => x.progress < 100).sort((a, b) => a.created - b.created).slice(0, 3);
@@ -155,7 +172,7 @@ export function todayView({ store, subscribe }) {
           ]),
         );
       });
-      root.append(tile('Цели', ul, goTo('#/tasks', { id: 'goals', label: 'Все цели' })));
+      grid.append(tile('Цели', ul, goTo('#/tasks', { id: 'goals', label: 'Все цели' }), 'w2'));
     }
 
     // Рупор: что публиковать сегодня и сколько площадок уже готово
@@ -175,7 +192,7 @@ export function todayView({ store, subscribe }) {
         });
         body.push(el('p', { text: `${pp.title}, опубликовано ${publishedCount(recOf(recs, pp.id))} из 3` }), open);
       } else body.push(el('p', { class: 'muted', text: 'Всё, что было подготовлено, опубликовано.' }));
-      root.append(tile('Рупор', body));
+      grid.append(tile('Рупор', body, null, 'w2'));
     }
 
     // Ближайшие списания
@@ -197,7 +214,7 @@ export function todayView({ store, subscribe }) {
           ]),
         ]));
       });
-      root.append(tile('Ближайшие платежи', ul, el('a', { class: 'tile__link', href: '#/subscriptions', text: 'Все подписки' })));
+      grid.append(tile('Ближайшие платежи', ul, el('a', { class: 'tile__link', href: '#/subscriptions', text: 'Все подписки' }), 'w2'));
     }
 
     // Ближайшие задачи: то, чего нет выше (не главные, не на сегодня и не просроченные)
@@ -206,17 +223,15 @@ export function todayView({ store, subscribe }) {
       const hidden = g.later.filter((t) => !t.main).length + g.nodue.filter((t) => !t.main).length - upcoming.length;
       const items = [el('ul', { class: 'tasks' }, upcoming.map((t) => taskLine(t, today)))];
       if (hidden > 0) items.push(el('p', { class: 'muted', text: `И ещё: ${hidden}` }));
-      root.append(tile('Ближайшие задачи', items, goTo('#/tasks', { id: 'tasks', label: 'Все задачи' })));
+      grid.append(tile('Ближайшие задачи', items, goTo('#/tasks', { id: 'tasks', label: 'Все задачи' }), 'w2'));
     }
 
     // Итоги недели: ссылка и коротко, сколько сделано; в воскресенье вечером итог сохраняется
     try { ensureSnapshot(store); } catch (_) { /* итог сохранится при следующем открытии */ }
     const ws = liveSummary(store, today);
     const sunEve = new Date().getDay() === 0 && new Date().getHours() >= 18;
-    root.append(tile(sunEve ? 'Итоги недели готовы' : 'Итоги недели', el('p', { class: ws.hasData ? '' : 'muted', text: ws.hasData ? `Закрыто задач: ${ws.tasks.closed.length}. Опубликовано в «Рупоре»: ${ws.rupor.total}. Событий проектов: ${ws.events.length}.` : 'За эту неделю пока нет данных.' }), el('a', { class: 'tile__link', href: '#/weekly', text: 'Открыть' })));
+    grid.append(tile(sunEve ? 'Итоги недели готовы' : 'Итоги недели', el('p', { class: ws.hasData ? '' : 'muted', text: ws.hasData ? `Закрыто задач: ${ws.tasks.closed.length}. Опубликовано в «Рупоре»: ${ws.rupor.total}. Событий проектов: ${ws.events.length}.` : 'За эту неделю пока нет данных.' }), el('a', { class: 'tile__link', href: '#/weekly', text: 'Открыть' })));
 
-    // Источники, которых ещё нет
-    root.append(el('p', { class: 'muted', text: 'Пока не подключено: погода (этап 17).' }));
 
     // Смена суток: в полночь экран обновляется сам
     const next = new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1, 0, 0, 5);
