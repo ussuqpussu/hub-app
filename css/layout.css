@@ -723,3 +723,8 @@ body, .card, .tile, .sheet, .field, .nav, .topbar { transition: background-color
 .tile--main { grid-template-rows: auto auto 1fr auto auto; }
 .tile--warn { border-color: var(--c-danger); }
 @media (hover: hover) { .bento > .tile { transition: transform var(--dur) var(--ease-out), border-color var(--dur) var(--ease-out); } .bento > .tile:hover { transform: translateY(-2px); } }
+
+.tile--quote { align-content: start; gap: var(--sp-2); }
+.qt { margin: 0; font-family: var(--font-head); font-weight: var(--fw-head); font-size: var(--fs-m); line-height: 1.35; padding-left: var(--sp-3); border-left: 3px solid var(--c-accent); }
+.qt__who { color: var(--c-dim); font-size: var(--fs-s); font-style: normal; }
+.tile--quote .btn { justify-self: start; }

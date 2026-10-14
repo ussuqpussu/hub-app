@@ -5206,6 +5206,11 @@ TSC.letterpress = [
   document.documentElement.classList.add('hub-' + MODE);
 
   loadOvr();
+  // Пока хаб не прислал настоящие проекты, вместо учебных названий из превью показываем созвездия (ничего не выдумываем про проекты).
+  if (typeof PROJECTS !== 'undefined') {
+    PROJECTS.length = 0;
+    ['Орион', 'Лира', 'Кассиопея', 'Андромеда', 'Персей', 'Лебедь', 'Пегас'].forEach(function (n, i) { PROJECTS.push({ id: 'c' + i, name: n, type: 'созвездие', st: 'в работе', pr: 30 + i * 9, next: '', upd: '' }); });
+  }
   cur = themeIndex(q('t'));
   ADPG = +q('pg') || 0;
   if (typeof z33Sync === 'function') z33Sync();
