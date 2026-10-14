@@ -826,14 +826,6 @@ html[data-hero-pos="bg"] .hero__quote { display: none; }
   html[data-hero-pos="side"] .hero__q { max-width: 40rem; font-size: clamp(1rem, .8rem + .55vw, 1.9rem); }
 }
 
-/* Мифы: покровитель страницы и полоса «Ярость» под цитатой */
-.hero--stage[data-myth] { --hq: 11rem; }
-.hero__pat { margin-top: var(--sp-2); font-size: var(--fs-s, .8rem); letter-spacing: .08em; text-transform: uppercase; opacity: .6; text-align: center; }
-.hero__pat:empty, .hero--stage:not([data-myth]) .hero__pat, .hero--stage:not([data-myth]) .hero__rage { display: none; }
-.hero__rage { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: var(--sp-2); margin: var(--sp-2) auto 0; width: min(100%, 18rem); font-size: .75rem; opacity: .85; }
-.hero__rage i { height: .35rem; border-radius: 1rem; background: color-mix(in srgb, currentColor 18%, transparent); position: relative; overflow: hidden; }
-.hero__rage i::after { content: ''; position: absolute; inset: 0 auto 0 0; width: var(--rage, 0%); background: var(--accent, currentColor); border-radius: inherit; transition: width var(--dur-l, .6s) var(--ease-out, ease-out); }
-html[data-hero-pos="bg"] .hero__rage, html[data-hero-pos="bg"] .hero__pat { display: none; }
 
 /* Анимации самого хаба: кнопки, плитки, галочки */
 .btn, .qtile__done, .seg button, .nav__item { transition: transform var(--dur-s, .15s) var(--ease-out, ease-out), background-color var(--dur-s, .15s), box-shadow var(--dur-s, .15s), opacity var(--dur-s, .15s); }
@@ -855,10 +847,6 @@ html[data-effects="off"] .btn, html[data-effects="off"] .qtile, html[data-effect
 .btn:active, .qtile__done:active, .seg button:active { transform: scale(.98); }
 .btn, .qtile__done, .seg button, .nav__item { transition-duration: .3s; }
 
-/* ворон сидит в шапке страницы справа, а не на вкладках и карточках */
-.view__head { position: relative; padding-right: 5.5rem; }
-.view__head > .cat-holder { top: auto; bottom: 0; right: 0; left: auto; width: 5.5rem; }
-.view__head > .cat-holder .pet { right: 0; bottom: 0; }
 
 /* цитата: кнопка смены */
 .hero__quote { position: relative; }
@@ -870,7 +858,7 @@ html[data-hero-pos="bg"] .hero__qn { display: none; }
 @media (min-width: 48rem) {
   html[data-hero-pos="side"] .main[data-page="today"] { display: block; max-width: 100rem; }
   html[data-hero-pos="side"] .main[data-page="today"] > .hero--stage { position: relative; top: auto; width: 100%; height: auto; margin: 0 0 var(--sp-4); }
-  html[data-hero-pos="side"] .main[data-page="today"] > .hero--stage .hero__frame { flex: none; height: clamp(13rem, 30vh, 26rem); }
+  html[data-hero-pos="side"] .main[data-page="today"] > .hero--stage .hero__frame { flex: none; height: auto; aspect-ratio: 3.1 / 1; }
   html[data-hero-pos="side"] .main[data-page="today"] .hero__quote { padding-bottom: 0; }
   html[data-hero-pos="side"] .main[data-page="today"] > .hero--stage .hero__q { max-width: 44rem; }
 }
@@ -897,3 +885,9 @@ html[data-hero-pos="bg"] .hero__qn { display: none; }
 .theme-tile { min-width: 0; box-sizing: border-box; }
 .theme-tile > * { min-width: 0; max-width: 100%; }
 .field { box-sizing: border-box; max-width: 100%; }
+
+/* ворон стоит на верхней кромке карточки; места над ней хватает, чтобы не наезжать на текст выше */
+.view .has-cat { margin-top: 3rem; }
+.hero__qn { pointer-events: auto; z-index: 2; }
+.bento > .has-cat { margin-top: 0; }
+.main[data-page="today"] .hero__quote { min-height: 0; }

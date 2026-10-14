@@ -7,7 +7,6 @@ import { QUOTES } from './data/quotes.js';
 import { QUOTES_GOW } from './data/quotes-gow.js';
 
 export const PAGE_INDEX = { today: 0, schedule: 1, tasks: 2, projects: 3, 'smart-home': 4, subscriptions: 5, notes: 6, knowledge: 7, settings: 8 };
-const PATRON = { today: 'Кратос', schedule: 'Кронос', tasks: 'Афина', projects: 'Гефест', 'smart-home': 'Брок', subscriptions: 'Кронос', notes: 'Мимир', knowledge: 'Мимир', settings: 'Брок', weekly: 'Мойры' };
 // у «Итогов недели» сцена есть только в «Мифах» (индекс 9 в их карте страниц)
 const pgOf = (route, name) => (route === 'weekly' ? (name === 'Мифы' ? 9 : null) : PAGE_INDEX[route]);
 const ENGINE = new URL('../theme/engine.html', import.meta.url).href;
@@ -26,25 +25,6 @@ function dayQuote(name) {
 const QUOTE_MS = 5 * 60 * 1000;
 let qShift = 0;
 setInterval(() => { if (box) fillQuote(box.el, engineName(box.theme)); }, 30000);
-let rage = 0;
-let curRoute = '';
-function setMeta(route) {
-  if (!box) return;
-  if (route) curRoute = route; else route = curRoute;
-  const my = engineName(box.theme) === 'Мифы';
-  box.el.toggleAttribute('data-myth', my);
-  const pat = box.el.querySelector('.hero__pat');
-  if (pat) pat.textContent = my && route ? `Покровитель: ${PATRON[route] || 'Кратос'}` : '';
-  const bar = box.el.querySelector('.hero__rage');
-  if (bar) { bar.style.setProperty('--rage', rage + '%'); bar.querySelector('b').textContent = rage + '%'; }
-}
-// «Ярость»: растёт с каждой закрытой задачей, за неделю гаснет. 10 свежих задач = 100%.
-export function setHeroRage(tasks, now = Date.now()) {
-  const W = 7 * 864e5;
-  const sum = (tasks || []).reduce((a, t) => (t.done && t.doneAt && now - t.doneAt < W ? a + (1 - (now - t.doneAt) / W) : a), 0);
-  rage = Math.max(0, Math.min(100, Math.round(sum * 10)));
-  if (box) setMeta('');
-}
 function fillQuote(el, name) {
   const [text, who] = dayQuote(name);
   el.querySelector('.hero__q').textContent = `«${text}»`;
@@ -78,7 +58,6 @@ export function sceneHero(themeId, route) {
   const dk = effectiveColors(themeId).dk ? 1 : 0;
   if (box && box.theme === themeId) {
     message({ pg, dk });
-    setMeta(route);
     return box.el;
   }
   destroyHero();
@@ -93,13 +72,12 @@ export function sceneHero(themeId, route) {
   el.setAttribute('aria-label', `Анимация темы «${name}»`);
   const quote = document.createElement('figure');
   quote.className = 'hero__quote';
-  quote.innerHTML = '<blockquote class="hero__q"></blockquote><figcaption class="hero__who"></figcaption><button type="button" class="hero__qn" aria-label="Другая цитата" title="Другая цитата">↻</button><div class="hero__pat"></div><div class="hero__rage" title="Ярость растёт с закрытыми задачами и гаснет за неделю"><span>Ярость</span><i></i><b>0%</b></div>';
+  quote.innerHTML = '<blockquote class="hero__q"></blockquote><figcaption class="hero__who"></figcaption><button type="button" class="hero__qn" aria-label="Другая цитата" title="Другая цитата">↻</button>';
   el.append(frame, quote);
   quote.querySelector('.hero__qn').addEventListener('click', () => { qShift += 1; fillQuote(el, engineName(box ? box.theme : themeId)); });
   fillQuote(el, name);
   sent = '';
   box = { el, frame, ready: false, pending: null, theme: themeId };
-  setMeta(route);
   return el;
 }
 
@@ -110,7 +88,6 @@ export function setHeroTheme(themeId, route) {
   if (!name) { destroyHero(); return; }
   box.theme = themeId;
   fillQuote(box.el, name);
-  setMeta(route);
   message({ t: name, pg: pgOf(route, name) ?? 0, dk: effectiveColors(themeId).dk ? 1 : 0 });
 }
 

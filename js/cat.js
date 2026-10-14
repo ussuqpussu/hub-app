@@ -20,7 +20,7 @@ function target() {
   const main = document.getElementById('main');
   if (!main) return null;
   const r = route();
-  const sel = [PERCH[r], '.view > .view__head', '.view .card'].filter(Boolean);
+  const sel = [PERCH[r], '.view .card', '.view .empty', '.view .qtile'].filter(Boolean);
   for (const s of sel) {
     const el = main.querySelector(s);
     if (el && el.offsetParent !== null) return el;
