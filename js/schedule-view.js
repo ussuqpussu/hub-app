@@ -50,7 +50,7 @@ export function scheduleView() {
   ]);
   let cursor = todayYmd();
   const bar = el('div', { class: 'week-nav' });
-  const body = el('div', { class: 'stack' });
+  const body = el('div', { class: 'stack sched-body' });
   const foot = el('div', { class: 'stack' });
 
   function renderBar() {

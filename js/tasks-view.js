@@ -146,7 +146,7 @@ export function tasksView({ store, subscribe }) {
     let kind = 'task';
     const form = el('form', { class: 'task-form card' });
     const seg = el('div', { class: 'seg seg--s', role: 'group', 'aria-label': 'Что добавить' });
-    const title = el('input', { class: 'field', type: 'text', 'aria-label': 'Название задачи', placeholder: 'Что сделать', maxlength: '200' });
+    const title = el('input', { class: 'field', type: 'text', 'aria-label': 'Название задачи', placeholder: 'Что сделать, например: завтра 15:00 сдать лабу', maxlength: '200' });
     const due = el('input', { class: 'field', type: 'date', 'aria-label': 'Срок' });
     const time = el('input', { class: 'field', type: 'time', 'aria-label': 'Время' });
     const dueRow = el('div', { class: 'task-form__row' }, [due, time]);
@@ -155,7 +155,7 @@ export function tasksView({ store, subscribe }) {
     const who = sel('У кого спросить', 'unset', Object.entries({ unset: 'Не указано', customer: 'Заказчик', me: 'Я сам', other: 'Кто-то ещё' }), () => {});
     who.hidden = true;
     const err = el('p', { class: 'err', role: 'alert' });
-    const submit = el('button', { type: 'submit', class: 'btn btn--primary', text: 'Добавить задачу' });
+    const submit = el('button', { type: 'submit', class: 'btn btn--primary', text: 'Добавить' });
     const paint = () => {
       seg.replaceChildren(...[['task', 'Задача'], ['question', 'Вопрос']].map(([k, t]) => {
         const b = el('button', { type: 'button', 'aria-pressed': String(kind === k), text: t });
@@ -163,13 +163,14 @@ export function tasksView({ store, subscribe }) {
         return b;
       }));
       title.setAttribute('aria-label', kind === 'task' ? 'Название задачи' : 'Новый вопрос');
-      title.placeholder = kind === 'task' ? 'Что сделать' : 'Что нужно выяснить';
+      title.placeholder = kind === 'task' ? 'Что сделать, например: завтра 15:00 сдать лабу' : 'Что нужно выяснить';
       dueRow.hidden = kind !== 'task';
       who.hidden = kind !== 'question';
-      submit.textContent = kind === 'task' ? 'Добавить задачу' : 'Добавить вопрос';
+      submit.textContent = kind === 'task' ? 'Добавить' : 'Добавить вопрос';
     };
     paint();
-    form.append(seg, title, dueRow, project, dl, who, err, el('div', { class: 'task-form__row' }, [submit]));
+    const more = el('details', { class: 'task-form__more' }, [el('summary', { text: 'Срок, проект, вопрос' }), el('div', { class: 'stack stack--tight' }, [seg, dueRow, project, dl, who])]);
+    form.append(el('div', { class: 'task-form__row task-form__main' }, [title, submit]), more, err);
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       err.textContent = '';
@@ -376,7 +377,7 @@ export function tasksView({ store, subscribe }) {
     ]);
     const goalsBox = el('details', { class: 'tbox', ...(openBox.goals ? { open: '' } : {}) }, [el('summary', { text: 'Цели' }), goalsPanel({ store, rerender: render, editing: editingGoal, setEditing: (id) => { editingGoal = id; } })]);
     goalsBox.addEventListener('toggle', () => { openBox.goals = goalsBox.open; });
-    body.replaceChildren(addForm(projects), filters, list, inboxBox(), goalsBox);
+    body.replaceChildren(addForm(projects), filters, list, el('div', { class: 'tpair' }, [inboxBox(), goalsBox]));
     live.textContent = msg;
   }
 

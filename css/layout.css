@@ -728,3 +728,22 @@ body, .card, .tile, .sheet, .field, .nav, .topbar { transition: background-color
 .qt { margin: 0; font-family: var(--font-head); font-weight: var(--fw-head); font-size: var(--fs-m); line-height: 1.35; padding-left: var(--sp-3); border-left: 3px solid var(--c-accent); }
 .qt__who { color: var(--c-dim); font-size: var(--fs-s); font-style: normal; }
 .tile--quote .btn { justify-self: start; }
+
+/* Страницы: быстрый ввод, ровные ряды кнопок */
+.row--start { justify-content: flex-start; }
+.task-form__main { flex-wrap: nowrap; align-items: stretch; }
+.task-form__main .field { flex: 1 1 auto; min-width: 0; }
+.task-form__main .btn { flex: 0 0 auto; white-space: nowrap; }
+@media (max-width: 479px) { .task-form__main { flex-wrap: wrap; } .task-form__main .btn { flex: 1 1 auto; } }
+.task-form__more > summary { cursor: pointer; min-height: var(--tap); display: flex; align-items: center; color: var(--c-dim); font-size: var(--fs-s); font-weight: 600; }
+.task-form__more[open] > summary { color: var(--c-text); }
+.task-form__more > .stack { padding-bottom: var(--sp-1); }
+.tpair { display: grid; gap: var(--sp-3); align-items: start; }
+@media (min-width: 720px) { .tpair { grid-template-columns: 1fr 1fr; } }
+/* Расписание: на широком экране дни — плитки в сетке, сегодняшний выделен и идёт первым по ширине */
+@media (min-width: 820px) {
+  .sched-body { display: grid; grid-template-columns: repeat(auto-fill, minmax(19rem, 1fr)); align-items: start; }
+  .sched-body > .sched-note, .sched-body > .empty { grid-column: 1 / -1; }
+  .sched-day--today { box-shadow: 0 0 0 1px var(--c-accent); }
+}
+.task-form .err:empty { display: none; }

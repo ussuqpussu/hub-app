@@ -47,6 +47,24 @@ function noteForm(store, note, close) {
 }
 
 export function notesView({ store, subscribe }) {
+  function quickAdd() {
+    const inp = el('input', { class: 'field', type: 'text', 'aria-label': 'Быстрая заметка или ссылка', placeholder: 'Заметка или ссылка: напиши и нажми Enter', maxlength: '500', autocomplete: 'off' });
+    const go = el('button', { type: 'submit', class: 'btn btn--primary', text: 'Добавить' });
+    const more = el('button', { type: 'button', class: 'btn', text: 'Подробно' });
+    const err = el('p', { class: 'err', role: 'alert' });
+    more.addEventListener('click', () => openSheet((close) => el('div', { class: 'stack' }, [el('h2', { text: 'Новая запись' }), noteForm(store, null, close)])));
+    const form = el('form', { class: 'task-form card' }, [el('div', { class: 'task-form__row task-form__main' }, [inp, go, more]), err]);
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const v = inp.value.trim();
+      if (!v) { err.textContent = 'Напиши текст или вставь ссылку.'; inp.focus(); return; }
+      const asLink = !/\s/.test(v) && /\./.test(v) ? normalizeUrl(v) : '';
+      if (asLink) await store.add('notes', { kind: 'link', title: '', text: '', url: asLink, tags: [] });
+      else await store.add('notes', { kind: 'note', title: '', text: v, tags: [] });
+      inp.value = ''; err.textContent = '';
+    });
+    return form;
+  }
   const root = el('section', { class: 'view' });
   const ui = { kind: 'all', tag: null, ...(load(KEY, {}) || {}) };
   let query = '';
@@ -86,7 +104,7 @@ export function notesView({ store, subscribe }) {
     q.addEventListener('input', () => { query = q.value; const pos = q.selectionStart; render(); const s2 = root.querySelector('input[type="search"]'); if (s2) { s2.focus(); s2.setSelectionRange(pos, pos); } });
     root.replaceChildren(
       el('div', { class: 'view__head' }, [el('h1', { text: 'Заметки и ссылки' }), el('p', { class: 'muted', text: 'Быстрые заметки и закладки с тегами.' })]),
-      el('section', { class: 'card stack' }, [el('h2', { text: 'Добавить' }), noteForm(store, null, null)]),
+      quickAdd(),
     );
     if (!all.length) { root.append(el('div', { class: 'empty' }, [el('strong', { text: 'Пока пусто' }), el('span', { text: 'Добавь первую заметку или ссылку. Их можно искать здесь и в общем поиске.' })])); return; }
     const seg = el('div', { class: 'seg seg--s', role: 'group', 'aria-label': 'Что показывать' }, [['all', 'Всё'], ['note', 'Заметки'], ['link', 'Ссылки']].map(([k, t]) => {

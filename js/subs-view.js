@@ -225,7 +225,7 @@ export function subsView({ store, subscribe }) {
       }
       input.value = '';
     });
-    box.append(el('div', { class: 'row' }, [ics, exp, el('label', { class: 'btn' }, [el('span', { text: 'Импорт из копии' }), input])]), live);
+    box.append(el('div', { class: 'row row--start' }, [ics, exp, el('label', { class: 'btn' }, [el('span', { text: 'Импорт из копии' }), input])]), live);
     return box;
   }
 
