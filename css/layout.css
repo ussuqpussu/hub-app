@@ -545,8 +545,11 @@
 .qtile::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 5px; background: var(--c-accent); }
 .qgrid[data-n="2"], .qgrid[data-n="3"], .qgrid[data-n="4"] { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 @media (min-width: 720px) {
-  .qgrid[data-n="3"] { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  .qgrid[data-n="4"] { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  /* на широком экране плитка не растёт больше 14rem, остаток строки остаётся пустым */
+  .qgrid[data-n="2"] { grid-template-columns: repeat(2, minmax(0, 14rem)); }
+  .qgrid[data-n="3"] { grid-template-columns: repeat(3, minmax(0, 14rem)); }
+  .qgrid[data-n="4"] { grid-template-columns: repeat(4, minmax(0, 14rem)); }
+  .qgrid { grid-template-columns: repeat(auto-fill, minmax(10.5rem, 14rem)); }
 }
 .qtile__top .qtile__who { min-height: 1.5rem; padding: 0; border: 0; background: transparent; color: var(--c-dim); font-size: 0.7rem; letter-spacing: 0.06em; text-transform: uppercase; text-align: left; }
 .qtile--open { aspect-ratio: auto; min-height: 0; }
