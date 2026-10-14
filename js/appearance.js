@@ -100,8 +100,8 @@ export function showSplash(name = 'Хаб') {
     line.className = 'splash__line';
     d.append(t, line);
     document.body.append(d);
-    setTimeout(() => d.classList.add('splash--out'), 900);
-    setTimeout(() => { d.remove(); resolve(); }, 1300);
+    setTimeout(() => d.classList.add('splash--out'), 1150);
+    setTimeout(() => { d.remove(); resolve(); }, 1750);
   });
 }
 

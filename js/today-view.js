@@ -25,6 +25,7 @@ export function todayView({ store, subscribe }) {
   const keys = ['inbox', 'tasks', 'goals', 'subs', 'rupor', 'rposts'];
   const signature = () => keys.map((m) => store.list(m).map((it) => `${it.id}:${it.updatedAt}`).join(',')).join('|');
   let sig = '';
+  const wsBefore = JSON.stringify(getWeather());
   let shown = '';
 
   function tile(title, children, link) {
@@ -66,11 +67,11 @@ export function todayView({ store, subscribe }) {
       ]),
     );
 
-    // Погода (данные приходят от облачной функции)
+    // Погода (хаб сам спрашивает Open-Meteo; нет сети — последний ответ)
     {
       const ws = weatherState(getWeather());
       const body = [];
-      if (!ws) body.push(el('p', { class: 'muted', text: 'Данных о погоде пока нет. Их получает облачная функция бота раз в полчаса; пока она не развёрнута или не достучалась до сервиса погоды, здесь пусто.' }));
+      if (!ws) body.push(el('p', { class: 'muted', text: 'Данных о погоде пока нет: хаб не достучался до сервиса погоды (Open-Meteo). Нужна сеть; как только она появится, погода подгрузится сама.' }));
       else {
         const sel = ws.cities.find((c) => c.name === load('hub.weatherCity', 'Москва')) || ws.cities[0];
         if (ws.cities.length > 1) {
@@ -82,7 +83,7 @@ export function todayView({ store, subscribe }) {
           body.push(seg);
         }
         body.push(el('p', { text: `${sel.name}: ${cityLine(sel)}` }), el('p', { class: 'muted', text: dayLine(sel) }));
-        if (ws.stale) body.push(el('p', { class: 'sched-note sched-note--warn', text: 'Данные устарели, облачная функция давно не обновляла погоду.' }));
+        if (ws.stale) body.push(el('p', { class: 'sched-note sched-note--warn', text: 'Данные устарели: сервис погоды давно не отвечал.' }));
         else if (ws.fetchedAt) body.push(el('p', { class: 'sched-note', text: `Обновлено ${new Date(ws.fetchedAt).toLocaleString('ru-RU', { hour: '2-digit', minute: '2-digit' })}` }));
       }
       if (getAppearance().sky) {
@@ -241,6 +242,7 @@ export function todayView({ store, subscribe }) {
   document.addEventListener('visibilitychange', () => {
     if (!document.hidden && root.isConnected && shown !== todayYmd()) render();
   });
+  refreshWeather().then(() => { if (root.isConnected && JSON.stringify(getWeather()) !== wsBefore) { sig = ''; render(); } }).catch(() => {});
   render();
   return root;
 }

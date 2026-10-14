@@ -622,12 +622,14 @@ button.nav__item { background: none; border: 0; color: inherit; font: inherit; c
 html[data-wp] body { background: transparent; }
 html[data-wp] body::before { content: ""; position: fixed; inset: 0; z-index: -3; background: var(--wp-image) center / cover no-repeat; }
 html[data-wp] body::after { content: ""; position: fixed; inset: 0; z-index: -2; pointer-events: none; background: color-mix(in srgb, var(--c-bg) var(--wp-dim, 40%), transparent); }
-.splash { position: fixed; inset: 0; z-index: 100; display: grid; place-content: center; justify-items: center; gap: var(--sp-3); background: var(--c-bg); color: var(--c-accent); opacity: 1; transition: opacity 0.4s var(--ease); }
-.splash--out { opacity: 0; }
-.splash__name { font-family: var(--font-head); font-weight: var(--fw-head); font-size: var(--fs-splash); letter-spacing: var(--ls-head); animation: splash-in 0.7s var(--ease) both; }
-.splash__line { width: var(--splash-line); height: var(--border); background: var(--c-accent); animation: splash-line 0.9s var(--ease) both; }
-@keyframes splash-in { from { opacity: 0; transform: translateY(0.5rem); } to { opacity: 1; transform: none; } }
-@keyframes splash-line { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+.splash { position: fixed; inset: 0; z-index: 100; display: grid; place-content: center; justify-items: center; gap: var(--sp-3); background: var(--c-bg); color: var(--c-accent); opacity: 1; transition: opacity 0.6s var(--ease-out), transform 0.6s var(--ease-out), filter 0.6s var(--ease-out); }
+.splash::before { content: ""; position: absolute; inset: 0; margin: auto; width: 22rem; height: 22rem; max-width: 80vw; max-height: 80vw; border-radius: 50%; background: radial-gradient(closest-side, color-mix(in srgb, var(--c-accent) 22%, transparent), transparent); animation: splash-glow 1.6s var(--ease-out) both; }
+.splash--out { opacity: 0; transform: scale(1.06); filter: blur(6px); }
+.splash__name { position: relative; font-family: var(--font-head); font-weight: var(--fw-head); font-size: var(--fs-splash); letter-spacing: var(--ls-head); animation: splash-in 0.9s var(--ease-out) both; }
+.splash__line { position: relative; width: var(--splash-line); height: var(--border); background: var(--c-accent); transform-origin: center; animation: splash-line 1s var(--ease-out) 0.25s both; }
+@keyframes splash-in { from { opacity: 0; transform: translateY(0.6rem) scale(0.96); filter: blur(8px); letter-spacing: calc(var(--ls-head) + 0.12em); } to { opacity: 1; transform: none; filter: blur(0); } }
+@keyframes splash-line { from { transform: scaleX(0); opacity: 0; } to { transform: scaleX(1); opacity: 1; } }
+@keyframes splash-glow { from { opacity: 0; transform: scale(0.6); } to { opacity: 1; transform: scale(1); } }
 
 .theme-tile { display: grid; gap: var(--sp-2); padding: var(--sp-2); text-align: left; background: var(--c-bg); color: var(--c-text); border: var(--border) solid var(--c-line); border-radius: var(--radius-m); font: inherit; }
 .theme-tile[aria-checked="true"] { border-color: var(--c-accent); box-shadow: 0 0 0 var(--border) var(--c-accent); }
@@ -656,3 +658,48 @@ pre.hero { display: flex; justify-content: center; align-items: center; overflow
 .hero__frame { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; background: transparent; }
 .theme-editor { margin-top: var(--sp-4); }
 .theme-editor__frame { display: block; width: 100%; height: 70dvh; min-height: 24rem; border: var(--border) var(--border-style) var(--c-line); border-radius: var(--radius-m); background: var(--c-surface); }
+
+/* Каталог скиллов */
+.skill__tags { display: flex; flex-wrap: wrap; gap: var(--sp-2); margin: 0; }
+.skill__text { max-height: 24rem; overflow: auto; white-space: pre-wrap; word-break: break-word; font-family: var(--font-mono); font-size: .8rem; line-height: 1.5; padding: var(--sp-3); background: var(--c-fill); border-radius: var(--radius-s); margin: var(--sp-3) 0 0; }
+.skill__files ul { margin: var(--sp-2) 0 0; padding-left: 1.2rem; font-size: .85rem; color: var(--c-dim); }
+
+/* ===== Движение (0.30.0): единые кривые и короткие осмысленные переходы ===== */
+.lock { transition: opacity var(--dur-m) var(--ease-out), transform var(--dur-m) var(--ease-out); }
+.lock--in .lock__box { animation: lock-in var(--dur-l) var(--ease-out) both; }
+.lock--out { opacity: 0; transform: scale(1.03); pointer-events: none; }
+.lock__box--shake { animation: lock-shake 0.42s var(--ease-out); }
+.lock__err { animation: fade-in var(--dur-m) var(--ease-out) both; }
+@keyframes lock-in { from { opacity: 0; transform: translateY(0.75rem) scale(0.98); } to { opacity: 1; transform: none; } }
+@keyframes lock-shake { 10%, 90% { transform: translateX(-2px); } 20%, 80% { transform: translateX(4px); } 30%, 50%, 70% { transform: translateX(-7px); } 40%, 60% { transform: translateX(7px); } }
+@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+
+/* страницы: новая страница въезжает снизу и проявляется; внутренние перерисовки анимацию не повторяют */
+#main > .view { animation: view-in var(--dur-m) var(--ease-out) both; }
+@keyframes view-in { from { opacity: 0; transform: translateY(0.5rem); } to { opacity: 1; transform: none; } }
+.hero--stage { animation: fade-in var(--dur-l) var(--ease-out) both; }
+
+/* окна: снизу на телефоне, с масштабом на широком экране; фон проявляется */
+.sheet[open] { animation: sheet-in var(--dur-m) var(--ease-out) both; }
+.sheet[open]::backdrop { animation: fade-in var(--dur-m) var(--ease-out) both; }
+@keyframes sheet-in { from { opacity: 0; transform: translateY(1.5rem); } to { opacity: 1; transform: none; } }
+@media (min-width: 48rem) { .sheet[open] { animation-name: sheet-in-wide; } }
+@keyframes sheet-in-wide { from { opacity: 0; transform: scale(0.96) translateY(0.5rem); } to { opacity: 1; transform: none; } }
+
+/* нажатия и наведение */
+.btn, .fab, .chip, .seg button, .theme-tile, .link-list a, .tile__link { transition: transform var(--dur-s) var(--ease-out), background-color var(--dur) var(--ease-out), border-color var(--dur) var(--ease-out), color var(--dur) var(--ease-out), box-shadow var(--dur) var(--ease-out), opacity var(--dur) var(--ease-out); }
+.btn:active, .fab:active, .chip:active, .seg button:active, .theme-tile:active { transform: scale(0.96); }
+.fab { transition-property: transform, box-shadow, background-color; }
+.fab:active { transform: scale(0.92) rotate(90deg); transition-timing-function: var(--ease-spring); }
+@media (hover: hover) {
+  .btn:hover, .chip:hover, .theme-tile:hover, .link-list a:hover { border-color: var(--c-accent); }
+  .theme-tile:hover { transform: translateY(-2px); }
+  .fab:hover { transform: scale(1.06); }
+}
+.seg button[aria-pressed="true"] { transition-timing-function: var(--ease-spring); }
+.bar::-webkit-progress-value { transition: width var(--dur-l) var(--ease-out); }
+
+/* смена темы: цвета перетекают, а не щёлкают */
+body, .card, .tile, .sheet, .field, .nav, .topbar { transition: background-color var(--dur-m) var(--ease), border-color var(--dur-m) var(--ease), color var(--dur-m) var(--ease); }
+
+.skill .row { display: flex; flex-wrap: wrap; gap: var(--sp-2); }

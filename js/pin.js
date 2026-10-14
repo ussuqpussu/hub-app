@@ -76,6 +76,10 @@ export function createLock(root, { onUnlock, onLock }) {
   let mode = 'enter';
   let pendingRaw = null; // ключ из кода восстановления, пока не задан PIN
 
+  // Неверный ввод: коробка встряхивается, подсказка появляется плавно.
+  const box0 = root.querySelector('.lock__box');
+  new MutationObserver(() => { if (!err.textContent || !box0) return; box0.classList.remove('lock__box--shake'); void box0.offsetWidth; box0.classList.add('lock__box--shake'); }).observe(err, { childList: true, characterData: true, subtree: true });
+
   const valid = (v) => /^\d{4,6}$/.test(v);
 
   function show(newMode) {
@@ -108,7 +112,9 @@ export function createLock(root, { onUnlock, onLock }) {
       hint.textContent = '';
       submit.textContent = 'Открыть';
     }
+    root.classList.remove('lock--out');
     root.hidden = false;
+    root.classList.remove('lock--in'); void root.offsetWidth; root.classList.add('lock--in');
     state.unlocked = false;
     document.getElementById('app').hidden = true;
     if (mode !== 'recovery') (mode === 'restore' ? codeInput : input).focus();
@@ -117,8 +123,9 @@ export function createLock(root, { onUnlock, onLock }) {
   function finishUnlock() {
     state.unlocked = true;
     state.fails = 0;
-    root.hidden = true;
     document.getElementById('app').hidden = false;
+    root.classList.add('lock--out');
+    setTimeout(() => { if (state.unlocked) { root.hidden = true; root.classList.remove('lock--out'); } }, 320);
     onUnlock();
   }
 
