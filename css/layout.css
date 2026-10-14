@@ -727,10 +727,6 @@ body, .card, .tile, .sheet, .field, .nav, .topbar { transition: background-color
 .tile--warn { border-color: var(--c-danger); }
 @media (hover: hover) { .bento > .tile { transition: transform var(--dur) var(--ease-out), border-color var(--dur) var(--ease-out); } .bento > .tile:hover { transform: translateY(-2px); } }
 
-.tile--quote { align-content: start; gap: var(--sp-2); }
-.qt { margin: 0; font-family: var(--font-head); font-weight: var(--fw-head); font-size: var(--fs-m); line-height: 1.35; padding-left: var(--sp-3); border-left: 3px solid var(--c-accent); }
-.qt__who { color: var(--c-dim); font-size: var(--fs-s); font-style: normal; }
-.tile--quote .btn { justify-self: start; }
 
 /* Страницы: быстрый ввод, ровные ряды кнопок */
 .row--start { justify-content: flex-start; }
@@ -779,7 +775,6 @@ html[data-effects="off"] .cat-holder .pet *, .cat-holder .pet[data-still] * { an
 
 /* Цитата дня на широком экране: в правом нижнем углу, рядом с кнопкой «+» */
 @media (min-width: 70rem) {
-  html[data-hero-pos="side"] .tile--quote { position: fixed; right: calc(var(--sp-6) + var(--fab) + var(--sp-3)); bottom: var(--sp-6); width: 21rem; z-index: 5; background: var(--c-surface); }
 }
 
 /* Мифы: ворон-питомец (вместо кота) */
@@ -816,3 +811,17 @@ html[data-effects="off"] .nav__ind, html[data-effects="off"] .seg__thumb { trans
   html[data-hero-pos="side"] .main > .hero { height: clamp(18rem, 56vh, 80rem); }
 }
 @media (min-width: 100rem) { .main { max-width: clamp(120rem, 92vw, 240rem); } }
+
+/* Цитата дня на фоне под анимацией: без плитки и кнопок */
+:root { --hq: 7.5rem; }
+.hero--stage { display: flex; flex-direction: column; height: calc(var(--hero-h) + var(--hq)); }
+@media (min-width: 48rem) { .hero--stage { height: calc(clamp(17rem, 19vw, 34rem) + var(--hq)); } }
+.hero--stage .hero__frame { position: relative; inset: auto; flex: 1 1 0; min-height: 0; width: 100%; height: auto; }
+.hero__quote { flex: none; margin: 0; min-height: var(--hq); padding: var(--sp-3) var(--sp-4) var(--sp-2); display: grid; align-content: start; justify-items: center; gap: var(--sp-1); text-align: center; pointer-events: none; }
+.hero__q { margin: 0; max-width: 34rem; font-family: var(--font-head); font-weight: var(--fw-head); font-style: italic; font-size: clamp(.95rem, .9rem + .35vw, 1.5rem); line-height: 1.4; color: var(--c-text); opacity: .92; }
+.hero__who { color: var(--c-dim); font-size: var(--fs-s); }
+html[data-hero-pos="bg"] .hero__quote { display: none; }
+@media (min-width: 70rem) {
+  html[data-hero-pos="side"] .main > .hero--stage { height: clamp(22rem, 62vh, 84rem); }
+  html[data-hero-pos="side"] .hero__q { max-width: 40rem; font-size: clamp(1rem, .8rem + .55vw, 1.9rem); }
+}

@@ -93,7 +93,6 @@ function sessionStorageGet(k) { try { return sessionStorage.getItem(k); } catch 
 
 // Заставка темы «Мифы»: видео (звезда загорается, фон темнеет, открывается хаб). Показывается один раз за сеанс, по касанию пропускается.
 function mythSplash() {
-  try { sessionStorage.setItem('hub.mythSplash', '1'); } catch (e) { /* без хранилища покажется снова */ }
   return new Promise((resolve) => {
     const d = document.createElement('div');
     d.className = 'splash splash--video';
@@ -102,7 +101,7 @@ function mythSplash() {
     v.muted = true; v.autoplay = true; v.playsInline = true;
     ['webm', 'mp4'].forEach((ext) => {
       const src = document.createElement('source');
-      src.src = new URL(`../theme/myth/splash.${ext}`, import.meta.url).href;
+      src.src = new URL(`../theme/myth/splash-trim.${ext}`, import.meta.url).href;
       src.type = `video/${ext}`;
       v.append(src);
     });
@@ -118,13 +117,15 @@ function mythSplash() {
     v.addEventListener('ended', end);
     v.addEventListener('error', end);
     d.addEventListener('click', end);
-    setTimeout(end, 10000);
+    const go = v.play();
+    if (go && go.catch) go.catch(end);
+    setTimeout(end, 9000);
   });
 }
 
 export function showSplash(name = 'Хаб') {
   if (!getAppearance().splash || reducedMotion()) return Promise.resolve();
-  if (document.documentElement.dataset.theme === 'myth' && !sessionStorageGet('hub.mythSplash')) return mythSplash();
+  if (document.documentElement.dataset.theme === 'myth') return mythSplash();
   return new Promise((resolve) => {
     const d = document.createElement('div');
     d.className = 'splash';

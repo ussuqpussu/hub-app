@@ -15,7 +15,6 @@ import { mountSky, bodyPos } from './sky.js';
 import { getWeather, refreshWeather } from './bot-sync.js';
 import { weatherState, cityLine, dayLine } from './weather-calc.js';
 import { getAppearance } from './appearance.js';
-import { QUOTES } from './data/quotes.js';
 import { groupTasks, openTasksTab, INBOX_OLD_DAYS, MAIN_LIMIT } from './tasks-view.js';
 
 const WEEKDAYS_FULL = ['воскресенье', 'понедельник', 'вторник', 'среда', 'четверг', 'пятница', 'суббота'];
@@ -159,19 +158,6 @@ export function todayView({ store, subscribe }) {
       el('p', { class: old ? 'today-warn tile__meta' : 'muted tile__meta', text: !inbox.length ? 'Всё разобрано' : old ? `Старой записи ${days} дн.` : 'Есть неразобранные' }),
       toInbox,
     ]));
-
-    // Цитата дня (по дате; кнопка «Другая» листает дальше)
-    {
-      const base = Math.floor(fromYmd(today).getTime() / 86400000);
-      const q = el('blockquote', { class: 'qt' });
-      const who = el('cite', { class: 'qt__who' });
-      const next = el('button', { type: 'button', class: 'btn btn--s', text: 'Другая' });
-      let k = ((base % QUOTES.length) + QUOTES.length) % QUOTES.length;
-      const show = () => { q.textContent = `«${QUOTES[k][0]}»`; who.textContent = QUOTES[k][1]; };
-      next.addEventListener('click', () => { k = (k + 1) % QUOTES.length; show(); });
-      show();
-      grid.append(el('section', { class: 'card tile tile--w2 tile--quote' }, [el('span', { class: 'tile__kicker', text: 'Цитата дня' }), q, who, next]));
-    }
 
     // Цели
     const goals = store.list('goals').filter((x) => x.progress < 100).sort((a, b) => a.created - b.created).slice(0, 3);

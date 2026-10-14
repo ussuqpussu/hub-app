@@ -18,7 +18,7 @@ import { todayView } from './today-view.js';
 
 export { ICONS, fmtTime };
 
-export const VERSION = '0.31.0 (тема «Мифы» целиком, плавные ползунки, анимации по размеру экрана)';
+export const VERSION = '0.32.0 (Мифы: видео-сцены из макетов, цитата под сценой, заставка при каждом запуске)';
 
 // Вкладки. group: main (в нижней панели телефона), more (внутри «Ещё»).
 export const TABS = [

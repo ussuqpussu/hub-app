@@ -3,6 +3,8 @@
 // и живёт между страницами: при смене страницы ей отправляется сообщение, перезагрузки нет.
 import { getAppearance, motionAllowed, onAppearance } from './appearance.js';
 import { THEMES, effectiveColors } from './theme.js';
+import { QUOTES } from './data/quotes.js';
+import { QUOTES_GOW } from './data/quotes-gow.js';
 
 export const PAGE_INDEX = { today: 0, schedule: 1, tasks: 2, projects: 3, 'smart-home': 4, subscriptions: 5, notes: 6, knowledge: 7, settings: 8 };
 const ENGINE = new URL('../theme/engine.html', import.meta.url).href;
@@ -10,6 +12,19 @@ const ENGINE = new URL('../theme/engine.html', import.meta.url).href;
 let box = null; // { el, frame, ready, pending, theme }
 let projects = [];
 let sent = ''; // что уже отправлено рамке, чтобы не перерисовывать сцену зря
+
+
+// Цитата дня лежит на фоне под анимацией: только текст и автор, без плитки и кнопок. Меняется раз в сутки.
+function dayQuote(name) {
+  const list = name === 'Мифы' ? QUOTES_GOW : QUOTES;
+  const day = Math.floor((Date.now() - new Date().getTimezoneOffset() * 60000) / 86400000);
+  return list[((day % list.length) + list.length) % list.length];
+}
+function fillQuote(el, name) {
+  const [text, who] = dayQuote(name);
+  el.querySelector('.hero__q').textContent = `«${text}»`;
+  el.querySelector('.hero__who').textContent = who;
+}
 
 const engineName = (themeId) => (THEMES.find((t) => t.id === themeId) || {}).engine || null;
 
@@ -50,7 +65,11 @@ export function sceneHero(themeId, route) {
   el.className = 'hero hero--stage';
   el.setAttribute('role', 'img');
   el.setAttribute('aria-label', `Анимация темы «${name}»`);
-  el.append(frame);
+  const quote = document.createElement('figure');
+  quote.className = 'hero__quote';
+  quote.innerHTML = '<blockquote class="hero__q"></blockquote><figcaption class="hero__who"></figcaption>';
+  el.append(frame, quote);
+  fillQuote(el, name);
   sent = '';
   box = { el, frame, ready: false, pending: null, theme: themeId };
   return el;
@@ -62,6 +81,7 @@ export function setHeroTheme(themeId, route) {
   const name = engineName(themeId);
   if (!name) { destroyHero(); return; }
   box.theme = themeId;
+  fillQuote(box.el, name);
   message({ t: name, pg: PAGE_INDEX[route] ?? 0, dk: effectiveColors(themeId).dk ? 1 : 0 });
 }
 

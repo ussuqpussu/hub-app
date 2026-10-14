@@ -1,6 +1,7 @@
+var MY_BASE_ADAM=LY.adam;
 /* ===== v36: тема «Мифы» (God of War, греческая и скандинавская мифология) ===== */
-var MYV={gears:"myth/gears.mp4",splash:"myth/splash.mp4"};
-var MYW={gears:"myth/gears.webm",splash:"myth/splash.webm"};
+var MYV={gears:"myth/gears.mp4",splash:"myth/splash.mp4",vase:"myth/wheel.mp4",stars:"myth/sag.mp4",coins:"myth/crate.mp4",hourglass:"myth/hourglass.mp4",scroll:"myth/scroll.mp4"};
+var MYW={gears:"myth/gears.webm",splash:"myth/splash.webm",vase:"myth/wheel.webm",stars:"myth/sag.webm",coins:"myth/crate.webm",hourglass:"myth/hourglass.webm",scroll:"myth/scroll.webm"};
 var MYD={coins:14,stars:5,proj:62,days:3,notes:5,rage:70,ravens:7,lore:18,demo:true};
 var MYPALS={
  base:{n:"Основная",b:"#050505",s:"#101010",t:"#d4d4d4",a:"#f2f2f2",ba:"#050505",asc:"#dcdcdc",r1:"#4a4d55",r2:"#9097a6"},
@@ -179,7 +180,7 @@ function myRaven(){var G=["..................................", "...............
   h=h.replace(/<div class="ad-t">[\s\S]*?<\/div><div class="ad-d">[\s\S]*?<\/div>/,'<div class="ad-t">'+P.n+'</div><div class="ad-d">'+DTS()+'</div>');
   h=h.replace(/<div class="ad-tabs">[\s\S]*?<\/div>(?=<pre)/,'<div class="ad-tabs">'+tabs+'</div><div class="myth-rage" title="Ярость растёт с каждой закрытой задачей и медленно остывает"><span>Ярость</span><u><i style="width:'+Math.round(MYD.rage)+'%"></i></u><b>'+Math.round(MYD.rage)+'%</b>'+chips+'</div>');
   if(P.video)h=h.replace(/<pre class="ad-asc"[\s\S]*?<\/pre>/,'<div class="myth-st">'+myVid(P.video,1)+'</div>');
-  else if(P.c)h=h.replace(/<pre class="ad-asc"[\s\S]*?<\/pre>/,'<div class="myth-st"><canvas class="myth-cv" data-sc="'+P.c+'"></canvas></div>');
+  else if(P.c)h=h.replace(/<pre class="ad-asc"[\s\S]*?<\/pre>/,'<div class="myth-st" data-sc="'+P.c+'">'+myVid(P.c,1)+'</div>');
   h=h.replace(/<svg class="[^"]*ad-cat"[\s\S]*?<\/svg>/,myRaven());
   var j=h.indexOf("</svg>",h.indexOf('class="ad-card"')),k2=h.indexOf('<div class="h9-side">');
   if(j>0&&k2>j)h=h.slice(0,j+6)+myRows(P)+'</div>'+h.slice(k2);
@@ -216,26 +217,36 @@ document.addEventListener("input",function(e){var r=e.target.closest&&e.target.c
  var rg=document.querySelector("#big .myth-rage");if(rg){rg.querySelector("i").style.width=Math.round(MYD.rage)+"%";rg.querySelector("b").textContent=Math.round(MYD.rage)+"%"}});
 document.addEventListener("change",function(e){if(e.target.matches&&e.target.matches("[data-mydemo]")){MYD.demo=e.target.checked;renderRowsDummy()}});
 function renderRowsDummy(){var pg=Math.min(ADPG,MYP.length-1),card=document.querySelector("#big .ad-card");if(card){card.querySelectorAll(".ad-row").forEach(function(x){x.remove()});card.insertAdjacentHTML("beforeend",myRows(MYP[pg]))}}
-/* рисование сцен */
+/* рисование сцен: сцена рисуется в 2× (1280×800), символов столько, чтобы знак был около 4,5 px, на большом экране сетка гуще */
 (function(){
- var last=0,cols=150,rows=56,ramp=" .:-=+*#%@";
+ var last=0,ramp=" .:-=+*#%@",K=2,RW=640*K,RH=400*K;
+ var atlas=null,atKey="";
+ function glyphs(cwPx,chPx,col){
+  var key=cwPx+"x"+chPx+col;if(atKey===key)return atlas;
+  atlas=document.createElement("canvas");atlas.width=cwPx*ramp.length;atlas.height=chPx;
+  var a=atlas.getContext("2d");a.font="bold "+(chPx*.98)+"px ui-monospace,Consolas,'Courier New',monospace";a.textBaseline="middle";a.textAlign="center";a.fillStyle=col;
+  for(var k=1;k<ramp.length;k++)a.fillText(ramp[k],k*cwPx+cwPx/2,chPx/2);
+  atKey=key;return atlas}
  function draw(cv,now){
-  var m=cv._m;if(!m){m=cv._m={sc:cv.dataset.sc,S:{},oc:document.createElement("canvas"),t0:now,lt:now};m.oc.width=640;m.oc.height=400;m.c=m.oc.getContext("2d",{willReadFrequently:true})}
+  var m=cv._m;if(!m){m=cv._m={sc:cv.dataset.sc,S:{},oc:document.createElement("canvas"),t0:now,lt:now};m.oc.width=RW;m.oc.height=RH;m.c=m.oc.getContext("2d",{willReadFrequently:true})}
   var fn=MYS[m.sc];if(!fn)return;
   var dpr=Math.min(2,window.devicePixelRatio||1),w=cv.clientWidth,h=cv.clientHeight;if(!w||!h)return;
   if(cv.width!==Math.round(w*dpr)||cv.height!==Math.round(h*dpr)){cv.width=Math.round(w*dpr);cv.height=Math.round(h*dpr)}
   var t=(now-m.t0)/1000,dt=Math.min(.1,(now-m.lt)/1000);m.lt=now;
-  var c=m.c;c.setTransform(1,0,0,1,0,0);c.globalAlpha=1;c.fillStyle="#000";c.fillRect(0,0,640,400);c.lineCap="butt";
+  var c=m.c;c.setTransform(1,0,0,1,0,0);c.globalAlpha=1;c.fillStyle="#000";c.fillRect(0,0,RW,RH);c.lineCap="butt";c.setTransform(K,0,0,K,0,0);
   fn(c,m.S,t,dt,MYD);
-  var px=c.getImageData(0,0,640,400).data,g=cv.getContext("2d");g.setTransform(dpr,0,0,dpr,0,0);g.clearRect(0,0,w,h);
-  var ch=Math.min(h/rows,w/cols/.6),cw=ch*.6,ox=(w-cw*cols)/2,oy=(h-ch*rows)/2,sx=640/cols,sy=400/rows;
-  g.font="bold "+(ch*.98)+"px ui-monospace,Consolas,'Courier New',monospace";g.textBaseline="middle";g.textAlign="center";
-  g.fillStyle=getComputedStyle(cv).getPropertyValue("--asc-c")||getComputedStyle(cv).color;
-  var cx,cy,x,y;
-  for(cy=0;cy<rows;cy++)for(cx=0;cx<cols;cx++){var sum=0,n=0,x0=Math.floor(cx*sx),y0=Math.floor(cy*sy);
-   for(y=y0;y<y0+sy;y+=2)for(x=x0;x<x0+sx;x+=2){sum+=px[(y*640+x)*4];n++}
-   var tn=sum/n/255;tn=Math.min(1,Math.max(0,(tn-.03)*1.9));if(tn<.04)continue;var idx=Math.min(ramp.length-1,Math.floor(Math.pow(tn,.75)*ramp.length));if(idx<1)continue;
-   g.globalAlpha=.6+.4*tn;g.fillText(ramp[idx],ox+cx*cw+cw/2,oy+cy*ch+ch/2)}
+  var g=cv.getContext("2d");g.setTransform(dpr,0,0,dpr,0,0);g.clearRect(0,0,w,h);
+  var fit=Math.min(w,h*1.6),cols=Math.max(120,Math.min(300,Math.round(fit/(5.5*.6)))),rows=Math.round(cols*.375);
+  var ch=Math.min(h/rows,w/cols/.6),cw=ch*.6,ox=(w-cw*cols)/2,oy=(h-ch*rows)/2;
+  if(!m.sm||m.sm.width!==cols||m.sm.height!==rows){m.sm=document.createElement("canvas");m.sm.width=cols;m.sm.height=rows;m.sg=m.sm.getContext("2d",{willReadFrequently:true});m.sg.imageSmoothingEnabled=true;m.sg.imageSmoothingQuality="high"}
+  m.sg.drawImage(m.oc,0,0,RW,RH,0,0,cols,rows);
+  var px=m.sg.getImageData(0,0,cols,rows).data;
+  var col=getComputedStyle(cv).getPropertyValue("--asc-c")||getComputedStyle(cv).color;
+  var at=glyphs(Math.max(1,Math.round(cw*dpr)),Math.max(1,Math.round(ch*dpr)),col),cwP=at.width/ramp.length,chP=at.height;
+  var cx,cy,i,j;
+  for(cy=0;cy<rows;cy++)for(cx=0;cx<cols;cx++){
+   var tn=px[(cy*cols+cx)*4]/255;tn=Math.min(1,Math.max(0,(tn-.03)*1.9));if(tn<.04)continue;var idx=Math.min(ramp.length-1,Math.floor(Math.pow(tn,.75)*ramp.length));if(idx<1)continue;
+   g.globalAlpha=.6+.4*tn;g.drawImage(at,idx*cwP,0,cwP,chP,ox+cx*cw,oy+cy*ch,cw,ch)}
   g.globalAlpha=1}
  function loop(now){requestAnimationFrame(loop);if(now-last<33)return;last=now;document.querySelectorAll("canvas.myth-cv").forEach(function(cv){try{draw(cv,now)}catch(e){if(!window._myErr){window._myErr=e;console.error(e)}}})}
  requestAnimationFrame(loop)})();
@@ -275,7 +286,7 @@ function myRage(){var L=document.querySelector("#big .lay.ad-myth");if(!L)return
    var hu=rc%2===1,A=hu?MYCAW.h:MYCAW.m;myToast(hu?"ᚺᚢᚷᛁᚾ":"ᛗᚢᚾᛁᚾ",(hu?"Хугин (Мысль): ":"Мунин (Память): ")+A[Math.floor(rc/2)%A.length],"raven");return}
   if(t.closest(".myth-rage")){var D=MYD;if(D.rage>=90)myRage();else myToast("ᚱᚨᚷᛖ","Ярость ещё не набрана. Закрывай задачи, она растёт сама.");return}
   if(t.closest("[data-myrune]")){var n=t.closest("[data-myrune]").getAttribute("title");myToast(myRune(n),"Эльдерфутарк. Здесь написано: «"+n+"». Руны читаются слева направо.","rune");return}
-  var st=t.closest(".myth-st");if(st){var cv=st.querySelector("canvas"),vd=st.querySelector("video"),sc=cv?cv.dataset.sc:vd?"gears":"";
+  var st=t.closest(".myth-st");if(st){var cv=st.querySelector("canvas"),vd=st.querySelector("video"),sc=cv?cv.dataset.sc:vd?(st.dataset.sc||"gears"):"";
    if(sc==="vase")myToast("ᛈᚨᚾᛞᛟᚱᚨ","Ваза, а не пифос Пандоры. Но надежда на дне всё равно осталась.","vase");
    else if(sc==="stars"){window._sn=((window._sn||0)+1)%MYSTN.length;var s=MYSTN[window._sn];myToast("ᚲᛁᚱᛟᚾ","Хирон учил героев стрельбе. "+s[0]+": "+s[1],"stars")}
    else if(sc==="coins")myToast("ᚲᚨᚱᛟᚾ","Обол Харона: плата за переправу через Стикс. Монеты в ящике твои, их не отдавай.","coins");
@@ -460,11 +471,11 @@ MYD.lore=Math.min(40,MYD.lore+myFound().length);
   var ch=t.closest("[data-mychr]");if(ch){myChrCard(+ch.dataset.mychr);return}
   var rw=t.closest(".ad-row");if(rw&&/Предания/.test(rw.textContent)){var n=Math.min(MYCHR.length,Math.floor(MYD.lore/4));window._ci=((window._ci||0)%Math.max(1,n));myChrCard(window._ci);window._ci++;return}
  },true);
- MYSEC.flyraven="Ворон в небе";MYSEC.konami="Код Спарты";
+ MYSEC.konami="Код Спарты";
  function fly(){var L=document.querySelector("#big .lay.ad-myth");if(L&&!document.hidden&&!L.querySelector(".myth-fly")){var d=document.createElement("div");d.className="myth-fly";d.style.top=(10+Math.random()*22)+"%";d.title="Ворон Одина";
   d.innerHTML='<svg viewBox="0 0 46 30"><path d="M23 14C14 6 6 4 1 8C8 8 14 12 18 18Z" fill="#14161c"/><path d="M23 14C32 6 40 4 45 8C38 8 32 12 28 18Z" fill="#14161c"/><path d="M16 17C16 11 30 11 30 17C30 23 26 26 23 26C20 26 16 23 16 17Z" fill="#1d2029"/><path d="M29 15L36 17L29 19Z" fill="#cdbf9a"/><circle cx="26.6" cy="15" r="1" fill="#ff9a3c"/></svg>';L.appendChild(d);setTimeout(function(){d.remove()},8200)}
-  setTimeout(fly,35000+Math.random()*35000)}
- setTimeout(fly,12000);
+  }
+
  var kn=[],KC=["ArrowUp","ArrowUp","ArrowDown","ArrowDown","ArrowLeft","ArrowRight","ArrowLeft","ArrowRight"];
  document.addEventListener("keydown",function(e){var t=e.target;if(t&&/INPUT|TEXTAREA|SELECT/.test(t.tagName))return;kn.push(e.key);kn=kn.slice(-8);if(kn.join()===KC.join()){kn=[];myRage();myToast("ᚲᚱᚨᛏᛟᛊ","Код Спарты принят.","konami")}});
  var _rb=renderBig;renderBig=function(){_rb();try{var inf=document.querySelector("#big .info"),col=document.querySelector("#big .myth-col");if(!inf||!col||col.querySelector(".chr"))return;
@@ -536,12 +547,12 @@ MYART[3]=["Мьёльнир","mjolnir","ᛗᛃᛟᛚᚾᛁᚱ","Молот То�
  th.L="adam";th.x10=0;delete th.ts;
  var HMODE=/(^|[#&])stage/.test(location.hash||"");
  /* страницы хаба (9) -> сцены Мифов (7) */
- var MAP=[0,5,2,1,6,3,4,4,6];
+ var MAP=[0,"b",2,1,"b",5,4,"b",6,3];
  var lay=LY.adam;
  LY.adam=function(t){
   if(!t||t.k!=="myth")return lay(t);
   var o2=ADPG,h;
-  if(HMODE)ADPG=MAP[o2]!=null?MAP[o2]:0;
+  if(HMODE){var mp=MAP[o2];if(mp==="b"){try{return MY_BASE_ADAM(t)}finally{ADPG=o2}}ADPG=mp!=null?mp:0}
   try{h=lay(t)}finally{ADPG=o2}
   h=h.replace('class="lay ad ad-myth"','class="lay ad ad-myth" data-pal="'+(t._pal||"base")+'"');
   if(HMODE){var rm=h.match(/<div class="myth-runes"[^>]*>[^<]*<\/div>/);if(rm){h=h.replace(rm[0],"");var q=h.lastIndexOf("</div>");h=h.slice(0,q)+rm[0]+h.slice(q)}}

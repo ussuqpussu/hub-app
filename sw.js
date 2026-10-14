@@ -1,6 +1,6 @@
 // Service worker: оболочка открывается без сети.
 // При изменении любого файла оболочки увеличивай VERSION, чтобы кэш обновился.
-const VERSION = 'hub-shell-v64';
+const VERSION = 'hub-shell-v65';
 const SHELL = [
   './',
   './index.html',
@@ -23,8 +23,18 @@ const SHELL = [
   './theme/engine.html',
   './theme/myth/gears.webm',
   './theme/myth/gears.mp4',
-  './theme/myth/splash.webm',
-  './theme/myth/splash.mp4',
+  './theme/myth/scroll.mp4',
+  './theme/myth/scroll.webm',
+  './theme/myth/hourglass.mp4',
+  './theme/myth/hourglass.webm',
+  './theme/myth/crate.mp4',
+  './theme/myth/crate.webm',
+  './theme/myth/sag.mp4',
+  './theme/myth/sag.webm',
+  './theme/myth/wheel.mp4',
+  './theme/myth/wheel.webm',
+  './theme/myth/splash-trim.mp4',
+  './theme/myth/splash-trim.webm',
   './js/sky.js',
   './js/pin.js',
   './js/views.js',
