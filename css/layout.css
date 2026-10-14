@@ -751,26 +751,29 @@ body, .card, .tile, .sheet, .field, .nav, .topbar { transition: background-color
 /* Фокус после перехода не рисует рамку вокруг всей колонки */
 .main:focus, .main:focus-visible { outline: none; }
 
-/* Положение анимации темы: сбоку, фоном или сверху (по умолчанию сверху на узких экранах) */
+/* Положение анимации темы: сбоку, фоном или сверху. Широкий монитор: колонка с анимацией растёт вместе с экраном */
 @media (min-width: 70rem) {
-  html[data-hero-pos="side"] .main { max-width: calc(var(--content-max) + 25rem + var(--sp-5)); display: grid; grid-template-columns: minmax(0, 1fr) 24rem; column-gap: var(--sp-5); align-items: start; }
-  html[data-hero-pos="side"] .main > :not(.hero) { grid-column: 1; }
-  html[data-hero-pos="side"] .main > .hero { grid-column: 2; grid-row: 1 / span 30; position: sticky; top: var(--sp-5); height: 26rem; margin: 0; }
+  html[data-hero-pos="side"] .main { max-width: none; display: grid; grid-template-columns: minmax(0, 1fr) clamp(26rem, 38vw, 64rem); column-gap: var(--sp-6); align-items: start; }
+  html[data-hero-pos="side"] .main > :not(.hero) { grid-column: 1; max-width: 100rem; }
+  html[data-hero-pos="side"] .main > .hero { grid-column: 2; grid-row: 1 / span 30; position: sticky; top: var(--sp-5); height: clamp(18rem, 44vh, 38rem); margin: 0; }
 }
+@media (min-width: 100rem) { .main { max-width: 120rem; } }
 html[data-hero-pos="bg"] .main > .hero { position: fixed; inset: 0; width: 100%; height: 100%; margin: 0; z-index: -1; opacity: .15; pointer-events: none; border-radius: 0; }
 html[data-hero-pos="bg"] .hero__frame { pointer-events: none; }
 
-/* Кот сидит на кнопке «+» */
-.fab-cat { position: fixed; z-index: 10; right: calc(var(--sp-4) + (var(--fab) - 3.8em) / 2); bottom: calc(var(--nav-h) + var(--sp-4) + var(--fab) - .35em + env(safe-area-inset-bottom)); font-size: 16px; width: 3.8em; pointer-events: none; }
-.fab-cat[hidden] { display: none; }
-.fab-cat .pet { display: block; width: 3.8em; height: 3.09em; overflow: visible; filter: drop-shadow(0 0 .3px rgba(0,0,0,.75)) drop-shadow(0 0 .8px rgba(0,0,0,.25)); }
-.fab-cat .pet .pb { fill: var(--pb); } .fab-cat .pet .ps { fill: var(--ps); } .fab-cat .pet .pt { fill: var(--pt); } .fab-cat .pet .pe { fill: var(--pe); } .fab-cat .pet .pn { fill: var(--pn); }
-.fab-cat .cl-eyes { transform-box: fill-box; transform-origin: 50% 50%; animation: catblink2 4.6s infinite; }
-.fab-cat .cl-tail { transform-box: fill-box; transform-origin: 0% 100%; animation: tailsw2 3.4s ease-in-out infinite; }
+/* Кот сидит на плоской поверхности: верхний край плитки или панели */
+.has-cat { position: relative; overflow: visible; }
+.cat-holder { position: absolute; left: 0; right: 0; top: 0; height: 0; z-index: 3; pointer-events: none; font-size: 16px; }
+.cat-holder .pet { position: absolute; right: 1.1em; bottom: -1px; width: 3.8em; height: 3.09em; overflow: visible; filter: drop-shadow(0 0 .3px rgba(0,0,0,.75)) drop-shadow(0 0 .8px rgba(0,0,0,.25)); }
+.cat-holder .pet .pb { fill: var(--pb); } .cat-holder .pet .ps { fill: var(--ps); } .cat-holder .pet .pt { fill: var(--pt); } .cat-holder .pet .pe { fill: var(--pe); } .cat-holder .pet .pn { fill: var(--pn); }
+.cat-holder .cl-eyes { transform-box: fill-box; transform-origin: 50% 50%; animation: catblink2 4.6s infinite; }
+.cat-holder .cl-tail { transform-box: fill-box; transform-origin: 0% 100%; animation: tailsw2 3.4s ease-in-out infinite; }
+.cat-holder .cl-body { transform-box: fill-box; transform-origin: 50% 100%; animation: catbr 4s ease-in-out infinite; }
 @keyframes catblink2 { 0%, 89%, 100% { transform: scaleY(1); } 92%, 96% { transform: scaleY(.12); } }
 @keyframes tailsw2 { 0%, 100% { transform: rotate(-6deg); } 50% { transform: rotate(9deg); } }
-html[data-effects="off"] .fab-cat .pet *, .fab-cat .pet[data-still] * { animation: none !important; }
-@media (min-width: 48rem) { .fab-cat { right: calc(var(--sp-6) + (var(--fab) - 3.8em) / 2); bottom: calc(var(--sp-6) + var(--fab) - .35em); } }
+@keyframes catbr { 0%, 100% { transform: scaleY(1); } 50% { transform: scaleY(1.018); } }
+html[data-effects="off"] .cat-holder .pet *, .cat-holder .pet[data-still] * { animation: none !important; }
+
 /* Цитата дня на широком экране: в правом нижнем углу, рядом с кнопкой «+» */
 @media (min-width: 70rem) {
   html[data-hero-pos="side"] .tile--quote { position: fixed; right: calc(var(--sp-6) + var(--fab) + var(--sp-3)); bottom: var(--sp-6); width: 21rem; z-index: 5; background: var(--c-surface); }

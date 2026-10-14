@@ -112,7 +112,7 @@ export function todayView({ store, subscribe }) {
         mountSky(cv, () => { const w2 = weatherState(getWeather()); const c2 = w2 && (w2.cities.find((c) => c.name === load('hub.weatherCity', 'Москва')) || w2.cities[0]); return c2 && !w2.stale ? c2.kind : 'clear'; });
         body.unshift(cv);
       }
-      grid.append(tile('Погода', body, null, 'w2'));
+      { const wt = tile('Погода', body, null, 'w2'); wt.dataset.cat = 'perch'; grid.append(wt); }
     }
 
     // Расписание на сегодня
