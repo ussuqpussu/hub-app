@@ -22,6 +22,8 @@ const LEGACY = 'hub.pin';
 // Ключ данных на время жизни вкладки: обновление страницы не просит PIN, закрытие вкладки сбрасывает вход.
 const SESSION_KEY = 'hub.session';
 const HIDDEN_KEY = 'hub.hiddenAt';
+// Вход без PIN на этом устройстве: ключ данных лежит в localStorage открыто (осознанный выбор владельца).
+const TRUST_KEY = 'hub.deviceKey';
 
 function sessGet(k) {
   try {
@@ -149,6 +151,46 @@ export async function resumeSession() {
   }
 }
 
+export function hasTrust() {
+  const t = load(TRUST_KEY);
+  return !!(t && t.k);
+}
+
+export async function enableTrust(pin) {
+  const vault = load(KEY);
+  if (!vault) throw new Error('no-vault');
+  const wrapKey = await deriveWrapKey(pin, vault.salt, vault.iter);
+  let raw;
+  try {
+    raw = await decryptBytes(wrapKey, vault.wrappedKey);
+  } catch (_) {
+    throw new Error('wrong-pin');
+  }
+  save(TRUST_KEY, { v: 1, k: bytesToB64(raw) });
+}
+
+export function disableTrust() {
+  remove(TRUST_KEY);
+}
+
+// Открывает хранилище без PIN, если на этом устройстве включён вход без PIN.
+export async function resumeTrusted() {
+  const vault = load(KEY);
+  const t = load(TRUST_KEY);
+  if (!vault || !t || !t.k) return false;
+  try {
+    await openSession(b64ToBytes(t.k), vault);
+    if (vault.token && !session.token) {
+      lockVault();
+      return false;
+    }
+    return true;
+  } catch (_) {
+    lockVault();
+    return false;
+  }
+}
+
 export async function verifyPin(pin) {
   try {
     const vault = load(KEY);
@@ -207,6 +249,7 @@ export function getRepo() {
 
 export function wipeEverything() {
   lockVault();
+  remove(TRUST_KEY);
   remove(KEY);
   remove(LEGACY);
 }

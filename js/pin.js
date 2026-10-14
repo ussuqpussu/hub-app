@@ -15,6 +15,8 @@ import {
   markHidden,
   clearHidden,
   getHiddenAt,
+  hasTrust,
+  resumeTrusted,
 } from './data/vault.js';
 
 const KEY_AUTOLOCK = 'hub.autolock';
@@ -252,7 +254,7 @@ export function createLock(root, { onUnlock, onLock }) {
       return;
     }
     const min = getAutolock();
-    if (state.unlocked && min > 0 && state.hiddenAt && Date.now() - state.hiddenAt > min * 60000) {
+    if (state.unlocked && !hasTrust() && min > 0 && state.hiddenAt && Date.now() - state.hiddenAt > min * 60000) {
       doLock();
       show('enter');
     } else if (state.unlocked) {
@@ -264,6 +266,8 @@ export function createLock(root, { onUnlock, onLock }) {
     async start() {
       show(vaultExists() || legacyPinExists() ? 'enter' : 'setup');
       if (!vaultExists()) return;
+      // Вход без PIN включён на этом устройстве: открываем сразу.
+      if (hasTrust() && (await resumeTrusted())) { finishUnlock(); return; }
       // Обновление страницы: если вкладку не закрывали и автоблокировка не сработала, PIN не нужен.
       const min = getAutolock();
       const hiddenAt = getHiddenAt();

@@ -1,6 +1,6 @@
 import { appearanceBlock } from './appearance-view.js';
 import { AUTOLOCK_OPTIONS, getAutolock, setAutolock } from './pin.js';
-import { verifyPin, changePin, getRecoveryCode, setToken, clearToken, getSession } from './data/vault.js';
+import { hasTrust, enableTrust, disableTrust, verifyPin, changePin, getRecoveryCode, setToken, clearToken, getSession } from './data/vault.js';
 import { createGithub } from './data/github.js';
 import { load } from './storage.js';
 import { el, ICONS, fmtTime } from './ui.js';
@@ -222,12 +222,39 @@ function settingsView({ onLockNow, store, subscribe }) {
 
   const lockBtn = el('button', { class: 'btn', type: 'button', text: 'Заблокировать сейчас' });
   lockBtn.addEventListener('click', onLockNow);
+  // Вход без PIN на этом устройстве
+  const trustBox = el('div', { class: 'stack' });
+  const paintTrust = () => {
+    if (hasTrust()) {
+      const off = el('button', { class: 'btn', type: 'button', text: 'Вернуть запрос PIN' });
+      off.addEventListener('click', () => { disableTrust(); paintTrust(); });
+      trustBox.replaceChildren(
+        el('p', { text: 'Вход без PIN включён: хаб открывается сразу. Ключ данных хранится на этом устройстве открыто, поэтому любой, кто откроет хаб здесь, увидит всё.' }),
+        off,
+      );
+      lockBtn.hidden = true;
+      sel.disabled = true;
+      return;
+    }
+    lockBtn.hidden = false;
+    sel.disabled = false;
+    const tp = pinField('PIN для подтверждения');
+    const tm = el('p', { class: 'muted', role: 'status' });
+    const on = el('form', { class: 'stack' }, [tp, el('button', { class: 'btn', type: 'submit', text: 'Входить без PIN на этом устройстве' }), tm]);
+    on.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      try { await enableTrust(tp.value); paintTrust(); } catch (_) { tm.textContent = 'PIN неверный.'; }
+    });
+    trustBox.replaceChildren(on, el('p', { class: 'muted', text: 'Ключ данных будет храниться на устройстве открыто: так удобнее, но слабее защита, если кто-то получит доступ к разблокированному устройству.' }));
+  };
+  paintTrust();
   root.append(
     el('div', { class: 'settings-group' }, [
       el('h2', { text: 'Безопасность' }),
       el('label', { class: 'stack' }, [el('span', { text: 'Автоблокировка при сворачивании' }), sel]),
       change,
       codeForm,
+      trustBox,
       lockBtn,
       el('p', { class: 'muted', text: 'PIN открывает ключ, которым шифруются личные записи. Если устройство потеряно: отзови токен на github.com (Settings → Developer settings). Без кода восстановления данные на новом устройстве не открыть.' }),
     ]),
