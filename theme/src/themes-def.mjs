@@ -26,4 +26,6 @@ export const NEW_THEMES = [
     bg: '#120c09', surface: '#1d130e', text: '#f5e6da', accent: '#ff8a3d', onAccent: '#120c09', dim: '#bda391', font: SANS, card: '.8em', btn: '99px', layout: 'air', pal: ['#ff8a3d', '#ffd08a', '#3a2418', '#f5e6da'] },
   { id: 'letterpress', name: 'Типограф', group: 'Светлые', dark: false, note: 'Светлая: типографская краска на кремовой бумаге, киноварь', desc: 'Книжная печать. Анимации: литеры встают в строку, оттиск штампа, растр печатной краски, листы с типографским набором',
     bg: '#f3eddc', surface: '#fbf7ea', text: '#181512', accent: '#c0261d', onAccent: '#ffffff', dim: '#5b5448', font: SERIF, card: '0', btn: '0', layout: 'side', pal: ['#c0261d', '#181512', '#e1d8bd', '#6a5f45'] },
+  { id: 'myth', name: 'Мифы', group: 'Тёмные', dark: true, note: 'Тёмная: чёрно-серебряная, по мотивам God of War и мифологии', desc: 'Греческая и скандинавская мифология. Анимации из символов: гончарный круг, где комок глины становится амфорой; созвездие Стрелец; песочные часы; свиток',
+    bg: '#050505', surface: '#101010', text: '#d4d4d4', accent: '#f2f2f2', onAccent: '#050505', dim: '#a0a0a0', font: SERIF, card: '.3em', btn: '.3em', layout: 'side', pal: ['#f2f2f2', '#9097a6', '#4a4d55', '#d4d4d4'] },
 ];
