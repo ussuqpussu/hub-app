@@ -18,7 +18,7 @@ import { todayView } from './today-view.js';
 
 export { ICONS, fmtTime };
 
-export const VERSION = '0.30.0 (Финальная версия: погода без бота, скиллы, плавное движение)';
+export const VERSION = '0.31.0 (тема «Мифы» целиком, плавные ползунки, анимации по размеру экрана)';
 
 // Вкладки. group: main (в нижней панели телефона), more (внутри «Ещё»).
 export const TABS = [

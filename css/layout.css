@@ -788,3 +788,31 @@ html[data-effects="off"] .cat-holder .pet *, .cat-holder .pet[data-still] * { an
 @keyframes rvtilt { 0%, 62%, 100% { transform: rotate(0); } 68% { transform: rotate(-9deg); } 76% { transform: rotate(4deg); } 84% { transform: rotate(-3deg); } }
 @keyframes rvblink { 0%, 92%, 100% { opacity: 1; } 95% { opacity: .1; } }
 @media (prefers-reduced-motion: reduce) { .cat-holder .pet .rv-head, .cat-holder .pet .rv-eye { animation: none; } }
+
+/* ===== Плавные ползунки (0.31.0): боковая и нижняя панель, сегменты ===== */
+.nav { isolation: isolate; }
+.nav[data-ind] .nav__item { position: relative; z-index: 1; }
+.nav__ind { position: absolute; left: 0; top: 0; z-index: 0; pointer-events: none; width: var(--iw, 0); height: var(--ih, 0); transform: translate(var(--ix, 0), var(--iy, 0)); background: var(--c-fill); border-radius: var(--radius-pill); opacity: 0; }
+.nav__ind[data-ready] { transition: transform var(--dur-m) var(--ease-out), width var(--dur-m) var(--ease-out), height var(--dur-m) var(--ease-out), opacity var(--dur) var(--ease-out); }
+.nav[data-ind] .nav__item[aria-current="page"] { background: none; }
+/* телефон: тонкая полоска акцента над выбранной вкладкой */
+@media (max-width: 47.999rem) {
+  .nav__ind { height: 3px; background: var(--c-accent); border-radius: 0 0 var(--radius-pill) var(--radius-pill); width: calc(var(--iw, 0px) * .5); transform: translate(calc(var(--ix, 0px) + var(--iw, 0px) * .25), 0); }
+}
+.nav[data-ind] .nav__item { transition: color var(--dur-m) var(--ease-out); }
+
+.seg--thumb { position: relative; isolation: isolate; }
+.seg--thumb button { position: relative; z-index: 1; }
+.seg--thumb button[aria-pressed="true"] { background: transparent; box-shadow: none; }
+.seg__thumb { position: absolute; left: 0; top: 0; z-index: 0; pointer-events: none; width: var(--iw, 0); height: var(--ih, 0); transform: translate(var(--ix, 0), var(--iy, 0)); background: var(--c-surface); border-radius: var(--radius-pill); box-shadow: 0 0 0 var(--border) var(--c-line); opacity: 0; }
+.seg__thumb[data-ready] { transition: transform var(--dur-m) var(--ease-spring), width var(--dur-m) var(--ease-out), height var(--dur-m) var(--ease-out), opacity var(--dur) var(--ease-out); }
+html[data-effects="off"] .nav__ind, html[data-effects="off"] .seg__thumb { transition: none !important; }
+@media (prefers-reduced-motion: reduce) { .nav__ind, .seg__thumb { transition: none !important; } }
+
+/* Анимация темы подстраивается под размер экрана: на большом мониторе растёт и по высоте, и по ширине */
+@media (min-width: 48rem) { .hero { height: clamp(17rem, 19vw, 34rem); } }
+@media (min-width: 70rem) {
+  html[data-hero-pos="side"] .main { grid-template-columns: minmax(0, 1fr) clamp(26rem, 40vw, 110rem); }
+  html[data-hero-pos="side"] .main > .hero { height: clamp(18rem, 56vh, 80rem); }
+}
+@media (min-width: 100rem) { .main { max-width: clamp(120rem, 92vw, 240rem); } }

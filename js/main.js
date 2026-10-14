@@ -11,6 +11,7 @@ import { initFx } from './fx.js';
 import { initCat } from './cat.js';
 import { sceneHero, initHero, setHeroTheme, setHeroProjects } from './hero.js';
 import { initSky } from './sky.js';
+import { initMotionUi } from './motion-ui.js';
 import { importInbox, refreshPulse, refreshWeather, sendBotConfig, reportHubErrors } from './bot-sync.js';
 import { onProjects, getProjectsState } from './projects-data.js';
 import { mergedProjects } from './projects-view.js';
@@ -135,6 +136,7 @@ function route() {
 }
 
 buildNav();
+initMotionUi({ nav });
 document.getElementById('gear').innerHTML = ICONS.gear;
 document.getElementById('search-btn').innerHTML = ICONS.search;
 document.getElementById('fab').innerHTML = `${ICONS.plus}<span class="sr-only">Добавить запись</span>`;
