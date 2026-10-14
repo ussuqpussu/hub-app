@@ -1,6 +1,6 @@
 // «Небо за окном» и погода: анимированная сцена по времени суток и погоде, нарисованная в манере выбранной темы
 // (те же приёмы shp/цвета, что у сцен тем: плоская заливка, линия, свечение, стекло, акварель).
-import { renderScene, SCENE_THEMES } from './scenes.js';
+import { renderScene } from './canvas-env.js';
 import { motionAllowed, onAppearance } from './appearance.js';
 
 const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
@@ -44,8 +44,6 @@ export const SKY_KINDS = { clear: { clouds: 1 }, cloud: { clouds: 5 }, fog: { cl
 
 // Тема для рисования: сцены темы или запасной набор из цветов страницы (для «Сотворения» и своей темы).
 export function skyTheme(themeId) {
-  const th = SCENE_THEMES[themeId] || SCENE_THEMES[themeId === 'custom' ? 'minimal' : ''];
-  if (th) return th;
   const cs = getComputedStyle(document.documentElement);
   const v = (n, d) => cs.getPropertyValue(n).trim() || d;
   const dk = cs.colorScheme.includes('dark');

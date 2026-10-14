@@ -18,7 +18,7 @@ import { todayView } from './today-view.js';
 
 export { ICONS, fmtTime };
 
-export const VERSION = '0.23.0 (Выбор сцен по страницам)';
+export const VERSION = '0.24.0 (Сотворение как эталон, 10 новых тем)';
 
 // Вкладки. group: main (в нижней панели телефона), more (внутри «Ещё»).
 export const TABS = [

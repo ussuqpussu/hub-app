@@ -1,83 +1,76 @@
-// Сцена сверху страницы: анимация темы на отдельной полосе, текст её не перекрывает.
-// Сцены (js/scenes.js) перенесены из превью тем; у каждой страницы своя сцена из четырёх.
+// Сцена сверху страницы. Её рисует движок тем (theme/engine.html в режиме #stage): тот же код, что в превью тем,
+// поэтому руки, звезда, ASCII-тон и анимации выглядят один в один. Рамка с движком создаётся один раз
+// и живёт между страницами: при смене страницы ей отправляется сообщение, перезагрузки нет.
 import { getAppearance, motionAllowed, onAppearance } from './appearance.js';
-import { SCENE_THEMES, SCENE_NAMES, renderScene } from './scenes.js';
-import { asciiFrame, ASCII_NAMES } from './ascii-scenes.js';
+import { THEMES, effectiveColors } from './theme.js';
 
 export const PAGE_INDEX = { today: 0, schedule: 1, tasks: 2, projects: 3, 'smart-home': 4, subscriptions: 5, notes: 6, knowledge: 7, settings: 8 };
+const ENGINE = new URL('../theme/engine.html', import.meta.url).href;
 
-// Номер сцены (0..3) на странице: выбор человека, иначе значение по умолчанию из темы.
-export function sceneIndex(themeId, pg) {
-  const th = SCENE_THEMES[themeId];
-  const mine = (getAppearance().scenes || {})[themeId];
-  const v = Array.isArray(mine) ? mine[pg] : null;
-  if (Number.isInteger(v) && v >= 0 && v < 4) return v;
-  return ((th && th.tm) || [0, 1, 2, 3, 0, 1, 2, 3, 0])[pg] || 0;
-}
-export const sceneInfo = (themeId, route) => {
-  const th = SCENE_THEMES[themeId];
-  const pg = PAGE_INDEX[route];
-  if (themeId === 'creation' && pg != null) return { pg, name: ASCII_NAMES[pg] || 'Сцена', ascii: true };
-  if (!th || pg == null) return null;
-  const k = sceneIndex(themeId, pg);
-  return { pg, name: (SCENE_NAMES[th.ts] || [])[k] || 'Сцена' };
-};
+let box = null; // { el, frame, ready, pending, theme }
+let projects = [];
+let sent = ''; // что уже отправлено рамке, чтобы не перерисовывать сцену зря
 
-let current = null; // { cv, theme, pg, raf }
-function stop() { if (current) { cancelAnimationFrame(current.raf); current.raf = 0; } }
+const engineName = (themeId) => (THEMES.find((t) => t.id === themeId) || {}).engine || null;
 
-// ASCII-сцена «Сотворения»: кадр текстом в <pre>, размер шрифта подбирается под полосу.
-function drawAscii(c, t) {
-  const f = asciiFrame(c.pg, c.pg === 6 ? t + 12 : t);
-  if (!f) return;
-  const el = c.cv;
-  el.textContent = f;
-  const lines = f.split('\n');
-  const cols = lines.reduce((m, l) => Math.max(m, l.length), 1);
-  const w = el.clientWidth;
-  const h = el.clientHeight;
-  if (w && h) el.style.fontSize = `${Math.max(2, Math.min(w / (cols * 0.6), h / lines.length)).toFixed(2)}px`;
-}
-function drawFrame(c, t) { if (c.ascii) drawAscii(c, t); else { const th = SCENE_THEMES[c.theme]; const tm = (th.tm || [0, 1, 2, 3, 0, 1, 2, 3, 0]).slice(); tm[c.pg] = sceneIndex(c.theme, c.pg); renderScene(c.cv, c.theme, c.pg, t, 2, null, { ...th, tm }); } }
-
-function loop(now) {
-  const c = current;
-  if (!c) return;
-  c.raf = requestAnimationFrame(loop);
-  if (!c.cv.isConnected) { stop(); current = null; return; }
-  if (now - c.last < (c.ascii ? 90 : 33)) return;
-  c.last = now;
-  drawFrame(c, (now - c.t0) / 1000);
+function message(m) {
+  if (!box || !box.frame.contentWindow) return;
+  if (!box.ready) { box.pending = { ...(box.pending || {}), ...m }; return; }
+  box.frame.contentWindow.postMessage({ type: 'hub-set', ...m }, '*');
 }
 
-function drawStill() { if (current && current.cv.isConnected) drawFrame(current, 2.5); }
+window.addEventListener('message', (e) => {
+  if (!box || !e.data || e.data.type !== 'hub-engine-ready' || e.source !== box.frame.contentWindow) return;
+  box.ready = true;
+  if (projects.length) { sent = JSON.stringify(projects); message({ projects }); }
+  if (box.pending) { const p = box.pending; box.pending = null; message(p); }
+});
 
-function sync() {
-  if (!current) return;
-  stop();
-  if (document.hidden) return;
-  if (motionAllowed()) { current.last = 0; current.raf = requestAnimationFrame(loop); } else drawStill();
+export function destroyHero() {
+  if (box) { box.el.remove(); box = null; }
 }
 
-// Возвращает холст или null, если для темы и страницы сцены нет или она выключена.
+// Возвращает контейнер сцены (один и тот же между страницами) или null, если сцены нет.
 export function sceneHero(themeId, route) {
-  stop();
-  current = null;
-  if (!getAppearance().hero) return null;
-  const info = sceneInfo(themeId, route);
-  if (!info) return null;
-  const cv = document.createElement(info.ascii ? 'pre' : 'canvas');
-  cv.className = info.ascii ? 'hero hero--ascii' : 'hero';
-  cv.setAttribute('role', 'img');
-  cv.setAttribute('aria-label', `Анимация: ${info.name}`);
-  current = { cv, theme: themeId, pg: info.pg, ascii: !!info.ascii, raf: 0, t0: performance.now(), last: 0 };
-  // размеры известны только после вставки в страницу
-  requestAnimationFrame(() => { if (current && current.cv === cv) sync(); });
-  return cv;
+  const pg = PAGE_INDEX[route];
+  const name = engineName(themeId);
+  if (!getAppearance().hero || !motionAllowed() || pg == null || !name) { destroyHero(); return null; }
+  const dk = effectiveColors(themeId).dk ? 1 : 0;
+  if (box && box.theme === themeId) {
+    message({ pg, dk });
+    return box.el;
+  }
+  destroyHero();
+  const frame = document.createElement('iframe');
+  frame.className = 'hero__frame';
+  frame.title = `Анимация темы «${name}»`;
+  frame.setAttribute('loading', 'eager');
+  frame.src = `${ENGINE}#stage&t=${encodeURIComponent(name)}&pg=${pg}&dk=${dk}`;
+  const el = document.createElement('div');
+  el.className = 'hero hero--stage';
+  el.setAttribute('role', 'img');
+  el.setAttribute('aria-label', `Анимация темы «${name}»`);
+  el.append(frame);
+  sent = '';
+  box = { el, frame, ready: false, pending: null, theme: themeId };
+  return el;
+}
+
+// Смена темы без перезагрузки рамки.
+export function setHeroTheme(themeId, route) {
+  if (!box) return;
+  const name = engineName(themeId);
+  if (!name) { destroyHero(); return; }
+  box.theme = themeId;
+  message({ t: name, pg: PAGE_INDEX[route] ?? 0, dk: effectiveColors(themeId).dk ? 1 : 0 });
+}
+
+// Список проектов для сцены «Проекты»: реальные названия вместо учебных.
+export function setHeroProjects(list) {
+  projects = (list || []).slice(0, 8).map((p, i) => ({ id: String(p.id || i), name: String(p.name || '').slice(0, 24), type: String(p.type || ''), st: String(p.st || 'в работе'), pr: Math.max(0, Math.min(100, Math.round(+p.pr || 0))), next: String(p.next || ''), upd: String(p.upd || '') }));
+  if (projects.length && JSON.stringify(projects) !== sent) { sent = JSON.stringify(projects); message({ projects }); }
 }
 
 export function initHero() {
-  onAppearance(sync);
-  document.addEventListener('visibilitychange', sync);
-  window.addEventListener('resize', () => { clearTimeout(initHero.t); initHero.t = setTimeout(sync, 200); });
+  onAppearance(() => { if (!getAppearance().hero || !motionAllowed()) destroyHero(); });
 }

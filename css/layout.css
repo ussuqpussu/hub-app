@@ -650,3 +650,9 @@ input[type="range"].field { padding: 0; }
 .hero { display: block; width: 100%; height: var(--hero-h); margin-bottom: var(--sp-4); background: var(--c-surface); border: var(--border) solid var(--c-line); border-radius: var(--radius-m); }
 @media (min-width: 48rem) { .hero { height: var(--hero-h-wide); } }
 pre.hero { display: flex; justify-content: center; align-items: center; overflow: hidden; margin: 0 0 var(--sp-4); white-space: pre; line-height: 1; font-family: var(--font-mono); color: var(--c-text); text-align: left; }
+
+/* Сцена темы: рамка с движком (theme/engine.html), прозрачная, текст не перекрывает */
+.hero--stage { position: relative; overflow: hidden; background: transparent; border: 0; }
+.hero__frame { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; background: transparent; }
+.theme-editor { margin-top: var(--sp-4); }
+.theme-editor__frame { display: block; width: 100%; height: 70dvh; min-height: 24rem; border: var(--border) var(--border-style) var(--c-line); border-radius: var(--radius-m); background: var(--c-surface); }

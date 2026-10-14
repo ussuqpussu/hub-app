@@ -4,7 +4,7 @@ import { getAppearance, onAppearance, motionAllowed } from './appearance.js';
 import { THEME_DEFS } from './theme-data.js';
 
 // Какая анимация подходит каждой теме по умолчанию.
-export const THEME_FX = { creation: 'stars', macos: 'blobs', water: 'blobs', film: 'dust', graph: 'off', chalk: 'off', terra: 'sun', forest: 'fireflies', cobalt: 'off', night: 'stars', dawn: 'blobs', scandi: 'mist', minimal: 'off', 'minimal-dark': 'off', classic: 'off', neutral: 'off' };
+export const THEME_FX = { creation: 'stars' };
 
 const rnd = (a, b) => a + Math.random() * (b - a);
 const cssVar = (n) => getComputedStyle(document.documentElement).getPropertyValue(n).trim();

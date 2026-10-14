@@ -10,7 +10,13 @@ const lum = (h) => { const v = parseInt(h.slice(1), 16); const c = [(v >> 16) & 
 const cr = (a, b) => { const [x, y] = [lum(a), lum(b)].sort((p, q) => q - p); return (x + 0.05) / (y + 0.05); };
 
 assert.equal(readFileSync(new URL('../css/themes.css', import.meta.url), 'utf8'), css(), 'themes.css не совпадает с theme-data.js: запусти node scripts/gen-themes.mjs'); n += 1;
-assert.equal(THEME_DEFS.length, 14); n += 1;
+assert.equal(THEME_DEFS.length, 10); n += 1;
+const engine = readFileSync(new URL('../theme/engine.html', import.meta.url), 'utf8');
+for (const t of THEME_DEFS) {
+  assert.ok(engine.includes(`hubAddTheme({"n":"${t.name}"`), `${t.id}: нет в движке`);
+  assert.ok(new RegExp(`TSC\\.${t.id}\\s*=\\s*\\[`).test(engine) && new RegExp(`TSN\\.${t.id}\\s*=\\s*\\[("[^"]+",?\\s*){4}\\]`).test(engine), `${t.id}: нет четырёх сцен`);
+  n += 2;
+}
 for (const t of THEME_DEFS) {
   const surf = t.surface.startsWith('#') ? t.surface : t.bg;
   assert.ok(cr(t.text, t.bg) >= 7 && cr(t.text, surf) >= 7, `${t.id}: текст`);
@@ -23,9 +29,8 @@ assert.ok(skyColors(12).stars === 0 && skyColors(0).stars === 1); n += 1;
 assert.equal(bodyPos(13).day, true); assert.equal(bodyPos(23).day, false); n += 2;
 assert.ok(bodyPos(13).y < 0.1); n += 1; // в полдень солнце наверху
 // живые обои
-assert.equal(pickEngine('forest', 'auto'), 'fireflies');
+assert.equal(pickEngine('creation', 'auto'), 'stars');
 assert.equal(pickEngine('minimal', 'auto'), null);
 assert.equal(pickEngine('minimal', 'stars'), 'stars');
-assert.equal(pickEngine('forest', 'off'), null); n += 4;
-assert.ok(Object.keys(THEME_FX).length === 16); n += 1;
+assert.equal(pickEngine('creation', 'off'), null); n += 4;
 console.log(`${n} passed`);

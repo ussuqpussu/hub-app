@@ -8,7 +8,7 @@ import { createStore } from './data/store.js';
 import { getSession } from './data/vault.js';
 import { applyAppearance, showSplash, playSound } from './appearance.js';
 import { initFx } from './fx.js';
-import { sceneHero, initHero } from './hero.js';
+import { sceneHero, initHero, setHeroTheme, setHeroProjects } from './hero.js';
 import { initSky } from './sky.js';
 import { importInbox, refreshPulse, refreshWeather, sendBotConfig, reportHubErrors } from './bot-sync.js';
 import { onProjects, getProjectsState } from './projects-data.js';
@@ -16,6 +16,8 @@ import { mergedProjects } from './projects-view.js';
 
 applyTheme(currentTheme());
 applyAppearance();
+// правки каталога тем сохраняются в соседней рамке: цвета хаба и сцена обновляются на лету
+window.addEventListener('storage', (e) => { if (e.key === 'hub.themeOvr') { applyTheme(currentTheme()); setHeroTheme(currentTheme(), currentRoute()); } });
 initFx();
 initHero();
 initSky();
@@ -87,14 +89,15 @@ function currentRoute() {
   return r || 'today';
 }
 
-// Смена темы: сцену сверху страницы пересоздаём, остальной экран не трогаем.
+// Смена темы: рамку со сценой не пересоздаём, ей отправляется новое имя темы.
 new MutationObserver(() => {
-  const old = main.querySelector(':scope > .hero');
-  if (old) old.remove();
   const full = currentRoute();
   if (full.includes('/')) return;
-  const h = sceneHero(document.documentElement.dataset.theme, full);
-  if (h) main.prepend(h);
+  const th = document.documentElement.dataset.theme;
+  if (!main.querySelector(':scope > .hero')) {
+    const h = sceneHero(th, full);
+    if (h) main.prepend(h);
+  } else setHeroTheme(th, full);
 }).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
 
 function route() {
@@ -111,7 +114,10 @@ function route() {
   }
   const view = renderRoute(id, { onLockNow: () => lock.lockNow(), store, subscribe, param });
   const hero = param ? null : sceneHero(document.documentElement.dataset.theme, id);
-  main.replaceChildren(...(hero ? [hero, view] : [view]));
+  // рамку со сценой не трогаем (иначе она перезагрузится): меняем только содержимое страницы
+  [...main.children].forEach((c) => { if (c !== hero) c.remove(); });
+  if (hero && hero.parentNode !== main) main.prepend(hero);
+  main.append(view);
   const tab = TABS.find((t) => t.id === id);
   title.textContent = id === 'settings' ? 'Настройки' : id === 'more' ? 'Ещё' : tab ? tab.name : 'Хаб';
   document.title = `${title.textContent} · Хаб`;
@@ -148,7 +154,16 @@ async function inboxTick() {
   if (location.hash === '#/today' && !main.contains(document.activeElement)) route();
 }
 // Список проектов и ошибка загрузки проектов уходят боту, когда меняются.
+const HERO_ST = { active: 'в работе', done: 'готов' };
+const HERO_PR = { active: 55, done: 100, paused: 25 };
+function pushHeroProjects() {
+  try {
+    setHeroProjects(mergedProjects(store).filter((p) => p.status !== 'archive').map((p) => ({ id: p.id, name: p.name, type: (p.types || [])[0] || '', st: HERO_ST[p.status] || p.status, pr: HERO_PR[p.status] ?? 15, next: p.nextAction || '', upd: '' })));
+  } catch (_) { /* сцена обойдётся учебными названиями */ }
+}
+store.on(() => pushHeroProjects());
 onProjects((st) => {
+  pushHeroProjects();
   if (!getSession().dataKey || st.busy) return;
   if (st.error) reportHubErrors([{ id: 'projects', text: 'не получилось обновить карточки проектов из hub-projects' }]);
   else if (st.loaded && st.fetchedAt) { reportHubErrors([]); sendBotConfig(mergedProjects(store)); }

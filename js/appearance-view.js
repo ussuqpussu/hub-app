@@ -1,12 +1,12 @@
-// Блок «Оформление» в настройках: плитки тем, своя тема, обои, живые обои, заставка, звуки.
+// Блок «Оформление» в настройках: плитки тем, каталог настроек темы (движок из превью), обои, живые обои, заставка, звуки.
 import { el } from './ui.js';
-import { SCENE_THEMES, SCENE_NAMES } from './scenes.js';
-import { PAGE_INDEX, sceneIndex } from './hero.js';
-import { THEMES, CUSTOM, currentTheme, setTheme, getCustom, setCustom } from './theme.js';
+import { THEMES, currentTheme, setTheme, invertTheme, resetThemeOvr } from './theme.js';
 import { getAppearance, setAppearance, LIVE_OPTIONS, saveWallpaperFile, removeWallpaper, hasWallpaper, playSound, reducedMotion } from './appearance.js';
 
+const ENGINE = new URL('../theme/engine.html', import.meta.url).href;
+
 function tile(t, active, onPick) {
-  const b = el('button', { type: 'button', class: 'theme-tile', role: 'radio', 'aria-checked': String(t.id === active), 'data-theme': t.id === 'custom' ? (getCustom().dark ? 'minimal-dark' : 'minimal') : t.id, 'data-pick': t.id, 'aria-label': `${t.name}. ${t.note}` }, [
+  const b = el('button', { type: 'button', class: 'theme-tile', role: 'radio', 'aria-checked': String(t.id === active), 'data-theme': t.id, 'data-pick': t.id, 'aria-label': `${t.name}. ${t.note}` }, [
     el('span', { class: 'theme-tile__screen' }, [
       el('span', { class: 'theme-tile__card' }, [el('b', { text: 'Сегодня' }), el('i'), el('i')]),
       el('span', { class: 'theme-tile__btn', text: 'Кнопка' }),
@@ -14,7 +14,6 @@ function tile(t, active, onPick) {
     el('span', { class: 'theme-tile__name', text: t.name }),
     el('span', { class: 'theme-tile__note', text: t.note }),
   ]);
-  if (t.id === 'custom') b.style.setProperty('--c-accent', getCustom().accent);
   b.addEventListener('click', onPick);
   return b;
 }
@@ -24,21 +23,25 @@ export function appearanceBlock() {
   let filter = 'all';
   const seg = el('div', { class: 'seg', role: 'group', 'aria-label': 'Какие темы показывать' });
   const grid = el('div', { class: 'themes-3', role: 'radiogroup', 'aria-label': 'Тема оформления' });
-  const customBox = el('div', { class: 'stack stack--tight' });
+  const tools = el('div', { class: 'stack stack--tight' });
+  const editorBox = el('div', { class: 'theme-editor' });
 
-  function renderCustom() {
-    customBox.replaceChildren();
-    if (currentTheme() !== 'custom') return;
-    const c = getCustom();
-    const pick = el('input', { type: 'color', class: 'colorpick', value: c.accent, 'aria-label': 'Акцентный цвет своей темы' });
-    pick.addEventListener('input', () => { setCustom({ accent: pick.value }); setTheme('custom'); });
-    const sch = el('div', { class: 'seg', role: 'group', 'aria-label': 'Схема своей темы' });
-    [['Светлая', false], ['Тёмная', true]].forEach(([name, dark]) => {
-      const b = el('button', { type: 'button', text: name, 'aria-pressed': String(c.dark === dark) });
-      b.addEventListener('click', () => { setCustom({ dark }); setTheme('custom'); render(); });
-      sch.append(b);
-    });
-    customBox.append(el('h3', { text: 'Своя тема' }), el('div', { class: 'row' }, [el('span', { text: 'Акцентный цвет' }), pick]), sch, el('p', { class: 'muted', text: 'Цвет текста на кнопках подбирается сам, чтобы читалось.' }));
+  // Каталог настроек: тот же код, что в превью тем. Правки сохраняются сразу и применяются к хабу.
+  function mountEditor() {
+    editorBox.replaceChildren();
+    const th = THEMES.find((t) => t.id === currentTheme()) || THEMES[0];
+    const frame = el('iframe', { class: 'theme-editor__frame', title: `Каталог настроек темы «${th.name}»`, loading: 'lazy' });
+    frame.src = `${ENGINE}#editor&t=${encodeURIComponent(th.engine)}&dk=${document.documentElement.style.colorScheme === 'light' || !th.dark ? 0 : 1}`;
+    editorBox.append(el('h3', { text: 'Каталог настроек темы' }), el('p', { class: 'muted', text: 'Цвета, плитки, шрифты, макет, анимации по страницам, кот, руки и звезда. Правки применяются сразу и хранятся на этом устройстве.' }), frame);
+  }
+
+  function renderTools() {
+    const th = THEMES.find((t) => t.id === currentTheme()) || THEMES[0];
+    const flip = el('button', { type: 'button', class: 'btn', text: 'Светлая ↔ тёмная' });
+    flip.addEventListener('click', () => { invertTheme(th.id); playSound('tap'); render(); });
+    const reset = el('button', { type: 'button', class: 'btn', text: 'Сбросить правки темы' });
+    reset.addEventListener('click', () => { resetThemeOvr(th.id); playSound('tap'); render(); });
+    tools.replaceChildren(el('h3', { text: `Тема «${th.name}»` }), el('div', { class: 'row' }, [flip, reset]), el('p', { class: 'muted', text: 'Кнопка меняет местами фон и текст: тёмная тема становится светлой и наоборот.' }));
   }
 
   function render() {
@@ -49,11 +52,11 @@ export function appearanceBlock() {
       return b;
     }));
     grid.replaceChildren(...THEMES.filter((t) => filter === 'all' || t.group === filter).map((t) => tile(t, active, () => { setTheme(t.id); playSound('tap'); render(); })));
-    if (filter === 'all') grid.append(tile(CUSTOM, active, () => { setTheme('custom'); render(); }));
-    renderCustom();
+    renderTools();
+    mountEditor();
   }
   render();
-  root.append(seg, grid, customBox);
+  root.append(seg, grid, tools, editorBox);
 
   // Обои
   const wpMsg = el('p', { class: 'muted', role: 'status' });
@@ -90,47 +93,12 @@ export function appearanceBlock() {
   const vol = el('input', { type: 'range', class: 'field', min: '0', max: '100', step: '5', value: String(a.volume), 'aria-label': 'Громкость звуков' });
   vol.addEventListener('change', () => { setAppearance({ volume: Number(vol.value) }); playSound('done'); });
 
-  // Анимация по страницам: у каждой темы четыре сцены, на каждой странице можно выбрать свою.
-  const PAGE_NAMES = { today: 'Сегодня', schedule: 'Расписание', tasks: 'Задачи', projects: 'Проекты', 'smart-home': 'Умный дом', subscriptions: 'Подписки', notes: 'Заметки', knowledge: 'Знания', settings: 'Настройки' };
-  const scenesBox = el('div', { class: 'scenes-box' });
-  function renderScenes() {
-    const tid = document.documentElement.dataset.theme;
-    const th = SCENE_THEMES[tid];
-    if (!root.isConnected && scenesBox.dataset.ready) return;
-    scenesBox.dataset.ready = '1';
-    const kids = [el('h3', { text: 'Анимация по страницам' })];
-    if (tid === 'creation') kids.push(el('p', { class: 'muted', text: 'У «Сотворения» на каждой странице своя ASCII-анимация, выбор не предусмотрен.' }));
-    else if (!th) kids.push(el('p', { class: 'muted', text: 'У этой темы нет анимаций сверху страниц.' }));
-    else {
-      const names = SCENE_NAMES[th.ts] || [];
-      const apply = (pg, k) => {
-        const cur = Array.isArray(getAppearance().scenes[tid]) ? getAppearance().scenes[tid].slice() : Array.from({ length: 9 }, (_, i) => sceneIndex(tid, i));
-        if (pg === 'all') cur.fill(k); else cur[pg] = k;
-        setAppearance({ scenes: { ...getAppearance().scenes, [tid]: cur } });
-        renderScenes();
-      };
-      const allSel = el('select', { class: 'field', 'aria-label': 'Одна сцена на все страницы' }, [el('option', { value: '', text: 'Выбрать для всех…' }), ...names.map((n, i) => el('option', { value: String(i), text: n }))]);
-      allSel.addEventListener('change', () => { if (allSel.value !== '') apply('all', Number(allSel.value)); });
-      kids.push(el('p', { class: 'muted', text: 'Анимация сверху страницы. Выбор хранится на этом устройстве.' }), allSel);
-      Object.keys(PAGE_INDEX).forEach((r) => {
-        const pg = PAGE_INDEX[r];
-        const sel = el('select', { class: 'field', 'aria-label': `Анимация на странице «${PAGE_NAMES[r]}»` }, names.map((n, i) => el('option', { value: String(i), text: n })));
-        sel.value = String(sceneIndex(tid, pg));
-        sel.addEventListener('change', () => apply(pg, Number(sel.value)));
-        kids.push(el('label', { class: 'row' }, [el('span', { text: PAGE_NAMES[r] }), sel]));
-      });
-    }
-    scenesBox.replaceChildren(...kids);
-  }
-  renderScenes();
-  new MutationObserver(() => { if (root.isConnected) renderScenes(); }).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
   root.append(
     el('h3', { text: 'Эффекты' }),
     toggle('Эффекты (живые обои, заставка)', 'effects'),
     el('label', { class: 'field-label', text: 'Живые обои' }), live,
     toggle('Анимация темы сверху страниц', 'hero'),
     toggle('Небо и погода в плитке «Погода»', 'sky'),
-    scenesBox,
     toggle('Заставка при входе', 'splash'),
     el('h3', { text: 'Звуки' }),
     toggle('Тихие звуки (вход, добавление, готово)', 'sounds', (on) => { if (on) playSound('unlock'); }),

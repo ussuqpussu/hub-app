@@ -1,115 +1,13 @@
 /* Темы 3–16. Файл собран скриптом scripts/gen-themes.mjs из js/theme-data.js, руками не правим. */
 
-[data-theme="macos"] {
-  color-scheme: light;
-  --c-bg: #ececec;
-  --c-surface: #fbfbfb;
-  --c-text: #1d1d1f;
-  --c-accent: #3d5a80;
-  --c-on-accent: #ffffff;
-  --c-dim: #636366;
-  --c-line: color-mix(in srgb, var(--c-text) 14%, var(--c-bg));
-  --c-fill: color-mix(in srgb, var(--c-text) 7%, var(--c-bg));
-  --c-danger: #b3261e;
-  --c-overlay: rgb(17 17 17 / 45%);
-  --c-ok: #1a7f37;
-  --c-warn: #a16207;
-  --lamp-green: #1fa855;
-  --lamp-yellow: #e8a100;
-  --lamp-red: #e5342a;
-  --lamp-off: #b8b8b8;
-  --chart-1: #c2410c;
-  --chart-2: #2563eb;
-  --chart-3: #1a7f37;
-  --chart-4: #a16207;
-  --chart-5: #7c3aed;
-  --chart-6: #be185d;
-  --chart-7: #0e7490;
-  --font-ui: -apple-system,'SF Pro Text','Segoe UI Variable',system-ui,sans-serif;
-  --font-head: var(--font-ui);
-  --fw-head: 600;
-  --radius-s: calc(.8rem * 0.6);
-  --radius-m: .8rem;
-  --radius-pill: 99px;
-  --border-style: solid;
-}
-
-[data-theme="scandi"] {
-  color-scheme: light;
-  --c-bg: #f1f3f0;
-  --c-surface: #ffffff;
-  --c-text: #1f2523;
-  --c-accent: #2f6650;
-  --c-on-accent: #ffffff;
-  --c-dim: #5d6662;
-  --c-line: color-mix(in srgb, var(--c-text) 14%, var(--c-bg));
-  --c-fill: color-mix(in srgb, var(--c-text) 7%, var(--c-bg));
-  --c-danger: #b3261e;
-  --c-overlay: rgb(17 17 17 / 45%);
-  --c-ok: #1a7f37;
-  --c-warn: #a16207;
-  --lamp-green: #1fa855;
-  --lamp-yellow: #e8a100;
-  --lamp-red: #e5342a;
-  --lamp-off: #b8b8b8;
-  --chart-1: #c2410c;
-  --chart-2: #2563eb;
-  --chart-3: #1a7f37;
-  --chart-4: #a16207;
-  --chart-5: #7c3aed;
-  --chart-6: #be185d;
-  --chart-7: #0e7490;
-  --font-ui: 'Outfit','Geist','Segoe UI Variable','Segoe UI',system-ui,sans-serif;
-  --font-head: var(--font-ui);
-  --fw-head: 600;
-  --radius-s: 0;
-  --radius-m: 0;
-  --radius-pill: .7rem;
-  --border-style: solid;
-}
-
-[data-theme="water"] {
-  color-scheme: light;
-  --c-bg: #f6f7f4;
-  --c-surface: #ffffff;
-  --c-text: #20242b;
-  --c-accent: #2a5fa8;
-  --c-on-accent: #ffffff;
-  --c-dim: #5e636d;
-  --c-line: color-mix(in srgb, var(--c-text) 14%, var(--c-bg));
-  --c-fill: color-mix(in srgb, var(--c-text) 7%, var(--c-bg));
-  --c-danger: #b3261e;
-  --c-overlay: rgb(17 17 17 / 45%);
-  --c-ok: #1a7f37;
-  --c-warn: #a16207;
-  --lamp-green: #1fa855;
-  --lamp-yellow: #e8a100;
-  --lamp-red: #e5342a;
-  --lamp-off: #b8b8b8;
-  --chart-1: #c2410c;
-  --chart-2: #2563eb;
-  --chart-3: #1a7f37;
-  --chart-4: #a16207;
-  --chart-5: #7c3aed;
-  --chart-6: #be185d;
-  --chart-7: #0e7490;
-  --font-ui: 'Outfit','Geist','Segoe UI Variable','Segoe UI',system-ui,sans-serif;
-  --font-head: var(--font-ui);
-  --fw-head: 600;
-  --radius-s: 0;
-  --radius-m: 0;
-  --radius-pill: 99px;
-  --border-style: solid;
-}
-
-[data-theme="film"] {
+[data-theme="lighthouse"] {
   color-scheme: dark;
-  --c-bg: #181715;
-  --c-surface: #22201d;
-  --c-text: #efe9df;
-  --c-accent: #f0b429;
-  --c-on-accent: #181715;
-  --c-dim: #b3aca0;
+  --c-bg: #07131f;
+  --c-surface: #0d2033;
+  --c-text: #e6f0f6;
+  --c-accent: #ffd27a;
+  --c-on-accent: #07131f;
+  --c-dim: #9fb6c6;
   --c-line: color-mix(in srgb, var(--c-text) 16%, var(--c-bg));
   --c-fill: color-mix(in srgb, var(--c-text) 8%, var(--c-bg));
   --c-danger: #ff8a80;
@@ -127,23 +25,23 @@
   --chart-5: #d8b4fe;
   --chart-6: #ff9aa2;
   --chart-7: #7fd7e8;
-  --font-ui: 'Courier Prime','Courier New',ui-monospace,monospace;
+  --font-ui: 'Segoe UI Variable','SF Pro Text','Segoe UI',system-ui,sans-serif;
   --font-head: var(--font-ui);
   --fw-head: 600;
-  --radius-s: 0;
-  --radius-m: 0;
-  --radius-pill: .35rem;
+  --radius-s: calc(.9rem * 0.6);
+  --radius-m: .9rem;
+  --radius-pill: 99px;
   --border-style: solid;
 }
 
-[data-theme="graph"] {
+[data-theme="constellation"] {
   color-scheme: dark;
-  --c-bg: #121417;
-  --c-surface: #1b1e23;
-  --c-text: #e6e9ee;
-  --c-accent: #4f86ff;
-  --c-on-accent: #0d0f12;
-  --c-dim: #9aa1ad;
+  --c-bg: #0b0d24;
+  --c-surface: #14173a;
+  --c-text: #e8e9ff;
+  --c-accent: #b7a6ff;
+  --c-on-accent: #0b0d24;
+  --c-dim: #a4a8d6;
   --c-line: color-mix(in srgb, var(--c-text) 16%, var(--c-bg));
   --c-fill: color-mix(in srgb, var(--c-text) 8%, var(--c-bg));
   --c-danger: #ff8a80;
@@ -161,41 +59,75 @@
   --chart-5: #d8b4fe;
   --chart-6: #ff9aa2;
   --chart-7: #7fd7e8;
-  --font-ui: 'Geist','JetBrains Mono','Segoe UI Variable',system-ui,sans-serif;
+  --font-ui: Georgia,'Times New Roman',serif;
   --font-head: var(--font-ui);
   --fw-head: 600;
-  --radius-s: 0;
-  --radius-m: 0;
-  --radius-pill: .5rem;
+  --radius-s: calc(.6rem * 0.6);
+  --radius-m: .6rem;
+  --radius-pill: 99px;
   --border-style: solid;
 }
 
-[data-theme="chalk"] {
-  color-scheme: light;
-  --c-bg: #f3f3f1;
-  --c-surface: #ffffff;
-  --c-text: #111214;
-  --c-accent: #d4205a;
-  --c-on-accent: #ffffff;
-  --c-dim: #5b5c60;
-  --c-line: color-mix(in srgb, var(--c-text) 14%, var(--c-bg));
-  --c-fill: color-mix(in srgb, var(--c-text) 7%, var(--c-bg));
-  --c-danger: #b3261e;
-  --c-overlay: rgb(17 17 17 / 45%);
-  --c-ok: #1a7f37;
-  --c-warn: #a16207;
-  --lamp-green: #1fa855;
-  --lamp-yellow: #e8a100;
-  --lamp-red: #e5342a;
-  --lamp-off: #b8b8b8;
-  --chart-1: #c2410c;
-  --chart-2: #2563eb;
-  --chart-3: #1a7f37;
-  --chart-4: #a16207;
-  --chart-5: #7c3aed;
-  --chart-6: #be185d;
-  --chart-7: #0e7490;
-  --font-ui: 'Outfit','Geist','Segoe UI Variable','Segoe UI',system-ui,sans-serif;
+[data-theme="aurora"] {
+  color-scheme: dark;
+  --c-bg: #08141a;
+  --c-surface: #0f232b;
+  --c-text: #e4f4ee;
+  --c-accent: #7ff0c0;
+  --c-on-accent: #08141a;
+  --c-dim: #9bbcb2;
+  --c-line: color-mix(in srgb, var(--c-text) 16%, var(--c-bg));
+  --c-fill: color-mix(in srgb, var(--c-text) 8%, var(--c-bg));
+  --c-danger: #ff8a80;
+  --c-overlay: rgb(0 0 0 / 65%);
+  --c-ok: #30d158;
+  --c-warn: #ffd60a;
+  --lamp-green: #30d158;
+  --lamp-yellow: #ffd60a;
+  --lamp-red: #ff453a;
+  --lamp-off: #636366;
+  --chart-1: #ffb4a2;
+  --chart-2: #5e9cff;
+  --chart-3: #30d158;
+  --chart-4: #ffd60a;
+  --chart-5: #d8b4fe;
+  --chart-6: #ff9aa2;
+  --chart-7: #7fd7e8;
+  --font-ui: 'Segoe UI Variable','SF Pro Text','Segoe UI',system-ui,sans-serif;
+  --font-head: var(--font-ui);
+  --fw-head: 600;
+  --radius-s: calc(1rem * 0.6);
+  --radius-m: 1rem;
+  --radius-pill: 99px;
+  --border-style: solid;
+}
+
+[data-theme="blueprint"] {
+  color-scheme: dark;
+  --c-bg: #0e3560;
+  --c-surface: #14457a;
+  --c-text: #eef6ff;
+  --c-accent: #ffe27a;
+  --c-on-accent: #0e3560;
+  --c-dim: #b9d3ee;
+  --c-line: color-mix(in srgb, var(--c-text) 16%, var(--c-bg));
+  --c-fill: color-mix(in srgb, var(--c-text) 8%, var(--c-bg));
+  --c-danger: #ff8a80;
+  --c-overlay: rgb(0 0 0 / 65%);
+  --c-ok: #30d158;
+  --c-warn: #ffd60a;
+  --lamp-green: #30d158;
+  --lamp-yellow: #ffd60a;
+  --lamp-red: #ff453a;
+  --lamp-off: #636366;
+  --chart-1: #ffb4a2;
+  --chart-2: #5e9cff;
+  --chart-3: #30d158;
+  --chart-4: #ffd60a;
+  --chart-5: #d8b4fe;
+  --chart-6: #ff9aa2;
+  --chart-7: #7fd7e8;
+  --font-ui: 'Cascadia Mono','SF Mono',Consolas,ui-monospace,monospace;
   --font-head: var(--font-ui);
   --fw-head: 600;
   --radius-s: 0;
@@ -204,218 +136,14 @@
   --border-style: solid;
 }
 
-[data-theme="terra"] {
+[data-theme="zen"] {
   color-scheme: light;
-  --c-bg: #e3e7ea;
-  --c-surface: #ffffff;
-  --c-text: #1e262b;
-  --c-accent: #b9471f;
+  --c-bg: #efece4;
+  --c-surface: #f8f6f0;
+  --c-text: #23211d;
+  --c-accent: #8f2d2a;
   --c-on-accent: #ffffff;
-  --c-dim: #56626a;
-  --c-line: color-mix(in srgb, var(--c-text) 14%, var(--c-bg));
-  --c-fill: color-mix(in srgb, var(--c-text) 7%, var(--c-bg));
-  --c-danger: #b3261e;
-  --c-overlay: rgb(17 17 17 / 45%);
-  --c-ok: #1a7f37;
-  --c-warn: #a16207;
-  --lamp-green: #1fa855;
-  --lamp-yellow: #e8a100;
-  --lamp-red: #e5342a;
-  --lamp-off: #b8b8b8;
-  --chart-1: #c2410c;
-  --chart-2: #2563eb;
-  --chart-3: #1a7f37;
-  --chart-4: #a16207;
-  --chart-5: #7c3aed;
-  --chart-6: #be185d;
-  --chart-7: #0e7490;
-  --font-ui: 'Outfit','Geist','Segoe UI Variable','Segoe UI',system-ui,sans-serif;
-  --font-head: var(--font-ui);
-  --fw-head: 600;
-  --radius-s: 0;
-  --radius-m: 0;
-  --radius-pill: 99px;
-  --border-style: solid;
-}
-
-[data-theme="forest"] {
-  color-scheme: dark;
-  --c-bg: #0f1a14;
-  --c-surface: #1b2a21;
-  --c-text: #e9ece4;
-  --c-accent: #e0a83a;
-  --c-on-accent: #0f1a14;
-  --c-dim: #a9b5a8;
-  --c-line: color-mix(in srgb, var(--c-text) 16%, var(--c-bg));
-  --c-fill: color-mix(in srgb, var(--c-text) 8%, var(--c-bg));
-  --c-danger: #ff8a80;
-  --c-overlay: rgb(0 0 0 / 65%);
-  --c-ok: #30d158;
-  --c-warn: #ffd60a;
-  --lamp-green: #30d158;
-  --lamp-yellow: #ffd60a;
-  --lamp-red: #ff453a;
-  --lamp-off: #636366;
-  --chart-1: #ffb4a2;
-  --chart-2: #5e9cff;
-  --chart-3: #30d158;
-  --chart-4: #ffd60a;
-  --chart-5: #d8b4fe;
-  --chart-6: #ff9aa2;
-  --chart-7: #7fd7e8;
-  --font-ui: 'Outfit','Geist','Segoe UI Variable','Segoe UI',system-ui,sans-serif;
-  --font-head: var(--font-ui);
-  --fw-head: 600;
-  --radius-s: 0;
-  --radius-m: 0;
-  --radius-pill: 99px;
-  --border-style: solid;
-}
-
-[data-theme="cobalt"] {
-  color-scheme: light;
-  --c-bg: #f2f4f7;
-  --c-surface: #ffffff;
-  --c-text: #10172b;
-  --c-accent: #1f4fd1;
-  --c-on-accent: #ffffff;
-  --c-dim: #545c70;
-  --c-line: color-mix(in srgb, var(--c-text) 14%, var(--c-bg));
-  --c-fill: color-mix(in srgb, var(--c-text) 7%, var(--c-bg));
-  --c-danger: #b3261e;
-  --c-overlay: rgb(17 17 17 / 45%);
-  --c-ok: #1a7f37;
-  --c-warn: #a16207;
-  --lamp-green: #1fa855;
-  --lamp-yellow: #e8a100;
-  --lamp-red: #e5342a;
-  --lamp-off: #b8b8b8;
-  --chart-1: #c2410c;
-  --chart-2: #2563eb;
-  --chart-3: #1a7f37;
-  --chart-4: #a16207;
-  --chart-5: #7c3aed;
-  --chart-6: #be185d;
-  --chart-7: #0e7490;
-  --font-ui: 'Outfit','Geist','Segoe UI Variable','Segoe UI',system-ui,sans-serif;
-  --font-head: var(--font-ui);
-  --fw-head: 600;
-  --radius-s: 0;
-  --radius-m: 0;
-  --radius-pill: .6rem;
-  --border-style: solid;
-}
-
-[data-theme="night"] {
-  color-scheme: dark;
-  --c-bg: #0e0f13;
-  --c-surface: #17181e;
-  --c-text: #eceae6;
-  --c-accent: #ff7a45;
-  --c-on-accent: #0e0f13;
-  --c-dim: #a3a09a;
-  --c-line: color-mix(in srgb, var(--c-text) 16%, var(--c-bg));
-  --c-fill: color-mix(in srgb, var(--c-text) 8%, var(--c-bg));
-  --c-danger: #ff8a80;
-  --c-overlay: rgb(0 0 0 / 65%);
-  --c-ok: #30d158;
-  --c-warn: #ffd60a;
-  --lamp-green: #30d158;
-  --lamp-yellow: #ffd60a;
-  --lamp-red: #ff453a;
-  --lamp-off: #636366;
-  --chart-1: #ffb4a2;
-  --chart-2: #5e9cff;
-  --chart-3: #30d158;
-  --chart-4: #ffd60a;
-  --chart-5: #d8b4fe;
-  --chart-6: #ff9aa2;
-  --chart-7: #7fd7e8;
-  --font-ui: 'Outfit','Geist','Segoe UI Variable','Segoe UI',system-ui,sans-serif;
-  --font-head: var(--font-ui);
-  --fw-head: 600;
-  --radius-s: 0;
-  --radius-m: 0;
-  --radius-pill: .5rem;
-  --border-style: solid;
-}
-
-[data-theme="dawn"] {
-  color-scheme: light;
-  --c-bg: #f3eef3;
-  --c-surface: #ffffff;
-  --c-text: #2a2333;
-  --c-accent: #b23d62;
-  --c-on-accent: #ffffff;
-  --c-dim: #6a5f74;
-  --c-line: color-mix(in srgb, var(--c-text) 14%, var(--c-bg));
-  --c-fill: color-mix(in srgb, var(--c-text) 7%, var(--c-bg));
-  --c-danger: #b3261e;
-  --c-overlay: rgb(17 17 17 / 45%);
-  --c-ok: #1a7f37;
-  --c-warn: #a16207;
-  --lamp-green: #1fa855;
-  --lamp-yellow: #e8a100;
-  --lamp-red: #e5342a;
-  --lamp-off: #b8b8b8;
-  --chart-1: #c2410c;
-  --chart-2: #2563eb;
-  --chart-3: #1a7f37;
-  --chart-4: #a16207;
-  --chart-5: #7c3aed;
-  --chart-6: #be185d;
-  --chart-7: #0e7490;
-  --font-ui: 'Outfit','Geist','Segoe UI Variable','Segoe UI',system-ui,sans-serif;
-  --font-head: var(--font-ui);
-  --fw-head: 600;
-  --radius-s: 0;
-  --radius-m: 0;
-  --radius-pill: 99px;
-  --border-style: solid;
-}
-
-[data-theme="minimal-dark"] {
-  color-scheme: dark;
-  --c-bg: #0f0f10;
-  --c-surface: #161618;
-  --c-text: #ececec;
-  --c-accent: #ececec;
-  --c-on-accent: #0f0f10;
-  --c-dim: #9a9a9a;
-  --c-line: color-mix(in srgb, var(--c-text) 16%, var(--c-bg));
-  --c-fill: color-mix(in srgb, var(--c-text) 8%, var(--c-bg));
-  --c-danger: #ff8a80;
-  --c-overlay: rgb(0 0 0 / 65%);
-  --c-ok: #30d158;
-  --c-warn: #ffd60a;
-  --lamp-green: #30d158;
-  --lamp-yellow: #ffd60a;
-  --lamp-red: #ff453a;
-  --lamp-off: #636366;
-  --chart-1: #ffb4a2;
-  --chart-2: #5e9cff;
-  --chart-3: #30d158;
-  --chart-4: #ffd60a;
-  --chart-5: #d8b4fe;
-  --chart-6: #ff9aa2;
-  --chart-7: #7fd7e8;
-  --font-ui: 'Inter','Helvetica Neue',Arial,system-ui,sans-serif;
-  --font-head: var(--font-ui);
-  --fw-head: 600;
-  --radius-s: 0;
-  --radius-m: 0;
-  --radius-pill: 0;
-  --border-style: solid;
-}
-
-[data-theme="classic"] {
-  color-scheme: light;
-  --c-bg: #f4f4f1;
-  --c-surface: #ffffff;
-  --c-text: #1c2433;
-  --c-accent: #1f3a68;
-  --c-on-accent: #ffffff;
-  --c-dim: #5b6270;
+  --c-dim: #5f5a50;
   --c-line: color-mix(in srgb, var(--c-text) 14%, var(--c-bg));
   --c-fill: color-mix(in srgb, var(--c-text) 7%, var(--c-bg));
   --c-danger: #b3261e;
@@ -438,18 +166,86 @@
   --fw-head: 600;
   --radius-s: calc(.4rem * 0.6);
   --radius-m: .4rem;
+  --radius-pill: .4rem;
+  --border-style: solid;
+}
+
+[data-theme="circuit"] {
+  color-scheme: dark;
+  --c-bg: #0b0f0e;
+  --c-surface: #121917;
+  --c-text: #dff5ea;
+  --c-accent: #9dff4d;
+  --c-on-accent: #0b0f0e;
+  --c-dim: #8fb3a2;
+  --c-line: color-mix(in srgb, var(--c-text) 16%, var(--c-bg));
+  --c-fill: color-mix(in srgb, var(--c-text) 8%, var(--c-bg));
+  --c-danger: #ff8a80;
+  --c-overlay: rgb(0 0 0 / 65%);
+  --c-ok: #30d158;
+  --c-warn: #ffd60a;
+  --lamp-green: #30d158;
+  --lamp-yellow: #ffd60a;
+  --lamp-red: #ff453a;
+  --lamp-off: #636366;
+  --chart-1: #ffb4a2;
+  --chart-2: #5e9cff;
+  --chart-3: #30d158;
+  --chart-4: #ffd60a;
+  --chart-5: #d8b4fe;
+  --chart-6: #ff9aa2;
+  --chart-7: #7fd7e8;
+  --font-ui: 'Cascadia Mono','SF Mono',Consolas,ui-monospace,monospace;
+  --font-head: var(--font-ui);
+  --fw-head: 600;
+  --radius-s: calc(.3rem * 0.6);
+  --radius-m: .3rem;
   --radius-pill: .3rem;
   --border-style: solid;
 }
 
-[data-theme="neutral"] {
+[data-theme="pixel"] {
+  color-scheme: dark;
+  --c-bg: #1b1230;
+  --c-surface: #271a45;
+  --c-text: #f6efff;
+  --c-accent: #ff6fae;
+  --c-on-accent: #1b1230;
+  --c-dim: #bfb0e0;
+  --c-line: color-mix(in srgb, var(--c-text) 16%, var(--c-bg));
+  --c-fill: color-mix(in srgb, var(--c-text) 8%, var(--c-bg));
+  --c-danger: #ff8a80;
+  --c-overlay: rgb(0 0 0 / 65%);
+  --c-ok: #30d158;
+  --c-warn: #ffd60a;
+  --lamp-green: #30d158;
+  --lamp-yellow: #ffd60a;
+  --lamp-red: #ff453a;
+  --lamp-off: #636366;
+  --chart-1: #ffb4a2;
+  --chart-2: #5e9cff;
+  --chart-3: #30d158;
+  --chart-4: #ffd60a;
+  --chart-5: #d8b4fe;
+  --chart-6: #ff9aa2;
+  --chart-7: #7fd7e8;
+  --font-ui: 'Cascadia Mono','SF Mono',Consolas,ui-monospace,monospace;
+  --font-head: var(--font-ui);
+  --fw-head: 600;
+  --radius-s: 0;
+  --radius-m: 0;
+  --radius-pill: 0;
+  --border-style: solid;
+}
+
+[data-theme="papercut"] {
   color-scheme: light;
-  --c-bg: #f2f2f7;
-  --c-surface: #ffffff;
-  --c-text: #1c1c1e;
-  --c-accent: #0a66d8;
+  --c-bg: #f4ede1;
+  --c-surface: #fffaf0;
+  --c-text: #2b2118;
+  --c-accent: #c84a24;
   --c-on-accent: #ffffff;
-  --c-dim: #636366;
+  --c-dim: #6a5b4c;
   --c-line: color-mix(in srgb, var(--c-text) 14%, var(--c-bg));
   --c-fill: color-mix(in srgb, var(--c-text) 7%, var(--c-bg));
   --c-danger: #b3261e;
@@ -467,11 +263,79 @@
   --chart-5: #7c3aed;
   --chart-6: #be185d;
   --chart-7: #0e7490;
-  --font-ui: -apple-system,'Segoe UI Variable','Segoe UI',system-ui,sans-serif;
+  --font-ui: 'Segoe UI Variable','SF Pro Text','Segoe UI',system-ui,sans-serif;
+  --font-head: var(--font-ui);
+  --fw-head: 600;
+  --radius-s: calc(1.1rem * 0.6);
+  --radius-m: 1.1rem;
+  --radius-pill: 99px;
+  --border-style: solid;
+}
+
+[data-theme="embers"] {
+  color-scheme: dark;
+  --c-bg: #120c09;
+  --c-surface: #1d130e;
+  --c-text: #f5e6da;
+  --c-accent: #ff8a3d;
+  --c-on-accent: #120c09;
+  --c-dim: #bda391;
+  --c-line: color-mix(in srgb, var(--c-text) 16%, var(--c-bg));
+  --c-fill: color-mix(in srgb, var(--c-text) 8%, var(--c-bg));
+  --c-danger: #ff8a80;
+  --c-overlay: rgb(0 0 0 / 65%);
+  --c-ok: #30d158;
+  --c-warn: #ffd60a;
+  --lamp-green: #30d158;
+  --lamp-yellow: #ffd60a;
+  --lamp-red: #ff453a;
+  --lamp-off: #636366;
+  --chart-1: #ffb4a2;
+  --chart-2: #5e9cff;
+  --chart-3: #30d158;
+  --chart-4: #ffd60a;
+  --chart-5: #d8b4fe;
+  --chart-6: #ff9aa2;
+  --chart-7: #7fd7e8;
+  --font-ui: 'Segoe UI Variable','SF Pro Text','Segoe UI',system-ui,sans-serif;
   --font-head: var(--font-ui);
   --fw-head: 600;
   --radius-s: calc(.8rem * 0.6);
   --radius-m: .8rem;
-  --radius-pill: .6rem;
+  --radius-pill: 99px;
+  --border-style: solid;
+}
+
+[data-theme="letterpress"] {
+  color-scheme: light;
+  --c-bg: #f3eddc;
+  --c-surface: #fbf7ea;
+  --c-text: #181512;
+  --c-accent: #c0261d;
+  --c-on-accent: #ffffff;
+  --c-dim: #5b5448;
+  --c-line: color-mix(in srgb, var(--c-text) 14%, var(--c-bg));
+  --c-fill: color-mix(in srgb, var(--c-text) 7%, var(--c-bg));
+  --c-danger: #b3261e;
+  --c-overlay: rgb(17 17 17 / 45%);
+  --c-ok: #1a7f37;
+  --c-warn: #a16207;
+  --lamp-green: #1fa855;
+  --lamp-yellow: #e8a100;
+  --lamp-red: #e5342a;
+  --lamp-off: #b8b8b8;
+  --chart-1: #c2410c;
+  --chart-2: #2563eb;
+  --chart-3: #1a7f37;
+  --chart-4: #a16207;
+  --chart-5: #7c3aed;
+  --chart-6: #be185d;
+  --chart-7: #0e7490;
+  --font-ui: Georgia,'Times New Roman',serif;
+  --font-head: var(--font-ui);
+  --fw-head: 600;
+  --radius-s: 0;
+  --radius-m: 0;
+  --radius-pill: 0;
   --border-style: solid;
 }
