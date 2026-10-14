@@ -14,6 +14,7 @@ assert.equal(THEME_DEFS.length, 11); n += 1;
 const engine = readFileSync(new URL('../theme/engine.html', import.meta.url), 'utf8');
 for (const t of THEME_DEFS) {
   assert.ok(engine.includes(`hubAddTheme({"n":"${t.name}"`), `${t.id}: нет в движке`);
+  if (t.id === 'myth') { assert.ok(engine.includes('var MYP=[') && engine.includes('MYS.vase=') && engine.includes('th.L="adam"'), 'myth: нет кода темы Мифы'); n += 1; continue; }
   assert.ok(new RegExp(`TSC\\.${t.id}\\s*=\\s*\\[`).test(engine) && new RegExp(`TSN\\.${t.id}\\s*=\\s*\\[("[^"]+",?\\s*){4}\\]`).test(engine), `${t.id}: нет четырёх сцен`);
   n += 2;
 }

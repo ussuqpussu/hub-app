@@ -13,7 +13,7 @@ const route = () => (location.hash || '#/today').replace(/^#\//, '').split('/')[
 
 function clean(svg) {
   // Рисунок приходит от нашего же движка тем; всё равно пропускаем только чистый svg без скриптов и ссылок.
-  return typeof svg === 'string' && svg.startsWith('<svg class="pet"') && svg.length < 20000 && !/<script|<foreignObject|on\w+\s*=|href\s*=/i.test(svg) ? svg : '';
+  return typeof svg === 'string' && svg.startsWith('<svg class="pet"') && svg.length < 60000 && !/<script|<foreignObject|on\w+\s*=|href\s*=/i.test(svg) ? svg : '';
 }
 
 function target() {

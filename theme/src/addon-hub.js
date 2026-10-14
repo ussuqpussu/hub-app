@@ -38,8 +38,9 @@
       '#big .info,#big .ad-hd,#big .ad-tabs,#big .ad-foot{display:none!important}' +
       '#big .scr{position:absolute!important;inset:0!important;width:auto!important;height:auto!important;max-width:none!important;max-height:none!important;aspect-ratio:auto!important;background:transparent!important;border:0!important;border-radius:0!important;box-shadow:none!important;padding:0!important;margin:0!important}' +
       '#big .lay{position:absolute!important;inset:0!important;padding:0!important}' +
-      '#big .lay :not(canvas):not(:has(canvas)):not(pre.ad-asc){display:none!important}#big .lay :has(canvas){transform:none!important;filter:none!important;background:none!important;border:0!important;box-shadow:none!important;padding:0!important;margin:0!important}' +
-      '#big pre.ad-asc{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;margin:0!important}#big .lay canvas{position:fixed!important;inset:0!important;width:100vw!important;height:100vh!important;margin:0!important}';
+      '#big .lay :not(canvas):not(:has(canvas)):not(pre.ad-asc):not(.myth-st):not(.myth-st *):not(.myth-toast):not(.myth-toast *):not(.myth-rageov):not(.myth-rageov *):not(.myth-fly):not(.myth-fly *):not(.myth-runes){display:none!important}#big .lay :has(canvas){transform:none!important;filter:none!important;background:none!important;border:0!important;box-shadow:none!important;padding:0!important;margin:0!important}' +
+      '#big pre.ad-asc{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;margin:0!important}#big .lay canvas{position:fixed!important;inset:0!important;width:100vw!important;height:100vh!important;margin:0!important}' +
+      '#big .myth-st{position:static!important;margin:0!important}#big .myth-st:has(video){position:fixed!important;inset:0!important;background:var(--mybg,#050505)!important}#big .myth-st video{position:fixed!important;inset:0!important;width:100vw!important;height:100vh!important;object-fit:contain!important}#big .myth-runes{position:absolute!important;left:14px;bottom:8px;margin:0!important;z-index:5}';
   } else {
     css.textContent = base.replace('overflow:hidden!important;', 'overflow:auto!important;') +
       '#big{display:block!important;padding:0!important;margin:0!important}#big .scr,#z20-fav{display:none!important}#big .info{width:auto!important;max-width:none!important;padding:18px 22px 22px!important;box-sizing:border-box!important}';
@@ -64,6 +65,7 @@
       var th = getT(cur);
       var c = th.cat || (th.L === 'adam' ? { p: 'tuxedo', b: '#a9a9a9', s: '#f2f2f2', t: '#f2f2f2', e: '#111', n: '#8a8a8a' } : null);
       var svg = c ? String(petSvg(c) || '') : '';
+      if (th.k === 'myth' && typeof mythPetSvg === 'function') svg = mythPetSvg();
       parent.postMessage({ type: 'hub-cat', theme: T[cur].n, svg: svg }, '*');
     } catch (e) { /* без кота */ }
   }

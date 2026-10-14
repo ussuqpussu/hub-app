@@ -89,8 +89,42 @@ export async function applyAppearance() {
 }
 
 // ---- Заставка ----
+function sessionStorageGet(k) { try { return sessionStorage.getItem(k); } catch (e) { return null; } }
+
+// Заставка темы «Мифы»: видео (звезда загорается, фон темнеет, открывается хаб). Показывается один раз за сеанс, по касанию пропускается.
+function mythSplash() {
+  try { sessionStorage.setItem('hub.mythSplash', '1'); } catch (e) { /* без хранилища покажется снова */ }
+  return new Promise((resolve) => {
+    const d = document.createElement('div');
+    d.className = 'splash splash--video';
+    d.setAttribute('aria-hidden', 'true');
+    const v = document.createElement('video');
+    v.muted = true; v.autoplay = true; v.playsInline = true;
+    ['webm', 'mp4'].forEach((ext) => {
+      const src = document.createElement('source');
+      src.src = new URL(`../theme/myth/splash.${ext}`, import.meta.url).href;
+      src.type = `video/${ext}`;
+      v.append(src);
+    });
+    d.append(v);
+    document.body.append(d);
+    let done = false;
+    const end = () => {
+      if (done) return;
+      done = true;
+      d.classList.add('splash--out');
+      setTimeout(() => { d.remove(); resolve(); }, 600);
+    };
+    v.addEventListener('ended', end);
+    v.addEventListener('error', end);
+    d.addEventListener('click', end);
+    setTimeout(end, 10000);
+  });
+}
+
 export function showSplash(name = 'Хаб') {
   if (!getAppearance().splash || reducedMotion()) return Promise.resolve();
+  if (document.documentElement.dataset.theme === 'myth' && !sessionStorageGet('hub.mythSplash')) return mythSplash();
   return new Promise((resolve) => {
     const d = document.createElement('div');
     d.className = 'splash';
