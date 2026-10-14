@@ -9,7 +9,7 @@ import { getSession } from './data/vault.js';
 import { applyAppearance, showSplash, playSound } from './appearance.js';
 import { initFx } from './fx.js';
 import { initCat } from './cat.js';
-import { sceneHero, initHero, setHeroTheme, setHeroProjects } from './hero.js';
+import { sceneHero, initHero, setHeroTheme, setHeroProjects, setHeroRage } from './hero.js';
 import { initSky } from './sky.js';
 import { initMotionUi } from './motion-ui.js';
 import { importInbox, refreshPulse, refreshWeather, sendBotConfig, reportHubErrors } from './bot-sync.js';
@@ -117,6 +117,8 @@ function route() {
   }
   const view = renderRoute(id, { onLockNow: () => lock.lockNow(), store, subscribe, param });
   const hero = param ? null : sceneHero(document.documentElement.dataset.theme, id);
+  setHeroRage(store.list('tasks'));
+  subs.push(store.on(() => setHeroRage(store.list('tasks'))));
   // рамку со сценой не трогаем (иначе она перезагрузится): меняем только содержимое страницы
   [...main.children].forEach((c) => { if (c !== hero) c.remove(); });
   if (hero && hero.parentNode !== main) main.prepend(hero);

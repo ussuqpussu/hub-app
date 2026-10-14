@@ -18,7 +18,7 @@ import { todayView } from './today-view.js';
 
 export { ICONS, fmtTime };
 
-export const VERSION = '0.32.0 (Мифы: видео-сцены из макетов, цитата под сценой, заставка при каждом запуске)';
+export const VERSION = '0.33.0 (Мифы: Ярость, покровители, сцена Итогов недели, анимации кнопок)';
 
 // Вкладки. group: main (в нижней панели телефона), more (внутри «Ещё»).
 export const TABS = [
