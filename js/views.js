@@ -18,7 +18,7 @@ import { todayView } from './today-view.js';
 
 export { ICONS, fmtTime };
 
-export const VERSION = '0.33.0 (Мифы: Ярость, покровители, сцена Итогов недели, анимации кнопок)';
+export const VERSION = '0.34.0 (Сегодня: сцена сверху, День пройден; цитата раз в 5 минут; ворон в шапке; без заставки Мифов)';
 
 // Вкладки. group: main (в нижней панели телефона), more (внутри «Ещё»).
 export const TABS = [
@@ -26,7 +26,7 @@ export const TABS = [
   { id: 'schedule', name: 'Расписание', icon: 'calendar', group: 'main' },
   { id: 'tasks', name: 'Задачи', icon: 'tasks', group: 'main' },
   { id: 'projects', name: 'Проекты', icon: 'projects', group: 'main' },
-  { id: 'smart-home', name: 'Умный дом', icon: 'home', group: 'more' },
+  // «Умный дом» пока скрыт: модуль не сделан, вернуть строку, когда начнём этап.
   { id: 'subscriptions', name: 'Подписки', icon: 'subs', group: 'more' },
   { id: 'weekly', name: 'Итоги недели', icon: 'calendar', group: 'more' },
   { id: 'notes', name: 'Заметки и ссылки', icon: 'notes', group: 'more' },

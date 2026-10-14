@@ -1,6 +1,6 @@
 // Service worker: оболочка открывается без сети.
 // При изменении любого файла оболочки увеличивай VERSION, чтобы кэш обновился.
-const VERSION = 'hub-shell-v66';
+const VERSION = 'hub-shell-v68';
 const SHELL = [
   './',
   './index.html',
@@ -33,8 +33,6 @@ const SHELL = [
   './theme/myth/sag.webm',
   './theme/myth/wheel.mp4',
   './theme/myth/wheel.webm',
-  './theme/myth/splash-trim.mp4',
-  './theme/myth/splash-trim.webm',
   './js/sky.js',
   './js/pin.js',
   './js/views.js',

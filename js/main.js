@@ -115,6 +115,7 @@ function route() {
   } catch (_) {
     param = '';
   }
+  main.dataset.page = id;
   const view = renderRoute(id, { onLockNow: () => lock.lockNow(), store, subscribe, param });
   const hero = param ? null : sceneHero(document.documentElement.dataset.theme, id);
   setHeroRage(store.list('tasks'));

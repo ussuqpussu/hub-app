@@ -788,7 +788,7 @@ html[data-effects="off"] .cat-holder .pet *, .cat-holder .pet[data-still] * { an
 .nav { isolation: isolate; }
 .nav[data-ind] .nav__item { position: relative; z-index: 1; }
 .nav__ind { position: absolute; left: 0; top: 0; z-index: 0; pointer-events: none; width: var(--iw, 0); height: var(--ih, 0); transform: translate(var(--ix, 0), var(--iy, 0)); background: var(--c-fill); border-radius: var(--radius-pill); opacity: 0; }
-.nav__ind[data-ready] { transition: transform var(--dur-m) var(--ease-out), width var(--dur-m) var(--ease-out), height var(--dur-m) var(--ease-out), opacity var(--dur) var(--ease-out); }
+.nav__ind[data-ready] { transition: transform .5s cubic-bezier(.22,.8,.3,1), width .5s cubic-bezier(.22,.8,.3,1), height .5s cubic-bezier(.22,.8,.3,1), opacity var(--dur) var(--ease-out); }
 .nav[data-ind] .nav__item[aria-current="page"] { background: none; }
 /* телефон: тонкая полоска акцента над выбранной вкладкой */
 @media (max-width: 47.999rem) {
@@ -800,7 +800,7 @@ html[data-effects="off"] .cat-holder .pet *, .cat-holder .pet[data-still] * { an
 .seg--thumb button { position: relative; z-index: 1; }
 .seg--thumb button[aria-pressed="true"] { background: transparent; box-shadow: none; }
 .seg__thumb { position: absolute; left: 0; top: 0; z-index: 0; pointer-events: none; width: var(--iw, 0); height: var(--ih, 0); transform: translate(var(--ix, 0), var(--iy, 0)); background: var(--c-surface); border-radius: var(--radius-pill); box-shadow: 0 0 0 var(--border) var(--c-line); opacity: 0; }
-.seg__thumb[data-ready] { transition: transform var(--dur-m) var(--ease-spring), width var(--dur-m) var(--ease-out), height var(--dur-m) var(--ease-out), opacity var(--dur) var(--ease-out); }
+.seg__thumb[data-ready] { transition: transform .5s cubic-bezier(.22,.8,.3,1), width .5s cubic-bezier(.22,.8,.3,1), height var(--dur-m) var(--ease-out), opacity var(--dur) var(--ease-out); }
 html[data-effects="off"] .nav__ind, html[data-effects="off"] .seg__thumb { transition: none !important; }
 @media (prefers-reduced-motion: reduce) { .nav__ind, .seg__thumb { transition: none !important; } }
 
@@ -847,3 +847,53 @@ html[data-hero-pos="bg"] .hero__rage, html[data-hero-pos="bg"] .hero__pat { disp
 .ttile--done .qtile__text { transition: opacity var(--dur-m, .25s); }
 html[data-effects="off"] .btn, html[data-effects="off"] .qtile, html[data-effects="off"] .view > * { transition: none !important; animation: none !important; transform: none !important; }
 @media (prefers-reduced-motion: reduce) { .view > * { animation: none !important; } .btn:hover, .qtile:hover, .btn:active { transform: none !important; } }
+
+/* мягче и без выхода за границы */
+.seg, .nav { overflow: hidden; }
+.nav { overflow: clip; }
+@media (hover: hover) { .btn:hover { transform: none; } .qtile:hover { transform: translateY(-1px); } }
+.btn:active, .qtile__done:active, .seg button:active { transform: scale(.98); }
+.btn, .qtile__done, .seg button, .nav__item { transition-duration: .3s; }
+
+/* ворон сидит в шапке страницы справа, а не на вкладках и карточках */
+.view__head { position: relative; padding-right: 5.5rem; }
+.view__head > .cat-holder { top: auto; bottom: 0; right: 0; left: auto; width: 5.5rem; }
+.view__head > .cat-holder .pet { right: 0; bottom: 0; }
+
+/* цитата: кнопка смены */
+.hero__quote { position: relative; }
+.hero__qn { position: absolute; right: .25rem; top: .25rem; width: 1.6rem; height: 1.6rem; padding: 0; font-size: .9rem; line-height: 1; border: 1px solid color-mix(in srgb, currentColor 25%, transparent); border-radius: 50%; background: transparent; color: inherit; opacity: .55; cursor: pointer; transition: opacity .3s, transform .5s; }
+.hero__qn:hover, .hero__qn:focus-visible { opacity: 1; transform: rotate(180deg); }
+html[data-hero-pos="bg"] .hero__qn { display: none; }
+
+/* «Сегодня»: сцена сверху на всю ширину, плитки под ней */
+@media (min-width: 48rem) {
+  html[data-hero-pos="side"] .main[data-page="today"] { display: block; max-width: 100rem; }
+  html[data-hero-pos="side"] .main[data-page="today"] > .hero--stage { position: relative; top: auto; width: 100%; height: auto; margin: 0 0 var(--sp-4); }
+  html[data-hero-pos="side"] .main[data-page="today"] > .hero--stage .hero__frame { flex: none; height: clamp(13rem, 30vh, 26rem); }
+  html[data-hero-pos="side"] .main[data-page="today"] .hero__quote { padding-bottom: 0; }
+  html[data-hero-pos="side"] .main[data-page="today"] > .hero--stage .hero__q { max-width: 44rem; }
+}
+
+/* День пройден */
+.tile--day .daypath { width: 100%; max-width: 12rem; margin: .25rem auto 0; display: block; }
+.tile--day .daypath path { fill: none; stroke-linecap: round; }
+.tile--day .daypath .dp-bg { stroke: color-mix(in srgb, currentColor 18%, transparent); stroke-dasharray: 2 5; }
+.tile--day .daypath .dp-fg { stroke: var(--accent, currentColor); }
+.tile--day .daypath circle { fill: var(--accent, currentColor); }
+.tile--day .daypct { text-align: center; font-size: 1.6rem; margin: -2.2rem 0 0; }
+.tile--day .daynote { text-align: center; }
+
+/* вопросы проекта в один ряд, длинный ряд листается вбок */
+.qgrid, .qgrid[data-n] { display: flex; flex-wrap: nowrap; overflow-x: auto; scroll-snap-type: x proximity; padding-bottom: var(--sp-2); }
+.qgrid > li { flex: 0 0 14rem; scroll-snap-align: start; }
+
+/* ничего не вылезает из колонки */
+.main > *, .view, .view > * { min-width: 0; }
+.view { max-width: 100%; }
+.view input, .view select, .view textarea { max-width: 100%; box-sizing: border-box; }
+.task-form__main .field { flex: 1 1 0; width: 0; min-width: 0; }
+@media (max-width: 479px) { .task-form__main .field { width: 100%; flex: 1 1 100%; } }
+.theme-tile { min-width: 0; box-sizing: border-box; }
+.theme-tile > * { min-width: 0; max-width: 100%; }
+.field { box-sizing: border-box; max-width: 100%; }

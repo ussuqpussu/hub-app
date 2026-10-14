@@ -20,9 +20,12 @@ let sent = ''; // что уже отправлено рамке, чтобы не
 // Цитата дня лежит на фоне под анимацией: только текст и автор, без плитки и кнопок. Меняется раз в сутки.
 function dayQuote(name) {
   const list = name === 'Мифы' ? QUOTES_GOW : QUOTES;
-  const day = Math.floor((Date.now() - new Date().getTimezoneOffset() * 60000) / 86400000);
-  return list[((day % list.length) + list.length) % list.length];
+  const n = Math.floor(Date.now() / QUOTE_MS) + qShift;
+  return list[((n % list.length) + list.length) % list.length];
 }
+const QUOTE_MS = 5 * 60 * 1000;
+let qShift = 0;
+setInterval(() => { if (box) fillQuote(box.el, engineName(box.theme)); }, 30000);
 let rage = 0;
 let curRoute = '';
 function setMeta(route) {
@@ -90,8 +93,9 @@ export function sceneHero(themeId, route) {
   el.setAttribute('aria-label', `Анимация темы «${name}»`);
   const quote = document.createElement('figure');
   quote.className = 'hero__quote';
-  quote.innerHTML = '<blockquote class="hero__q"></blockquote><figcaption class="hero__who"></figcaption><div class="hero__pat"></div><div class="hero__rage" title="Ярость растёт с закрытыми задачами и гаснет за неделю"><span>Ярость</span><i></i><b>0%</b></div>';
+  quote.innerHTML = '<blockquote class="hero__q"></blockquote><figcaption class="hero__who"></figcaption><button type="button" class="hero__qn" aria-label="Другая цитата" title="Другая цитата">↻</button><div class="hero__pat"></div><div class="hero__rage" title="Ярость растёт с закрытыми задачами и гаснет за неделю"><span>Ярость</span><i></i><b>0%</b></div>';
   el.append(frame, quote);
+  quote.querySelector('.hero__qn').addEventListener('click', () => { qShift += 1; fillQuote(el, engineName(box ? box.theme : themeId)); });
   fillQuote(el, name);
   sent = '';
   box = { el, frame, ready: false, pending: null, theme: themeId };

@@ -4,7 +4,7 @@
 import { load, save } from './storage.js';
 
 const KEY = 'hub.cats';
-const PERCH = { today: '[data-cat="perch"]', settings: '.view .seg' };
+const PERCH = {};
 let holder = null;
 let svgNow = '';
 let queued = false;
@@ -20,7 +20,7 @@ function target() {
   const main = document.getElementById('main');
   if (!main) return null;
   const r = route();
-  const sel = [PERCH[r], '.view .card', '.view .seg'].filter(Boolean);
+  const sel = [PERCH[r], '.view > .view__head', '.view .card'].filter(Boolean);
   for (const s of sel) {
     const el = main.querySelector(s);
     if (el && el.offsetParent !== null) return el;

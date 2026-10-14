@@ -85,6 +85,33 @@ export function todayView({ store, subscribe }) {
     const grid = el('div', { class: 'bento' });
     root.append(grid);
 
+    // День пройден: доля суток от 00:00 до 24:00, обновляется раз в минуту
+    {
+      const myth = document.documentElement.dataset.theme === 'myth';
+      const NS = 'http://www.w3.org/2000/svg';
+      const svg = document.createElementNS(NS, 'svg');
+      svg.setAttribute('class', 'daypath'); svg.setAttribute('viewBox', '0 0 120 70'); svg.setAttribute('role', 'img');
+      const arc = (cls) => { const p = document.createElementNS(NS, 'path'); p.setAttribute('d', 'M 10 64 A 50 50 0 0 1 110 64'); p.setAttribute('class', cls); p.setAttribute('stroke-width', '3'); return p; };
+      const bg = arc('dp-bg'); const fg = arc('dp-fg'); fg.setAttribute('pathLength', '100'); fg.setAttribute('stroke-dasharray', '100'); fg.style.transition = 'stroke-dashoffset 1.2s cubic-bezier(.22,.8,.3,1)';
+      const dot = document.createElementNS(NS, 'circle'); dot.setAttribute('r', '4');
+      svg.append(bg, fg, dot);
+      const pct = el('p', { class: 'daypct' });
+      const note = el('p', { class: 'muted tile__meta daynote' });
+      const upd = () => {
+        const n = new Date();
+        const f = Math.min(1, (n.getHours() * 60 + n.getMinutes()) / 1440);
+        const a = Math.PI * (1 - f);
+        dot.setAttribute('cx', String(60 + 50 * Math.cos(a))); dot.setAttribute('cy', String(64 - 50 * Math.sin(a)));
+        fg.setAttribute('stroke-dashoffset', String(100 - f * 100));
+        pct.textContent = `${Math.round(f * 100)}%`;
+        svg.setAttribute('aria-label', `День пройден на ${Math.round(f * 100)} процентов`);
+        note.textContent = `день пройден на ${Math.round(f * 100)}%`;
+      };
+      upd();
+      const iv = setInterval(() => { if (root.isConnected) upd(); else clearInterval(iv); }, 60000);
+      grid.append(el('section', { class: 'card tile tile--day tile--w2' }, [el('span', { class: 'tile__kicker', text: myth ? 'Путь Гелиоса' : 'День' }), svg, pct, note]));
+    }
+
     // Погода (хаб сам спрашивает Open-Meteo; нет сети — последний ответ)
     {
       const ws = weatherState(getWeather());
@@ -111,7 +138,7 @@ export function todayView({ store, subscribe }) {
         mountSky(cv, () => { const w2 = weatherState(getWeather()); const c2 = w2 && (w2.cities.find((c) => c.name === load('hub.weatherCity', 'Москва')) || w2.cities[0]); return c2 && !w2.stale ? c2.kind : 'clear'; });
         body.unshift(cv);
       }
-      { const wt = tile('Погода', body, null, 'w2'); wt.dataset.cat = 'perch'; grid.append(wt); }
+      grid.append(tile('Погода', body, null, 'w2'));
     }
 
     // Расписание на сегодня
@@ -230,7 +257,7 @@ export function todayView({ store, subscribe }) {
     try { ensureSnapshot(store); } catch (_) { /* итог сохранится при следующем открытии */ }
     const ws = liveSummary(store, today);
     const sunEve = new Date().getDay() === 0 && new Date().getHours() >= 18;
-    grid.append(tile(sunEve ? 'Итоги недели готовы' : 'Итоги недели', el('p', { class: ws.hasData ? '' : 'muted', text: ws.hasData ? `Закрыто задач: ${ws.tasks.closed.length}. Опубликовано в «Рупоре»: ${ws.rupor.total}. Событий проектов: ${ws.events.length}.` : 'За эту неделю пока нет данных.' }), el('a', { class: 'tile__link', href: '#/weekly', text: 'Открыть' })));
+    grid.append(tile(sunEve ? 'Итоги недели готовы' : 'Итоги недели', el('p', { class: ws.hasData ? '' : 'muted', text: ws.hasData ? `Закрыто задач: ${ws.tasks.closed.length}. Опубликовано в «Рупоре»: ${ws.rupor.total}. Событий проектов: ${ws.events.length}.` : 'За эту неделю пока нет данных.' }), el('a', { class: 'tile__link', href: '#/weekly', text: 'Открыть' }), 'w2'));
 
 
     // Смена суток: в полночь экран обновляется сам

@@ -179,7 +179,7 @@ function myRaven(){var G=["..................................", "...............
   h=h.replace(/<div class="lay ad ad-myth"/,'<div class="lay ad ad-myth" style="--rv1:'+pal.r1+';--rv2:'+pal.r2+';--rvt:'+pal.t+';--rva:'+pal.asc+'"');
   h=h.replace(/<div class="ad-t">[\s\S]*?<\/div><div class="ad-d">[\s\S]*?<\/div>/,'<div class="ad-t">'+P.n+'</div><div class="ad-d">'+DTS()+'</div>');
   h=h.replace(/<div class="ad-tabs">[\s\S]*?<\/div>(?=<pre)/,'<div class="ad-tabs">'+tabs+'</div><div class="myth-rage" title="Ярость растёт с каждой закрытой задачей и медленно остывает"><span>Ярость</span><u><i style="width:'+Math.round(MYD.rage)+'%"></i></u><b>'+Math.round(MYD.rage)+'%</b>'+chips+'</div>');
-  if(P.video)h=h.replace(/<pre class="ad-asc"[\s\S]*?<\/pre>/,'<div class="myth-st">'+myVid(P.video,1)+'</div>');
+  if(P.video)h=h.replace(/<pre class="ad-asc"[\s\S]*?<\/pre>/,'<div class="myth-st" data-sc="'+P.video+'">'+myVid(P.video,1)+'</div>');
   else if(P.c)h=h.replace(/<pre class="ad-asc"[\s\S]*?<\/pre>/,'<div class="myth-st" data-sc="'+P.c+'">'+myVid(P.c,1)+'</div>');
   h=h.replace(/<svg class="[^"]*ad-cat"[\s\S]*?<\/svg>/,myRaven());
   var j=h.indexOf("</svg>",h.indexOf('class="ad-card"')),k2=h.indexOf('<div class="h9-side">');
@@ -248,7 +248,9 @@ function renderRowsDummy(){var pg=Math.min(ADPG,MYP.length-1),card=document.quer
    var tn=px[(cy*cols+cx)*4]/255;tn=Math.min(1,Math.max(0,(tn-.03)*1.9));if(tn<.04)continue;var idx=Math.min(ramp.length-1,Math.floor(Math.pow(tn,.75)*ramp.length));if(idx<1)continue;
    g.globalAlpha=.6+.4*tn;g.drawImage(at,idx*cwP,0,cwP,chP,ox+cx*cw,oy+cy*ch,cw,ch)}
   g.globalAlpha=1}
- function loop(now){requestAnimationFrame(loop);if(now-last<33)return;last=now;document.querySelectorAll("canvas.myth-cv").forEach(function(cv){try{draw(cv,now)}catch(e){if(!window._myErr){window._myErr=e;console.error(e)}}})}
+ var MYRATE={hourglass:.5,scroll:.5,coins:.75,vase:.75,stars:.75,gears:.75};
+ function slowVid(){document.querySelectorAll(".myth-st[data-sc] video").forEach(function(v){var r=MYRATE[v.parentNode.dataset.sc]||1;if(v._r!==r){v._r=r;v.playbackRate=r}})}
+ function loop(now){requestAnimationFrame(loop);slowVid();if(now-last<33)return;last=now;document.querySelectorAll("canvas.myth-cv").forEach(function(cv){try{draw(cv,now)}catch(e){if(!window._myErr){window._myErr=e;console.error(e)}}})}
  requestAnimationFrame(loop)})();
 
 /* Мифы: руны, тайны, ворон, Ярость, артефакт дня */
