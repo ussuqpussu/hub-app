@@ -279,6 +279,29 @@ export const THEME_DEFS = [
   ]
  },
  {
+  "id": "mythbento",
+  "name": "Бенто",
+  "group": "Тёмные",
+  "note": "Тёмная: плавающая панель-капсула, асимметричное бенто, светящееся стекло, светлая карточка фокуса",
+  "dark": true,
+  "bg": "#040405",
+  "surface": "#101012",
+  "text": "#d8d8dc",
+  "accent": "#f2f2f2",
+  "onAccent": "#050505",
+  "dim": "#8d8e96",
+  "font": "Georgia,'Times New Roman',serif",
+  "card": "1.75em",
+  "btn": "99px",
+  "layout": "float",
+  "pal": [
+   "#f2f2f2",
+   "#9097a6",
+   "#2a2b30",
+   "#d8d8dc"
+  ]
+ },
+ {
   "id": "glass",
   "name": "Стекло",
   "group": "Тёмные",

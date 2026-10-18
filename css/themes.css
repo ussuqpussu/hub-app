@@ -408,6 +408,40 @@
   --border-style: solid;
 }
 
+[data-theme="mythbento"] {
+  color-scheme: dark;
+  --c-bg: #040405;
+  --c-surface: #101012;
+  --c-text: #d8d8dc;
+  --c-accent: #f2f2f2;
+  --c-on-accent: #050505;
+  --c-dim: #8d8e96;
+  --c-line: color-mix(in srgb, var(--c-text) 16%, var(--c-bg));
+  --c-fill: color-mix(in srgb, var(--c-text) 8%, var(--c-bg));
+  --c-danger: #ff8a80;
+  --c-overlay: rgb(0 0 0 / 65%);
+  --c-ok: #30d158;
+  --c-warn: #ffd60a;
+  --lamp-green: #30d158;
+  --lamp-yellow: #ffd60a;
+  --lamp-red: #ff453a;
+  --lamp-off: #636366;
+  --chart-1: #ffb4a2;
+  --chart-2: #5e9cff;
+  --chart-3: #30d158;
+  --chart-4: #ffd60a;
+  --chart-5: #d8b4fe;
+  --chart-6: #ff9aa2;
+  --chart-7: #7fd7e8;
+  --font-ui: Georgia,'Times New Roman',serif;
+  --font-head: var(--font-ui);
+  --fw-head: 600;
+  --radius-s: calc(1.75rem * 0.6);
+  --radius-m: 1.75rem;
+  --radius-pill: 99px;
+  --border-style: solid;
+}
+
 [data-theme="glass"] {
   color-scheme: dark;
   --c-bg: #0a0b10;
