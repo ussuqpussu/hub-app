@@ -139,6 +139,9 @@ export function scheduleView() {
   });
   render();
   loadSchedule();
+  // после полуночи сегодняшний день меняется: ворон перепрыгивает на новую плитку
+  let shown = todayYmd();
+  const tick = setInterval(() => { if (!root.isConnected) { if (seen) clearInterval(tick); return; } if (todayYmd() !== shown) { shown = todayYmd(); render(); } }, 30000);
   root.append(bar, body, foot);
   return root;
 }

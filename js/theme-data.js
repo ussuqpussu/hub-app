@@ -256,6 +256,29 @@ export const THEME_DEFS = [
   ]
  },
  {
+  "id": "mythglass",
+  "name": "Мифы · Стекло",
+  "group": "Тёмные",
+  "note": "Тёмная: все сцены и ворон Мифов, бенто-плитки из матового стекла, остров с фокусом",
+  "dark": true,
+  "bg": "#040405",
+  "surface": "#101012",
+  "text": "#d8d8dc",
+  "accent": "#f2f2f2",
+  "onAccent": "#050505",
+  "dim": "#9a9aa2",
+  "font": "Georgia,'Times New Roman',serif",
+  "card": "1.75em",
+  "btn": "99px",
+  "layout": "side",
+  "pal": [
+   "#f2f2f2",
+   "#9097a6",
+   "#4a4d55",
+   "#d8d8dc"
+  ]
+ },
+ {
   "id": "glass",
   "name": "Стекло",
   "group": "Тёмные",

@@ -154,7 +154,10 @@ html[data-effects="off"] .l-timer .ring { animation: none; }
 /* ---------- стекло для всех тем ---------- */
 /* Включается атрибутом html[data-glass="tinted|clear"]. Для тем с плоским фоном рисуем ровную диагональную заливку,
    чтобы стеклу было что размывать. Рамка и внутренний блик вместо внешней тени. */
-html[data-glass]:not([data-wp]) body { background: var(--wp-grad, none), var(--c-bg); background-attachment: fixed; }
+/* заливка лежит на отдельном закреплённом слое: background-attachment: fixed заставляет перерисовывать весь фон при каждой прокрутке */
+html[data-glass]:not([data-wp]) { background: var(--c-bg); }
+html[data-glass]:not([data-wp]) body { background: none; }
+html[data-glass]:not([data-wp])::before { content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none; background: var(--wp-grad, none); transform: translateZ(0); }
 html[data-glass="tinted"] { --glass-a: 9%; --glass-b: 3%; }
 html[data-glass="clear"] { --glass-a: 4%; --glass-b: 1.2%; }
 html[data-glass] :is(.card, .qtile, .sheet, .nav, .topbar, .lock__box, .tipcard, .empty) {
@@ -176,7 +179,6 @@ html[data-effects="off"][data-glass] .card:hover, html[data-effects="off"][data-
 /* тема «Стекло»: Manrope, диагональные обои и акцент из набора */
 [data-theme="glass"] { --font-ui: "Manrope", "Segoe UI", system-ui, -apple-system, sans-serif; --wp-grad: linear-gradient(155deg, #2a2f4555 0%, #0a0b10aa 100%); }
 [data-theme="glass"] body { font-feature-settings: "tnum" 1; }
-html[data-theme="glass"]:not([data-wp]) body { background: var(--wp-grad), var(--c-bg); background-attachment: fixed; }
 .glasspick { display: grid; grid-template-columns: repeat(auto-fill, minmax(5.5rem, 1fr)); gap: var(--sp-3); margin-top: var(--sp-2); }
 .glasspick__wp { position: relative; aspect-ratio: 3 / 2; border-radius: var(--radius-s); border: 0; padding: 0; transition: transform .3s var(--ease-snap), box-shadow .3s; }
 @media (hover: hover) { .glasspick__wp:hover { transform: translateY(-2px); } }
@@ -216,3 +218,47 @@ html[data-theme="glass"]:not([data-wp]) body { background: var(--wp-grad), var(-
 
 /* узкий телефон: заголовку остаётся место рядом с новой кнопкой темы */
 @media (max-width: 30rem) { .topbar .sync-chip { max-width: 5rem; } .topbar__title { min-width: 5.5rem; } }
+
+/* ---------- тема «Мифы · Стекло»: все сцены Мифов, плитки как стеклянное бенто ---------- */
+.focus__time { font-family: var(--font-head); font-size: 2.6rem; line-height: 1; margin: .25rem 0 .1rem; font-variant-numeric: tabular-nums; }
+[data-theme="mythglass"] {
+  --chart-1: #f2f2f2; --chart-2: #b8bac2; --chart-3: #8d8f98; --chart-4: #686a72; --chart-5: #d7d8dd; --chart-6: #a0a2aa; --chart-7: #55575e;
+  --glass-blur: 16px; --glass-sat: 1.15; --glass-line: 12%;
+}
+html[data-theme="mythglass"]:not([data-wp]) { --wp-grad:
+    radial-gradient(42rem 34rem at 4% -6%, rgb(255 255 255 / .16), transparent 70%),
+    radial-gradient(46rem 40rem at 104% 38%, rgb(150 160 185 / .15), transparent 70%),
+    radial-gradient(40rem 28rem at 40% 112%, rgb(255 255 255 / .07), transparent 70%); }
+html[data-theme="mythglass"] .tile__kicker { letter-spacing: .14em; font-size: .66rem; }
+html[data-theme="mythglass"] .card, [data-theme="mythglass"] .qtile { box-shadow: inset 0 1px 0 rgb(255 255 255 / .16), inset 0 0 0 1px rgb(255 255 255 / .05), 0 20px 40px -22px rgb(0 0 0 / .85); }
+html[data-theme="mythglass"] .btn { border-radius: 99px; }
+html[data-theme="mythglass"] .btn--primary { background: #f2f2f2; color: #050505; border-color: transparent; font-weight: 600; }
+@media (min-width: 48rem) {
+  html[data-theme="mythglass"] .nav__ind { background: #f2f2f2; }
+  html[data-theme="mythglass"] .nav__item[aria-current="page"] { color: #050505; }
+}
+/* светлая карточка фокуса, как на макете */
+html[data-theme="mythglass"] .tile--focus { background: linear-gradient(160deg, #f4f4f5, #cfd0d4); color: #0a0a0b; border-color: transparent; backdrop-filter: none; }
+html[data-theme="mythglass"] .tile--focus :is(h2, h3, .focus__time) { color: #050505; }
+html[data-theme="mythglass"] .tile--focus :is(.muted, .tile__kicker) { color: #55565c; }
+html[data-theme="mythglass"] .tile--focus .btn--primary { background: #050505; color: #fff; }
+html[data-theme="mythglass"] .tile--focus .btn:disabled { opacity: .75; }
+html[data-theme="mythglass"] .island { box-shadow: 0 12px 30px rgb(0 0 0 / .7), inset 0 0 0 1px rgb(255 255 255 / .1); }
+html[data-theme="mythglass"] .sched-day--today { box-shadow: 0 0 0 1px rgb(255 255 255 / .35), 0 20px 40px -22px #000; }
+
+/* ---------- без лагов: лёгкое стекло ---------- */
+/* Размытие фона под каждой плиткой дорогое, особенно на телефоне; пока страница появляется и уходит, его выключаем,
+   а вместо размытия самих плиток анимируем только прозрачность и сдвиг (их считает видеокарта без перерисовки). */
+@keyframes mk-rise-g { from { opacity: 0; transform: translate3d(0, 12px, 0); } }
+@keyframes mk-rise-in-g { from { opacity: 0; transform: translate3d(0, 8px, 0); } }
+@keyframes mk-out-g { to { opacity: 0; transform: translate3d(0, -4px, 0); } }
+html[data-glass] .view.is-entering [data-rise] { animation-name: mk-rise-g; }
+html[data-glass] .view.is-entering [data-rise] > * { animation-name: mk-rise-in-g; }
+html[data-glass] .view.is-leaving > *, html[data-glass] .view.is-leaving [data-rise] { animation-name: mk-out-g !important; }
+html[data-glass] :is(.view.is-entering, .view.is-leaving) :is(.card, .qtile) { -webkit-backdrop-filter: none; backdrop-filter: none; }
+html[data-glass] .view.is-entering [data-rise], html[data-glass] .view.is-leaving [data-rise] { will-change: opacity, transform; }
+html[data-glass] .card:hover, html[data-glass] .qtile:hover { will-change: transform; }
+@media (max-width: 47.99rem), (pointer: coarse) {
+  html[data-glass] { --glass-blur: 10px; --glass-sat: 1; }
+  html[data-glass] .card:hover, html[data-glass] .qtile:hover { transform: none; }
+}

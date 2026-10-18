@@ -20,6 +20,7 @@ function set(state) { if (S.nodes) S.nodes.root.dataset.state = state; }
 function say(text) { if (!S.live) return; S.live.textContent = ''; setTimeout(() => { S.live.textContent = text; }, 30); }
 
 function paint() {
+  document.dispatchEvent(new CustomEvent('hub:focus', { detail: { rem: S.rem, run: S.run, active: S.base !== 'idle', text: fmt(S.rem) } }));
   if (!S.nodes) return;
   S.nodes.compact.textContent = S.nodes.big.textContent = fmt(S.rem);
   S.nodes.root.dataset.run = String(S.run);
@@ -66,6 +67,7 @@ export function startFocus() {
   clearInterval(S.iv);
   S.iv = setInterval(tick, 500);
 }
+export const focusText = () => fmt(S.rem);
 export const focusActive = () => S.base !== 'idle';
 
 function stop() {

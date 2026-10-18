@@ -344,7 +344,7 @@
 .sched-day__head h3 { font-size: var(--fs-m); }
 .sched-day--today { border-color: var(--c-accent); }
 .pairs { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--sp-2); }
-.pair { display: grid; grid-template-columns: auto 1fr; gap: var(--sp-1) var(--sp-3); padding: var(--sp-2) var(--sp-3); background: var(--c-fill); border: var(--border) var(--border-style) transparent; border-radius: var(--radius-s); }
+.pair { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--sp-1) var(--sp-3); padding: var(--sp-2) var(--sp-3); background: var(--c-fill); border: var(--border) var(--border-style) transparent; border-radius: var(--radius-s); }
 .pair--now { border-color: var(--c-accent); background: var(--c-surface); }
 .pair--past { opacity: 0.55; }
 .pair__time { font-variant-numeric: tabular-nums; color: var(--c-dim); font-size: var(--fs-s); min-width: 3.5rem; }
@@ -888,3 +888,12 @@ html[data-hero-pos="bg"] .hero__qn { display: none; }
 .hero__qn { pointer-events: auto; z-index: 2; }
 .bento > .has-cat { margin-top: 0; }
 .main[data-page="today"] .hero__quote { min-height: 0; }
+
+/* Расписание: плитки не вылезают за сетку, длинные слова переносятся; плитка с вороном опускается вниз */
+.sched-body > .sched-day { min-width: 0; transition: margin-top .45s cubic-bezier(.22,1,.36,1); }
+.sched-day .pair > *, .sched-day .pair__meta { min-width: 0; overflow-wrap: anywhere; }
+.pair__time { flex: none; }
+.pair__meta { overflow-wrap: anywhere; }
+@keyframes cathop { 0% { transform: translateY(-1.4rem); opacity: 0; } 55% { transform: translateY(-.5rem); opacity: 1; } 100% { transform: none; } }
+.cat-holder--hop .pet { animation: cathop .6s cubic-bezier(.22,1,.36,1); }
+html[data-effects="off"] .cat-holder--hop .pet { animation: none; }

@@ -65,7 +65,7 @@
       var th = getT(cur);
       var c = th.cat || (th.L === 'adam' ? { p: 'tuxedo', b: '#a9a9a9', s: '#f2f2f2', t: '#f2f2f2', e: '#111', n: '#8a8a8a' } : null);
       var svg = c ? String(petSvg(c) || '') : '';
-      if (th.k === 'myth' && typeof mythPetSvg === 'function') svg = mythPetSvg();
+      if (/^myth/.test(th.k) && typeof mythPetSvg === 'function') svg = mythPetSvg();
       parent.postMessage({ type: 'hub-cat', theme: T[cur].n, svg: svg }, '*');
     } catch (e) { /* без кота */ }
   }

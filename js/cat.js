@@ -4,10 +4,12 @@
 import { load, save } from './storage.js';
 
 const KEY = 'hub.cats';
-const PERCH = {};
+const PERCH = { schedule: '.sched-day--today' };
 let holder = null;
 let svgNow = '';
 let queued = false;
+let lastRoute = '';
+let hopNext = false; // true, если ворон перепрыгивает на другую плитку без смены страницы
 
 const route = () => (location.hash || '#/today').replace(/^#\//, '').split('/')[0] || 'today';
 
@@ -33,11 +35,15 @@ function place() {
   const t = svgNow ? target() : null;
   if (!t) { if (holder) holder.remove(); holder = null; return; }
   if (holder && holder.parentElement === t && holder.dataset.svg === svgNow) return;
+  hopNext = !!holder && holder.isConnected && route() === lastRoute;
+  lastRoute = route();
   if (holder) holder.remove();
   holder = document.createElement('div');
   holder.className = 'cat-holder';
   holder.setAttribute('aria-hidden', 'true');
   holder.dataset.svg = svgNow;
+  holder.classList.toggle('cat-holder--hop', hopNext);
+  hopNext = false;
   holder.innerHTML = svgNow;
   t.classList.add('has-cat');
   t.append(holder);

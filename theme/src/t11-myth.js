@@ -172,7 +172,7 @@ function myRaven(){var G=["..................................", "...............
 (function(){
  var f=LY.adam;
  LY.adam=function(th){
-  var h=f(th); if(!th||th.k!=="myth")return h;
+  var h=f(th); if(!th||!/^myth/.test(th.k))return h;
   var pg=RB?Math.min(ADPG,MYP.length-1):0,P=MYP[pg],i,pal=MYPALS[th._pal||MYPAL];
   var tabs="";for(i=0;i<MYP.length;i++)tabs+='<span role="button" aria-pressed="'+(i===pg)+'" data-adpg="'+i+'"'+(i===pg?' class="on"':'')+'>'+MYP[i].n+'</span>';
   var chips="";if(RB){chips='<span class="myth-pal">';for(var kk in MYPALS)chips+='<button type="button" data-mypal="'+kk+'"'+(kk===(th._pal||MYPAL)?' class="on"':'')+'>'+MYPALS[kk].n+'</button>';chips+='</span><button class="myth-sp" type="button" data-mysp="1">▶ заставка</button>'}
@@ -186,7 +186,7 @@ function myRaven(){var G=["..................................", "...............
   if(j>0&&k2>j)h=h.slice(0,j+6)+myRows(P)+'</div>'+h.slice(k2);
   h=h.replace(/<div class="h9-side">[\s\S]*?<\/div><\/div><\/div>$/,'<div class="h9-side"><blockquote class="myq"><p>«'+P.q[0]+'»</p><cite>— '+P.q[1]+'</cite></blockquote>'+(P.b?'<div class="ad-btn">'+P.b+'</div>':'')+'</div></div></div>');
   return h};
- var _s=screen;screen=function(th,big){if(th&&th.k==="myth"){var p=MYPALS[MYPAL];th=Object.assign({},th,{b:p.b,s:p.s,t:p.t,a:p.a,ba:p.ba,asc:p.asc,_pal:MYPAL})}return _s(th,big)};
+ var _s=screen;screen=function(th,big){if(th&&/^myth/.test(th.k)){var p=MYPALS[MYPAL];th=Object.assign({},th,{b:p.b,s:p.s,t:p.t,a:p.a,ba:p.ba,asc:p.asc,_pal:MYPAL})}return _s(th,big)};
  var _rb=renderBig;renderBig=function(){_rb();try{mythPanel()}catch(e){}};
  var st=document.createElement("style");
  st.textContent=".myth-st{position:relative;flex:1;min-height:4.5em;margin:.15em 0 .25em;display:flex;align-items:center;justify-content:center;overflow:hidden;pointer-events:none}.myth-st video{max-width:100%;max-height:100%;object-fit:contain;mix-blend-mode:lighten;background:#000}.myth-cv{width:100%;height:100%;display:block;color:var(--rva)}.ad-myth .ad-t{color:var(--rvt)!important}"
@@ -268,7 +268,7 @@ function myToast(rune,txt,key){var L=document.querySelector("#big .lay.ad-myth")
 function myRage(){var L=document.querySelector("#big .lay.ad-myth");if(!L)return;var o=document.createElement("div");var tt=L.querySelector(".myth-toast");if(tt)tt.remove();o.className="myth-rageov";o.innerHTML="<span>ЯРОСТЬ СПАРТАНЦА</span><i>"+myRune("ярость")+"</i>";L.appendChild(o);setTimeout(function(){o.remove()},2600);myMark("rage")}
 (function(){
  var f=LY.adam;
- LY.adam=function(th){var h=f(th);if(!th||th.k!=="myth")return h;
+ LY.adam=function(th){var h=f(th);if(!th||!/^myth/.test(th.k))return h;
   var m=h.match(/<div class="ad-t">([^<]*)<\/div>/),nm=m?m[1]:"";
   h=h.replace(/(<div class="ad-d">[\s\S]*?<\/div>)/,'$1<div class="myth-runes" data-myrune="1" title="'+nm+'">'+myRune(nm)+'</div>');
   h=h.replace('</cite></blockquote>','</cite></blockquote><div class="myth-art"></div>');
@@ -346,7 +346,7 @@ function myArtCard(i){var a=MYART[i];myCard(MYAS[a[1]],a[0],a[2],a[3],"Прин�
 for(var _i=0;_i<MYART.length;_i++)MYSEC["art"+_i]=MYART[_i][0];
 (function(){
  var f=LY.adam;
- LY.adam=function(th){var h=f(th);if(!th||th.k!=="myth")return h;
+ LY.adam=function(th){var h=f(th);if(!th||!/^myth/.test(th.k))return h;
   var pg=RB?Math.min(ADPG,MYP.length-1):0,pl=MYPAT[pg],g=MYGOD[pl[0]];
   h=h.replace(/(<div class="myth-runes"[^>]*>[^<]*<\/div>)/,'$1<button type="button" class="myth-pat" data-mypat="'+pg+'" data-i="0" title="Нажми: покровители страницы">Покровитель: '+g[1]+' ›</button>');
   var d=new Date(),doy=Math.floor((d-new Date(d.getFullYear(),0,0))/864e5),ai=doy%MYART.length,A=MYART[ai];
@@ -457,7 +457,7 @@ MYD.lore=Math.min(40,MYD.lore+myFound().length);
 /* интерфейс */
 (function(){
  var f=LY.adam;
- LY.adam=function(th){var h=f(th);if(!th||th.k!=="myth")return h;
+ LY.adam=function(th){var h=f(th);if(!th||!/^myth/.test(th.k))return h;
   var pg=RB?Math.min(ADPG,MYP.length-1):0,pl=MYPAT[pg];
   h=h.replace(/<button type="button" class="myth-pat"[\s\S]*?<\/button>/,'<div class="myth-pat">Покровители: '+pl.map(function(id){return '<button type="button" data-mygod="'+id+'">'+MYGOD[id][1]+'</button>'}).join('')+'</div>');
   h=h.replace('<div class="myth-runes"','<div class="myth-brk"></div><div class="myth-runes"');
@@ -544,15 +544,17 @@ MYART[3]=["Мьёльнир","mjolnir","ᛗᛃᛟᛚᚾᛁᚱ","Молот То�
 (function(){
  var th=T.filter(function(x){return x.n==="Мифы"})[0];
  if(!th)return;
+ var th2=T.filter(function(x){return x.n==="Мифы · Стекло"})[0];
  var o={n:"Мифы",g:"Тёмные",L:"adam",k:"myth",b:"#050505",s:"#101010",t:"#d4d4d4",a:"#f2f2f2",ba:"#050505",fx:"adam8",d:"Тема по мотивам God of War, греческой и скандинавской мифологии: 7 страниц, у каждой своя анимация из символов. «Сегодня»: руки и искра. «Проекты»: гончарный круг, комок глины становится амфорой. «Задачи»: созвездие Стрелец собирается из звёзд. «Итоги недели»: монеты падают в ящик. «Заметки»: свиток. «Подписки»: песочные часы, которые переворачиваются. «Настройки»: шестерёнки. Кнопка «заставка» на странице показывает вход в хаб: звезда загорается, тускнеет, фон темнеет, открывается хаб."};
  for(var k in o)th[k]=o[k];
  th.L="adam";th.x10=0;delete th.ts;
+ if(th2){var o2c=Object.assign({},o,{n:"Мифы · Стекло",k:"mythglass"});for(var k2 in o2c)th2[k2]=o2c[k2];th2.L="adam";th2.x10=0;delete th2.ts}
  var HMODE=/(^|[#&])stage/.test(location.hash||"");
  /* страницы хаба (9) -> сцены Мифов (7) */
  var MAP=[0,"b",2,1,"b",5,4,"b",6,3];
  var lay=LY.adam;
  LY.adam=function(t){
-  if(!t||t.k!=="myth")return lay(t);
+  if(!t||!/^myth/.test(t.k))return lay(t);
   var o2=ADPG,h;
   if(HMODE){var mp=MAP[o2];if(mp==="b"){try{return MY_BASE_ADAM(t)}finally{ADPG=o2}}ADPG=mp!=null?mp:0}
   try{h=lay(t)}finally{ADPG=o2}
@@ -588,7 +590,7 @@ function mythPetSvg() {
     rb();
     try {
       var th = getT(cur), inf = document.querySelector('#big .info');
-      if (EDITOR && th && th.n === 'Мифы' && inf && !inf.querySelector('.myth-pal2')) {
+      if (EDITOR && th && /^Мифы/.test(th.n) && inf && !inf.querySelector('.myth-pal2')) {
         var h = '<div class="myth-pal2" style="margin:0 0 1em;display:flex;flex-wrap:wrap;gap:.5em;align-items:center"><span class="myth-pal">';
         for (var k in MYPALS) h += '<button type="button" data-mypal="' + k + '"' + (k === MYPAL ? ' class="on"' : '') + '>' + MYPALS[k].n + '</button>';
         h += '</span><button class="myth-sp" type="button" data-mysp="1">▶ заставка</button></div>';

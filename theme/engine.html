@@ -3798,6 +3798,7 @@ hubAddTheme({"n":"Бумажный театр","g":"Светлые","ts":"paperc
 hubAddTheme({"n":"Угли","g":"Тёмные","ts":"embers","lo":"air","b":"#120c09","s":"#1d130e","t":"#f5e6da","a":"#ff8a3d","ba":"#120c09","dim":"#bda391","dk":true,"pal":["#ff8a3d","#ffd08a","#3a2418","#f5e6da"],"tf":"'Segoe UI Variable','SF Pro Text','Segoe UI',system-ui,sans-serif","cr":".8em","brr":"99px","d":"Огонь и тепло. Анимации: искры над углями, пламя камина, свечи, лавовая лампа"});
 hubAddTheme({"n":"Типограф","g":"Светлые","ts":"letterpress","lo":"side","b":"#f3eddc","s":"#fbf7ea","t":"#181512","a":"#c0261d","ba":"#ffffff","dim":"#5b5448","dk":false,"pal":["#c0261d","#181512","#e1d8bd","#6a5f45"],"tf":"Georgia,'Times New Roman',serif","cr":"0","brr":"0","d":"Книжная печать. Анимации: литеры встают в строку, оттиск штампа, растр печатной краски, листы с типографским набором"});
 hubAddTheme({"n":"Мифы","g":"Тёмные","ts":"myth","lo":"side","b":"#050505","s":"#101010","t":"#d4d4d4","a":"#f2f2f2","ba":"#050505","dim":"#a0a0a0","dk":true,"pal":["#f2f2f2","#9097a6","#4a4d55","#d4d4d4"],"tf":"Georgia,'Times New Roman',serif","cr":".3em","brr":".3em","d":"Греческая и скандинавская мифология. Анимации из символов: гончарный круг, где комок глины становится амфорой; созвездие Стрелец; песочные часы; свиток"});
+hubAddTheme({"n":"Мифы · Стекло","g":"Тёмные","ts":"mythglass","lo":"side","b":"#040405","s":"#101012","t":"#d8d8dc","a":"#f2f2f2","ba":"#050505","dim":"#9a9aa2","dk":true,"pal":["#f2f2f2","#9097a6","#4a4d55","#d8d8dc"],"tf":"Georgia,'Times New Roman',serif","cr":"1.75em","brr":"99px","d":"Мифы и Сотворение целиком, но плитки как стеклянное бенто: крупные скругления, зерно, светлая карточка фокуса, свечение за стеклом, капсула-остров. Все анимации из кита"});
 hubAddTheme({"n":"Стекло","g":"Тёмные","ts":"glass","lo":"float","b":"#0a0b10","s":"#14161f","t":"#f1f2f6","a":"#3b82f6","ba":"#0a0b10","dim":"#a3a9bb","dk":true,"pal":["#3b82f6","#8b5cf6","#232842","#f1f2f6"],"tf":"Manrope,'Segoe UI Variable','Segoe UI',system-ui,sans-serif","cr":"1.5em","brr":"99px","d":"Матовое стекло из рилсов. Анимации: кольца активности, бублик с легендой, линия с заливкой, капсула-остров, меняющая форму"});
 
 /* ---- t01-lighthouse.js ---- */
@@ -5333,7 +5334,7 @@ function myRaven(){var G=["..................................", "...............
 (function(){
  var f=LY.adam;
  LY.adam=function(th){
-  var h=f(th); if(!th||th.k!=="myth")return h;
+  var h=f(th); if(!th||!/^myth/.test(th.k))return h;
   var pg=RB?Math.min(ADPG,MYP.length-1):0,P=MYP[pg],i,pal=MYPALS[th._pal||MYPAL];
   var tabs="";for(i=0;i<MYP.length;i++)tabs+='<span role="button" aria-pressed="'+(i===pg)+'" data-adpg="'+i+'"'+(i===pg?' class="on"':'')+'>'+MYP[i].n+'</span>';
   var chips="";if(RB){chips='<span class="myth-pal">';for(var kk in MYPALS)chips+='<button type="button" data-mypal="'+kk+'"'+(kk===(th._pal||MYPAL)?' class="on"':'')+'>'+MYPALS[kk].n+'</button>';chips+='</span><button class="myth-sp" type="button" data-mysp="1">▶ заставка</button>'}
@@ -5347,7 +5348,7 @@ function myRaven(){var G=["..................................", "...............
   if(j>0&&k2>j)h=h.slice(0,j+6)+myRows(P)+'</div>'+h.slice(k2);
   h=h.replace(/<div class="h9-side">[\s\S]*?<\/div><\/div><\/div>$/,'<div class="h9-side"><blockquote class="myq"><p>«'+P.q[0]+'»</p><cite>— '+P.q[1]+'</cite></blockquote>'+(P.b?'<div class="ad-btn">'+P.b+'</div>':'')+'</div></div></div>');
   return h};
- var _s=screen;screen=function(th,big){if(th&&th.k==="myth"){var p=MYPALS[MYPAL];th=Object.assign({},th,{b:p.b,s:p.s,t:p.t,a:p.a,ba:p.ba,asc:p.asc,_pal:MYPAL})}return _s(th,big)};
+ var _s=screen;screen=function(th,big){if(th&&/^myth/.test(th.k)){var p=MYPALS[MYPAL];th=Object.assign({},th,{b:p.b,s:p.s,t:p.t,a:p.a,ba:p.ba,asc:p.asc,_pal:MYPAL})}return _s(th,big)};
  var _rb=renderBig;renderBig=function(){_rb();try{mythPanel()}catch(e){}};
  var st=document.createElement("style");
  st.textContent=".myth-st{position:relative;flex:1;min-height:4.5em;margin:.15em 0 .25em;display:flex;align-items:center;justify-content:center;overflow:hidden;pointer-events:none}.myth-st video{max-width:100%;max-height:100%;object-fit:contain;mix-blend-mode:lighten;background:#000}.myth-cv{width:100%;height:100%;display:block;color:var(--rva)}.ad-myth .ad-t{color:var(--rvt)!important}"
@@ -5429,7 +5430,7 @@ function myToast(rune,txt,key){var L=document.querySelector("#big .lay.ad-myth")
 function myRage(){var L=document.querySelector("#big .lay.ad-myth");if(!L)return;var o=document.createElement("div");var tt=L.querySelector(".myth-toast");if(tt)tt.remove();o.className="myth-rageov";o.innerHTML="<span>ЯРОСТЬ СПАРТАНЦА</span><i>"+myRune("ярость")+"</i>";L.appendChild(o);setTimeout(function(){o.remove()},2600);myMark("rage")}
 (function(){
  var f=LY.adam;
- LY.adam=function(th){var h=f(th);if(!th||th.k!=="myth")return h;
+ LY.adam=function(th){var h=f(th);if(!th||!/^myth/.test(th.k))return h;
   var m=h.match(/<div class="ad-t">([^<]*)<\/div>/),nm=m?m[1]:"";
   h=h.replace(/(<div class="ad-d">[\s\S]*?<\/div>)/,'$1<div class="myth-runes" data-myrune="1" title="'+nm+'">'+myRune(nm)+'</div>');
   h=h.replace('</cite></blockquote>','</cite></blockquote><div class="myth-art"></div>');
@@ -5507,7 +5508,7 @@ function myArtCard(i){var a=MYART[i];myCard(MYAS[a[1]],a[0],a[2],a[3],"Прин�
 for(var _i=0;_i<MYART.length;_i++)MYSEC["art"+_i]=MYART[_i][0];
 (function(){
  var f=LY.adam;
- LY.adam=function(th){var h=f(th);if(!th||th.k!=="myth")return h;
+ LY.adam=function(th){var h=f(th);if(!th||!/^myth/.test(th.k))return h;
   var pg=RB?Math.min(ADPG,MYP.length-1):0,pl=MYPAT[pg],g=MYGOD[pl[0]];
   h=h.replace(/(<div class="myth-runes"[^>]*>[^<]*<\/div>)/,'$1<button type="button" class="myth-pat" data-mypat="'+pg+'" data-i="0" title="Нажми: покровители страницы">Покровитель: '+g[1]+' ›</button>');
   var d=new Date(),doy=Math.floor((d-new Date(d.getFullYear(),0,0))/864e5),ai=doy%MYART.length,A=MYART[ai];
@@ -5618,7 +5619,7 @@ MYD.lore=Math.min(40,MYD.lore+myFound().length);
 /* интерфейс */
 (function(){
  var f=LY.adam;
- LY.adam=function(th){var h=f(th);if(!th||th.k!=="myth")return h;
+ LY.adam=function(th){var h=f(th);if(!th||!/^myth/.test(th.k))return h;
   var pg=RB?Math.min(ADPG,MYP.length-1):0,pl=MYPAT[pg];
   h=h.replace(/<button type="button" class="myth-pat"[\s\S]*?<\/button>/,'<div class="myth-pat">Покровители: '+pl.map(function(id){return '<button type="button" data-mygod="'+id+'">'+MYGOD[id][1]+'</button>'}).join('')+'</div>');
   h=h.replace('<div class="myth-runes"','<div class="myth-brk"></div><div class="myth-runes"');
@@ -5705,15 +5706,17 @@ MYART[3]=["Мьёльнир","mjolnir","ᛗᛃᛟᛚᚾᛁᚱ","Молот То�
 (function(){
  var th=T.filter(function(x){return x.n==="Мифы"})[0];
  if(!th)return;
+ var th2=T.filter(function(x){return x.n==="Мифы · Стекло"})[0];
  var o={n:"Мифы",g:"Тёмные",L:"adam",k:"myth",b:"#050505",s:"#101010",t:"#d4d4d4",a:"#f2f2f2",ba:"#050505",fx:"adam8",d:"Тема по мотивам God of War, греческой и скандинавской мифологии: 7 страниц, у каждой своя анимация из символов. «Сегодня»: руки и искра. «Проекты»: гончарный круг, комок глины становится амфорой. «Задачи»: созвездие Стрелец собирается из звёзд. «Итоги недели»: монеты падают в ящик. «Заметки»: свиток. «Подписки»: песочные часы, которые переворачиваются. «Настройки»: шестерёнки. Кнопка «заставка» на странице показывает вход в хаб: звезда загорается, тускнеет, фон темнеет, открывается хаб."};
  for(var k in o)th[k]=o[k];
  th.L="adam";th.x10=0;delete th.ts;
+ if(th2){var o2c=Object.assign({},o,{n:"Мифы · Стекло",k:"mythglass"});for(var k2 in o2c)th2[k2]=o2c[k2];th2.L="adam";th2.x10=0;delete th2.ts}
  var HMODE=/(^|[#&])stage/.test(location.hash||"");
  /* страницы хаба (9) -> сцены Мифов (7) */
  var MAP=[0,"b",2,1,"b",5,4,"b",6,3];
  var lay=LY.adam;
  LY.adam=function(t){
-  if(!t||t.k!=="myth")return lay(t);
+  if(!t||!/^myth/.test(t.k))return lay(t);
   var o2=ADPG,h;
   if(HMODE){var mp=MAP[o2];if(mp==="b"){try{return MY_BASE_ADAM(t)}finally{ADPG=o2}}ADPG=mp!=null?mp:0}
   try{h=lay(t)}finally{ADPG=o2}
@@ -5749,7 +5752,7 @@ function mythPetSvg() {
     rb();
     try {
       var th = getT(cur), inf = document.querySelector('#big .info');
-      if (EDITOR && th && th.n === 'Мифы' && inf && !inf.querySelector('.myth-pal2')) {
+      if (EDITOR && th && /^Мифы/.test(th.n) && inf && !inf.querySelector('.myth-pal2')) {
         var h = '<div class="myth-pal2" style="margin:0 0 1em;display:flex;flex-wrap:wrap;gap:.5em;align-items:center"><span class="myth-pal">';
         for (var k in MYPALS) h += '<button type="button" data-mypal="' + k + '"' + (k === MYPAL ? ' class="on"' : '') + '>' + MYPALS[k].n + '</button>';
         h += '</span><button class="myth-sp" type="button" data-mysp="1">▶ заставка</button></div>';
@@ -5975,7 +5978,7 @@ TSC.glass = [
       var th = getT(cur);
       var c = th.cat || (th.L === 'adam' ? { p: 'tuxedo', b: '#a9a9a9', s: '#f2f2f2', t: '#f2f2f2', e: '#111', n: '#8a8a8a' } : null);
       var svg = c ? String(petSvg(c) || '') : '';
-      if (th.k === 'myth' && typeof mythPetSvg === 'function') svg = mythPetSvg();
+      if (/^myth/.test(th.k) && typeof mythPetSvg === 'function') svg = mythPetSvg();
       parent.postMessage({ type: 'hub-cat', theme: T[cur].n, svg: svg }, '*');
     } catch (e) { /* без кота */ }
   }

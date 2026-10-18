@@ -57,7 +57,7 @@ export function applyGlass() {
   const root = document.documentElement;
   const a = getAppearance();
   const theme = root.dataset.theme;
-  const mode = a.glass === 'auto' ? (theme === 'glass' ? 'tinted' : '') : a.glass === 'off' ? '' : a.glass;
+  const mode = a.glass === 'auto' ? (theme === 'glass' || theme === 'mythglass' ? 'tinted' : '') : a.glass === 'off' ? '' : a.glass;
   if (mode) { if (root.dataset.glass !== mode) root.dataset.glass = mode; } else if (root.dataset.glass) delete root.dataset.glass;
   const idx = a.wpGrad >= 0 ? a.wpGrad : theme === 'glass' ? 0 : -1;
   let dk = true;

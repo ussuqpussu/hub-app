@@ -16,7 +16,7 @@ import { getWeather, refreshWeather } from './bot-sync.js';
 import { weatherState, cityLine, dayLine } from './weather-calc.js';
 import { getAppearance, motionAllowed } from './appearance.js';
 import { rings } from './mk-widgets.js';
-import { startFocus, focusActive } from './island.js';
+import { startFocus, focusActive, focusText } from './island.js';
 import { groupTasks, openTasksTab, INBOX_OLD_DAYS, MAIN_LIMIT } from './tasks-view.js';
 
 const WEEKDAYS_FULL = ['воскресенье', 'понедельник', 'вторник', 'среда', 'четверг', 'пятница', 'суббота'];
@@ -89,7 +89,7 @@ export function todayView({ store, subscribe }) {
 
     // День пройден: доля суток от 00:00 до 24:00, обновляется раз в минуту
     {
-      const myth = document.documentElement.dataset.theme === 'myth';
+      const myth = /^myth/.test(document.documentElement.dataset.theme || '');
       const NS = 'http://www.w3.org/2000/svg';
       const svg = document.createElementNS(NS, 'svg');
       svg.setAttribute('class', 'daypath'); svg.setAttribute('viewBox', '0 0 120 70'); svg.setAttribute('role', 'img');
@@ -136,9 +136,20 @@ export function todayView({ store, subscribe }) {
     // Фокус: таймер 25 минут живёт в острове сверху
     {
       const go = el('button', { type: 'button', class: 'btn btn--primary btn--s', text: focusActive() ? 'Фокус идёт' : 'Начать фокус' });
-      if (focusActive()) go.disabled = true;
-      go.addEventListener('click', () => { startFocus(); go.disabled = true; go.textContent = 'Фокус идёт'; });
-      grid.append(tile('Фокус', [el('p', { class: 'muted tile__meta', text: '25 минут без отвлечений. Таймер в капсуле сверху, нажми на неё, чтобы раскрыть.' }), go]));
+      const time = el('p', { class: 'focus__time', 'aria-live': 'off', text: focusText() });
+      const sync = (e) => {
+        const d = e.detail || {};
+        time.textContent = d.text;
+        go.disabled = !!d.active;
+        go.textContent = d.active ? (d.run ? 'Фокус идёт' : 'Пауза') : 'Начать фокус';
+      };
+      document.addEventListener('hub:focus', sync);
+      const off = setInterval(() => { if (!root.isConnected) { document.removeEventListener('hub:focus', sync); clearInterval(off); } }, 5000);
+      go.disabled = focusActive();
+      go.addEventListener('click', () => { startFocus(); });
+      const ft = tile('Фокус', [time, el('p', { class: 'muted tile__meta', text: '25 минут без отвлечений. Таймер в капсуле сверху, нажми на неё, чтобы раскрыть.' }), go]);
+      ft.classList.add('tile--focus');
+      grid.append(ft);
     }
 
     // Погода (хаб сам спрашивает Open-Meteo; нет сети — последний ответ)
