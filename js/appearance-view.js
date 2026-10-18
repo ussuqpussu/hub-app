@@ -118,6 +118,10 @@ export function appearanceBlock() {
   LIVE_OPTIONS.forEach((o) => live.append(el('option', { value: o.id, text: o.name })));
   live.value = a.live;
   live.addEventListener('change', () => setAppearance({ live: live.value }));
+  const lite = el('select', { class: 'field', 'aria-label': 'Экономный режим' });
+  [['auto', 'Сам (включается на слабых устройствах)'], ['on', 'Включён'], ['off', 'Выключен']].forEach(([v, t]) => lite.append(el('option', { value: v, text: t })));
+  lite.value = a.lite;
+  lite.addEventListener('change', () => setAppearance({ lite: lite.value }));
   const heroPos = el('select', { class: 'field', 'aria-label': 'Где показывать анимацию' });
   [['side', 'Сбоку (на узком экране сверху)'], ['top', 'Сверху'], ['bg', 'Фоном за содержимым']].forEach(([v, t]) => heroPos.append(el('option', { value: v, text: t })));
   heroPos.value = a.heroPos;
@@ -131,6 +135,7 @@ export function appearanceBlock() {
     el('label', { class: 'field-label', text: 'Живые обои' }), live,
     toggle('Анимация темы на страницах', 'hero'),
     el('label', { class: 'field-label', text: 'Где показывать анимацию' }), heroPos,
+    el('label', { class: 'field-label', text: 'Экономный режим (без размытия стекла, меньше кадров; при игре и в фоне сцены замирают сами)' }), lite,
     toggle('Небо и погода в плитке «Погода»', 'sky'),
     toggle('Заставка при входе', 'splash'),
     el('h3', { text: 'Звуки' }),

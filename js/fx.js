@@ -1,6 +1,7 @@
 // Живые обои: тихая анимация на холсте позади содержимого. Рисуется в половинном разрешении, не чаще 30 кадров в секунду,
 // стоит, когда вкладка скрыта, эффекты выключены или в системе включено «уменьшение движения».
 import { getAppearance, onAppearance, motionAllowed } from './appearance.js';
+import { frameGap } from './perf.js';
 import { THEME_DEFS } from './theme-data.js';
 
 // Какая анимация подходит каждой теме по умолчанию.
@@ -52,7 +53,7 @@ function clear() { if (cv) cv.getContext('2d').clearRect(0, 0, cv.width, cv.heig
 
 function frame(ts) {
   raf = requestAnimationFrame(frame);
-  if (ts - lastFrame < 33) return;
+  if (document.hidden || ts - lastFrame < frameGap()) return;
   lastFrame = ts;
   const c = cv.getContext('2d');
   c.clearRect(0, 0, cv.width, cv.height);

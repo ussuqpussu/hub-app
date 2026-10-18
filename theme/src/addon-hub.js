@@ -5,6 +5,18 @@
   var MODE = /(^|[#&])stage/.test(H) ? 'stage' : /(^|[#&])editor/.test(H) ? 'editor' : '';
   if (!MODE) return;
   var KEY = 'hub.themeOvr';
+  // Ограничение кадров: хаб сообщает, сколько кадров в секунду можно (0 = сцена скрыта или окно спрятано)
+  (function () {
+    var raf = window.requestAnimationFrame.bind(window), fps = 30, curT = -1, run = true, lastRun = 0;
+    window.addEventListener('message', function (e) { var d = e.data; if (d && d.type === 'hub-perf' && typeof d.fps === 'number') fps = d.fps; });
+    window.requestAnimationFrame = function (cb) {
+      return raf(function w(t) {
+        if (fps <= 0 || document.hidden) { setTimeout(function () { raf(w); }, 400); return; }
+        if (t !== curT) { curT = t; run = t - lastRun >= 1000 / fps - 2; if (run) lastRun = t; }
+        if (run) cb(t); else raf(w);
+      });
+    };
+  })();
   var q = function (k) { var m = H.match(new RegExp('[&#]' + k + '=([^&]*)')); return m ? decodeURIComponent(m[1]) : null; };
   var last = '';
   function loadOvr() {

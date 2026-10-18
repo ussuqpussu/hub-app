@@ -11,6 +11,7 @@ import { enterView, leaveView, themeWipe } from './motion-kit.js';
 import { initIsland, toast } from './island.js';
 import { initFx } from './fx.js';
 import { initCat } from './cat.js';
+import { initPerf } from './perf.js';
 import { sceneHero, initHero, setHeroTheme, setHeroProjects } from './hero.js';
 import { initSky } from './sky.js';
 import { initMotionUi } from './motion-ui.js';
@@ -25,6 +26,7 @@ window.addEventListener('storage', (e) => { if (e.key === 'hub.themeOvr') { appl
 initFx();
 initHero();
 initCat();
+initPerf();
 initSky();
 
 const nav = document.getElementById('nav');

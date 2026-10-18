@@ -5,7 +5,7 @@ import { dbGet, dbSet, dbDelete } from './data/db.js';
 import { effectiveColors } from './theme.js';
 
 const KEY = 'hub.appearance';
-const DEFAULTS = { effects: true, live: 'auto', splash: true, hero: true, heroPos: 'side', sky: true, sounds: false, volume: 30, wpOn: true, wpDim: 40, glass: 'auto', wpGrad: -1 };
+const DEFAULTS = { effects: true, live: 'auto', splash: true, hero: true, heroPos: 'side', sky: true, sounds: false, volume: 30, wpOn: true, wpDim: 40, glass: 'auto', wpGrad: -1, lite: 'auto' };
 export const LIVE_OPTIONS = [
   { id: 'auto', name: 'Как у темы' },
   { id: 'stars', name: 'Звёзды' },
@@ -34,6 +34,7 @@ export function getAppearance() {
     wpOn: s.wpOn !== false,
     wpDim: Number.isFinite(s.wpDim) ? Math.min(90, Math.max(0, s.wpDim)) : DEFAULTS.wpDim,
     glass: ['auto', 'off', 'tinted', 'clear'].includes(s.glass) ? s.glass : DEFAULTS.glass,
+    lite: ['auto', 'on', 'off'].includes(s.lite) ? s.lite : DEFAULTS.lite,
     wpGrad: Number.isInteger(s.wpGrad) && s.wpGrad >= -1 && s.wpGrad < GLASS_WALLS.length ? s.wpGrad : DEFAULTS.wpGrad,
   };
 }

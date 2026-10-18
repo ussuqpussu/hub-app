@@ -2,6 +2,7 @@
 // (те же приёмы shp/цвета, что у сцен тем: плоская заливка, линия, свечение, стекло, акварель).
 import { renderScene } from './canvas-env.js';
 import { motionAllowed, onAppearance } from './appearance.js';
+import { frameGap } from './perf.js';
 
 const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
 const hex = (h) => { const n = parseInt(String(h).replace('#', '').slice(0, 6), 16); return [(n >> 16) & 255, (n >> 8) & 255, n & 255]; };
@@ -154,7 +155,7 @@ function tick(now) {
   raf = requestAnimationFrame(tick);
   mounted.forEach((m) => {
     if (!m.cv.isConnected) { mounted.delete(m); return; }
-    if (now - m.last < 33) return;
+    if (document.hidden || now - m.last < frameGap()) return;
     m.last = now;
     draw(m, (now - m.t0) / 1000);
   });

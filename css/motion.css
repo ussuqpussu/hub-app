@@ -294,3 +294,16 @@ html[data-glass] .card:hover, html[data-glass] .qtile:hover { will-change: trans
   html[data-glass] { --glass-blur: 10px; --glass-sat: 1; }
   html[data-glass] .card:hover, html[data-glass] .qtile:hover { transform: none; }
 }
+
+/* ---------- окно хаба не в фокусе (игра, другая программа): декоративное движение стоит ---------- */
+html[data-idle] *, html[data-idle] *::before, html[data-idle] *::after { animation-play-state: paused !important; }
+html[data-idle] .hero { opacity: .9; }
+
+/* ---------- экономный режим: без размытия и тяжёлых теней ---------- */
+html[data-lite] :is(.card, .qtile, .sheet, .nav, .topbar, .lock__box, .tipcard, .empty) { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; background: var(--c-surface) !important; box-shadow: none !important; }
+html[data-lite] .nav__ind, html[data-lite] .view [data-rise], html[data-lite] .view [data-rise] > * { will-change: auto; }
+html[data-lite] .view.is-entering [data-rise] > * { animation: none; }
+html[data-lite] .card:hover, html[data-lite] .qtile:hover, html[data-lite] .bento > .tile:hover { transform: none; }
+html[data-lite]:not([data-wp])::before { display: none; }
+html[data-lite] .island { box-shadow: none; }
+html[data-lite] .tile--focus { background: #e8e8ea !important; }
