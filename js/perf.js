@@ -4,7 +4,6 @@
 //  - «Экономный режим» (авто на слабых устройствах, можно включить вручную): без размытия стекла и тяжёлых теней, сцены 20 кадров/с.
 import { getAppearance, onAppearance } from './appearance.js';
 
-const root = document.documentElement;
 const state = { idle: false, lite: false };
 const seen = new Map(); // iframe -> виден ли на экране
 
@@ -29,6 +28,7 @@ function broadcast() {
   });
 }
 function apply() {
+  const root = document.documentElement;
   state.idle = idleNow();
   state.lite = liteNow();
   if (state.idle) { if (root.dataset.idle !== '1') root.dataset.idle = '1'; } else if (root.dataset.idle) delete root.dataset.idle;
