@@ -6,6 +6,7 @@ import { mergedProjects } from './projects-view.js';
 import { buildFeed } from './feed-calc.js';
 import { loadProjects, onProjects } from './projects-data.js';
 import { ruporPosts } from './rupor-view.js';
+import { bars, line } from './mk-widgets.js';
 import { summarizeWeek, weekId, prevWeekDay, nextWeekDay, shouldSnapshot } from './weekly-calc.js';
 
 const MONTHS = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
@@ -59,6 +60,17 @@ export function weeklyView({ store, subscribe }) {
       el('div', { class: 'pillrow' }, [prev, next]),
     );
     if (!s.hasData) root.append(el('div', { class: 'empty' }, [el('strong', { text: 'Нет данных' }), el('span', { text: 'За эту неделю нет закрытых задач, публикаций в «Рупоре» и событий проектов.' })]));
+    if (s.tasks.byDay && s.tasks.closed.length) {
+      let acc = 0;
+      const cum = s.tasks.byDay.map((v) => { acc += v; return acc; });
+      root.append(el('section', { class: 'card stack stack--tight' }, [
+        el('h2', { text: 'Закрыто по дням' }),
+        el('p', {}, [el('strong', { class: 'tile__num', text: String(s.tasks.closed.length), 'data-count': '1200' }), el('span', { class: 'muted', text: ' задач за неделю' })]),
+        bars(s.tasks.byDay, ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'], { label: 'Закрыто задач по дням' }),
+        el('p', { class: 'muted', text: 'Нарастающим итогом' }),
+        line(cum, { label: 'Закрыто задач нарастающим итогом' }),
+      ]));
+    }
     root.append(
       list(`Задачи: закрыто ${s.tasks.closed.length}`, s.tasks.closed.map((t) => el('li', { text: t.project ? `${t.title} · ${t.project}` : t.title })), 'Закрытых задач нет.'),
       el('p', { class: 'muted', text: `Открытых задач сейчас: ${s.tasks.openCount}${s.tasks.overdue ? `, из них просрочено на начало недели: ${s.tasks.overdue}` : ''}.` }),

@@ -3,6 +3,7 @@ import { el, ICONS } from './ui.js';
 import { todayYmd, fromYmd, addDays, monthName, ymd } from './dates.js';
 import { load, save } from './storage.js';
 import { ensureRates } from './rates.js';
+import { donut } from './mk-widgets.js';
 import { lamp, nextDue, daysUntil, markPaid, editFields, withInitialPaidThrough, monthlyTotalRub, categoryShares, spent, tips, categories, sortSubs, filterSubs, monthEvents, monthTotalRub, buildIcs, convertBackup, toBackup, normalizeSub, toRub, CURRENCY_SYMBOL } from './subs-calc.js';
 import { money, rubMoney, periodText, dateText, dueWords, dueText, lampNode, logoNode } from './subs-parts.js';
 import { subscriptionSheet, filtersSheet, confirmSheet } from './subs-form.js';
@@ -69,7 +70,7 @@ export function subsView({ store, subscribe }) {
     eye.addEventListener('click', () => { hidden = !hidden; save(KEY_HIDE, hidden); render(); });
     const card = el('section', { class: 'card sum', 'aria-labelledby': 'sum-title' }, [el('div', { class: 'sum__head' }, [el('h2', { id: 'sum-title', text: 'Траты в месяц' }), eye])]);
     if (active.length) {
-      card.append(el('p', { class: 'sum__total', text: hide(rubMoney(total.amount)) }), el('p', { class: 'sum__year', text: `${hide(rubMoney(total.amount * 12))} в год` }));
+      card.append(el('p', { class: 'sum__total', text: hide(rubMoney(total.amount)), 'data-count': '1200' }), el('p', { class: 'sum__year', text: `${hide(rubMoney(total.amount * 12))} в год` }));
     } else card.append(el('p', { class: 'muted', text: 'Нет активных подписок' }));
     const pills = el('div', { class: 'pills' }, [el('span', { class: 'pill', text: `${active.length} активных` })]);
     if (overdue) pills.append(el('span', { class: 'pill pill--bad' }, [lampNode('red'), `Просрочено: ${overdue}`]));
@@ -273,8 +274,8 @@ export function subsView({ store, subscribe }) {
     wrap.append(el('section', { class: 'card stack' }, [
       el('h3', { text: 'Оплачено' }),
       el('div', { class: 'stat2' }, [
-        el('div', {}, [el('span', { class: 'muted', text: 'В этом месяце' }), el('strong', { text: hide(rubMoney(spent(subs, rates, monthStart, today))) })]),
-        el('div', {}, [el('span', { class: 'muted', text: 'С начала года' }), el('strong', { text: hide(rubMoney(spent(subs, rates, yearStart, today))) })]),
+        el('div', {}, [el('span', { class: 'muted', text: 'В этом месяце' }), el('strong', { text: hide(rubMoney(spent(subs, rates, monthStart, today))), 'data-count': '1200' })]),
+        el('div', {}, [el('span', { class: 'muted', text: 'С начала года' }), el('strong', { text: hide(rubMoney(spent(subs, rates, yearStart, today))), 'data-count': '1200' })]),
       ]),
       el('p', { class: 'sched-note', text: 'Считается по нажатиям «Оплачено», поэтому учитывает только отмеченные платежи.' }),
     ]));
@@ -290,7 +291,9 @@ export function subsView({ store, subscribe }) {
           el('span', { class: 'legend__bar' }, [el('i', { style: `width:${Math.round(s.share * 100)}%;background:${color}` })]),
         ]));
       });
-      wrap.append(el('section', { class: 'card stack' }, [el('h3', { text: 'На что уходит в месяц' }), ul]));
+      const activeN = subs.filter((x) => x.status === 'active').length;
+      const dn = donut(shares.map((x, i) => ({ share: x.share, color: `var(--chart-${(i % 7) + 1})` })), { value: activeN, label: 'активных' });
+      wrap.append(el('section', { class: 'card stack' }, [el('h3', { text: 'На что уходит в месяц' }), el('div', { class: 'mk-wrap', 'data-draw': '' }, [dn, ul])]));
     }
     const tp = tips(subs, today, rates);
     if (tp.length) wrap.append(el('section', { class: 'stack' }, [el('h3', { text: 'Стоит проверить' }), ...tp.map((t) => el('div', { class: 'card tipcard', 'data-tone': t.tone, text: t.text }))]));

@@ -2,9 +2,10 @@
 // Всё хранится на этом устройстве (настройки в localStorage, картинка обоев в IndexedDB) и не синхронизируется.
 import { load, save } from './storage.js';
 import { dbGet, dbSet, dbDelete } from './data/db.js';
+import { effectiveColors } from './theme.js';
 
 const KEY = 'hub.appearance';
-const DEFAULTS = { effects: true, live: 'auto', splash: true, hero: true, heroPos: 'side', sky: true, sounds: false, volume: 30, wpOn: true, wpDim: 40 };
+const DEFAULTS = { effects: true, live: 'auto', splash: true, hero: true, heroPos: 'side', sky: true, sounds: false, volume: 30, wpOn: true, wpDim: 40, glass: 'auto', wpGrad: -1 };
 export const LIVE_OPTIONS = [
   { id: 'auto', name: 'Как у темы' },
   { id: 'stars', name: 'Звёзды' },
@@ -32,6 +33,8 @@ export function getAppearance() {
     volume: Number.isFinite(s.volume) ? Math.min(100, Math.max(0, s.volume)) : DEFAULTS.volume,
     wpOn: s.wpOn !== false,
     wpDim: Number.isFinite(s.wpDim) ? Math.min(90, Math.max(0, s.wpDim)) : DEFAULTS.wpDim,
+    glass: ['auto', 'off', 'tinted', 'clear'].includes(s.glass) ? s.glass : DEFAULTS.glass,
+    wpGrad: Number.isInteger(s.wpGrad) && s.wpGrad >= -1 && s.wpGrad < GLASS_WALLS.length ? s.wpGrad : DEFAULTS.wpGrad,
   };
 }
 export function setAppearance(patch) {
@@ -40,6 +43,27 @@ export function setAppearance(patch) {
   applyAppearance();
   listeners.forEach((fn) => fn(next));
   return next;
+}
+
+// Диагональные обои для стекла (из motion-kit): два цвета, ровная заливка без «свечений»
+export const GLASS_WALLS = [['Пепел', '#2a2f45', '#0a0b10'], ['Песок', '#d9a066', '#4a3322'], ['Шалфей', '#7fb08c', '#16251d'], ['Аврора', '#4f7cff', '#a855f7'], ['Дым', '#6b7280', '#1f2937'],
+  ['Прилив', '#0ea5e9', '#1e3a8a'], ['Цветение', '#f472b6', '#7c3aed'], ['Жар', '#fb923c', '#7f1d1d'], ['Роща', '#22c55e', '#064e3b'], ['Сумрак', '#6366f1', '#1e1b4b']];
+export const GLASS_ACCENTS = [['Синий', '#3b82f6'], ['Фиолетовый', '#8b5cf6'], ['Розовый', '#ec4899'], ['Оранжевый', '#f97316'], ['Зелёный', '#22c55e'], ['Серый', '#9ca3af']];
+export const wallGrad = (i, dark = true) => (GLASS_WALLS[i] ? `linear-gradient(155deg, ${GLASS_WALLS[i][1]}${dark ? '55' : '40'} 0%, ${GLASS_WALLS[i][2]}${dark ? 'aa' : '30'} 100%)` : '');
+
+// Стекло: «как у темы» включает его только в теме «Стекло»; вручную можно включить в любой теме.
+// Заливка обоев своя для тёмной и светлой темы (на светлой она бледнее), поэтому вызывается и при смене светлая/тёмная.
+export function applyGlass() {
+  const root = document.documentElement;
+  const a = getAppearance();
+  const theme = root.dataset.theme;
+  const mode = a.glass === 'auto' ? (theme === 'glass' ? 'tinted' : '') : a.glass === 'off' ? '' : a.glass;
+  if (mode) { if (root.dataset.glass !== mode) root.dataset.glass = mode; } else if (root.dataset.glass) delete root.dataset.glass;
+  const idx = a.wpGrad >= 0 ? a.wpGrad : theme === 'glass' ? 0 : -1;
+  let dk = true;
+  try { dk = effectiveColors(theme).dk; } catch (_) { dk = true; }
+  const want = mode && idx >= 0 ? wallGrad(idx, dk) : '';
+  if (root.style.getPropertyValue('--wp-grad') !== want) { if (want) root.style.setProperty('--wp-grad', want); else root.style.removeProperty('--wp-grad'); }
 }
 
 export const reducedMotion = () => !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
@@ -75,6 +99,7 @@ export async function applyAppearance() {
   root.style.setProperty('--wp-dim', `${a.wpDim}%`);
   root.dataset.effects = motionAllowed() ? 'on' : 'off';
   root.dataset.heroPos = a.heroPos;
+  applyGlass();
   let blob = null;
   try { blob = a.wpOn ? await dbGet('files', 'wallpaper') : null; } catch (_) { blob = null; }
   if (wpUrl) { URL.revokeObjectURL(wpUrl); wpUrl = null; }

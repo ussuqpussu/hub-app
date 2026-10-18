@@ -1,7 +1,8 @@
 // Блок «Оформление» в настройках: плитки тем, каталог настроек темы (движок из превью), обои, живые обои, заставка, звуки.
 import { el } from './ui.js';
-import { THEMES, currentTheme, setTheme, invertTheme, resetThemeOvr } from './theme.js';
-import { getAppearance, setAppearance, LIVE_OPTIONS, saveWallpaperFile, removeWallpaper, hasWallpaper, playSound, reducedMotion } from './appearance.js';
+import { THEMES, currentTheme, setTheme, invertTheme, resetThemeOvr, setAccent, effectiveColors } from './theme.js';
+import { themeWipe } from './motion-kit.js';
+import { getAppearance, setAppearance, GLASS_WALLS, GLASS_ACCENTS, LIVE_OPTIONS, saveWallpaperFile, removeWallpaper, hasWallpaper, playSound, reducedMotion } from './appearance.js';
 
 const ENGINE = new URL('../theme/engine.html', import.meta.url).href;
 
@@ -25,6 +26,7 @@ export function appearanceBlock() {
   const grid = el('div', { class: 'themes-3', role: 'radiogroup', 'aria-label': 'Тема оформления' });
   const tools = el('div', { class: 'stack stack--tight' });
   const editorBox = el('div', { class: 'theme-editor' });
+  const glassBox = el('div', { class: 'stack stack--tight' });
 
   // Каталог настроек: тот же код, что в превью тем. Правки сохраняются сразу и применяются к хабу.
   function mountEditor() {
@@ -38,10 +40,35 @@ export function appearanceBlock() {
   function renderTools() {
     const th = THEMES.find((t) => t.id === currentTheme()) || THEMES[0];
     const flip = el('button', { type: 'button', class: 'btn', text: 'Светлая ↔ тёмная' });
-    flip.addEventListener('click', () => { invertTheme(th.id); playSound('tap'); render(); });
+    flip.addEventListener('click', () => { themeWipe(flip, () => { invertTheme(th.id); render(); }); playSound('tap'); });
     const reset = el('button', { type: 'button', class: 'btn', text: 'Сбросить правки темы' });
     reset.addEventListener('click', () => { resetThemeOvr(th.id); playSound('tap'); render(); });
     tools.replaceChildren(el('h3', { text: `Тема «${th.name}»` }), el('div', { class: 'row' }, [flip, reset]), el('p', { class: 'muted', text: 'Кнопка меняет местами фон и текст: тёмная тема становится светлой и наоборот.' }));
+  }
+
+  // Стекло для любой темы; у темы «Стекло» ещё обои-заливки и акцент из набора
+  function renderGlass() {
+    const a = getAppearance();
+    const sel = el('select', { class: 'field', 'aria-label': 'Стекло' });
+    [['auto', 'Как у темы (включено в «Стекле»)'], ['off', 'Выкл, сплошные панели'], ['tinted', 'Тонированное'], ['clear', 'Прозрачное, виднее обои']].forEach(([v, t]) => sel.append(el('option', { value: v, text: t })));
+    sel.value = a.glass;
+    sel.addEventListener('change', () => { setAppearance({ glass: sel.value }); renderGlass(); });
+    const kids = [el('h3', { text: 'Стекло' }), el('p', { class: 'muted', text: 'Матовые панели с зерном и тонкой рамкой. Размытие нагружает слабые телефоны, поэтому в других темах по умолчанию выключено. «Выкл» даёт сплошные панели для лучшей читаемости.' }), sel];
+    if (currentTheme() === 'glass') {
+      const walls = el('div', { class: 'glasspick', role: 'group', 'aria-label': 'Обои-заливки' }, GLASS_WALLS.map(([name, c1, c2], i) => {
+        const b = el('button', { type: 'button', class: 'glasspick__wp', 'aria-pressed': String(a.wpGrad === i), 'aria-label': name, style: `background:linear-gradient(135deg,${c1},${c2})` }, [el('span', { text: name })]);
+        b.addEventListener('click', () => { setAppearance({ wpGrad: a.wpGrad === i ? -1 : i }); renderGlass(); });
+        return b;
+      }));
+      const cur = effectiveColors('glass').a.toLowerCase();
+      const dots = el('div', { class: 'glassdots', role: 'group', 'aria-label': 'Акцент' }, GLASS_ACCENTS.map(([name, hex]) => {
+        const b = el('button', { type: 'button', class: 'glassdot', 'aria-pressed': String(cur === hex), 'aria-label': name, title: name, style: `background:${hex}` });
+        b.addEventListener('click', () => { setAccent('glass', hex); renderGlass(); });
+        return b;
+      }));
+      kids.push(el('h3', { text: 'Обои стекла' }), walls, el('h3', { text: 'Акцент' }), dots);
+    }
+    glassBox.replaceChildren(...kids);
   }
 
   function render() {
@@ -53,10 +80,11 @@ export function appearanceBlock() {
     }));
     grid.replaceChildren(...THEMES.filter((t) => filter === 'all' || t.group === filter).map((t) => tile(t, active, () => { setTheme(t.id); playSound('tap'); render(); })));
     renderTools();
+    renderGlass();
     mountEditor();
   }
   render();
-  root.append(seg, grid, tools, editorBox);
+  root.append(seg, grid, tools, glassBox, editorBox);
 
   // Обои
   const wpMsg = el('p', { class: 'muted', role: 'status' });

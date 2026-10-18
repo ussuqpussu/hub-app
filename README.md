@@ -5,3 +5,7 @@
 данные лежат в приватном репозитории `hub-data`.
 
 Статус: подготовка (этап 0). Код ещё не написан.
+
+## Шрифты и лицензии
+- Manrope (assets/fonts, тема «Стекло»): SIL Open Font License 1.1, текст лицензии в assets/fonts/Manrope-OFL.txt. Файлы взяты из пакета @fontsource-variable/manrope.
+- Движение, графики и остров перенесены из присланного motion-kit (демо-код без внешних зависимостей), свои реализации в js/motion-kit.js, js/island.js, js/mk-widgets.js, js/kanban.js.

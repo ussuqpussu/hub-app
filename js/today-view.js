@@ -14,7 +14,9 @@ import { liveSummary, ensureSnapshot } from './weekly-view.js';
 import { mountSky, bodyPos } from './sky.js';
 import { getWeather, refreshWeather } from './bot-sync.js';
 import { weatherState, cityLine, dayLine } from './weather-calc.js';
-import { getAppearance } from './appearance.js';
+import { getAppearance, motionAllowed } from './appearance.js';
+import { rings } from './mk-widgets.js';
+import { startFocus, focusActive } from './island.js';
 import { groupTasks, openTasksTab, INBOX_OLD_DAYS, MAIN_LIMIT } from './tasks-view.js';
 
 const WEEKDAYS_FULL = ['воскресенье', 'понедельник', 'вторник', 'среда', 'четверг', 'пятница', 'суббота'];
@@ -108,8 +110,35 @@ export function todayView({ store, subscribe }) {
         note.textContent = `день пройден на ${Math.round(f * 100)}%`;
       };
       upd();
+      { const to = fg.getAttribute('stroke-dashoffset'); if (motionAllowed()) { fg.setAttribute('stroke-dashoffset', '100'); dot.style.opacity = '0'; setTimeout(() => { fg.setAttribute('stroke-dashoffset', to); dot.style.transition = 'opacity .4s'; dot.style.opacity = '1'; }, 450); } }
       const iv = setInterval(() => { if (root.isConnected) upd(); else clearInterval(iv); }, 60000);
       grid.append(el('section', { class: 'card tile tile--day tile--w2' }, [el('span', { class: 'tile__kicker', text: myth ? 'Путь Гелиоса' : 'День' }), svg, pct, note]));
+    }
+
+    // Кольца дня: сколько задач закрыто из того, что было на сегодня, и средний прогресс целей
+    {
+      const tk = store.list('tasks');
+      const dayStart = new Date(); dayStart.setHours(0, 0, 0, 0);
+      const doneToday = tk.filter((t) => t.done && t.doneAt >= dayStart.getTime()).length;
+      const gg0 = groupTasks(tk, today);
+      const left = new Set([...gg0.overdue, ...gg0.today, ...tk.filter((t) => t.main && !t.done)].map((t) => t.id)).size;
+      const plan = doneToday + left;
+      const gl = store.list('goals').filter((x) => x.progress < 100);
+      const avg = gl.length ? Math.round(gl.reduce((a, x) => a + x.progress, 0) / gl.length) : 0;
+      const items = [{ label: 'Задачи за день', value: doneToday, p: plan ? doneToday / plan : 0 }];
+      if (gl.length) items.push({ label: 'Цели, %', value: avg, p: avg / 100 });
+      const body = [rings(items, { label: 'Кольца дня' })];
+      if (!plan) body.push(el('p', { class: 'muted tile__meta', text: 'На сегодня задач нет: кольцо заполнится, когда появятся и закроются дела.' }));
+      else body.push(el('p', { class: 'muted tile__meta', text: `Закрыто ${doneToday} из ${plan}.` }));
+      grid.append(tile('Сегодня', body, null, 'w2'));
+    }
+
+    // Фокус: таймер 25 минут живёт в острове сверху
+    {
+      const go = el('button', { type: 'button', class: 'btn btn--primary btn--s', text: focusActive() ? 'Фокус идёт' : 'Начать фокус' });
+      if (focusActive()) go.disabled = true;
+      go.addEventListener('click', () => { startFocus(); go.disabled = true; go.textContent = 'Фокус идёт'; });
+      grid.append(tile('Фокус', [el('p', { class: 'muted tile__meta', text: '25 минут без отвлечений. Таймер в капсуле сверху, нажми на неё, чтобы раскрыть.' }), go]));
     }
 
     // Погода (хаб сам спрашивает Open-Meteo; нет сети — последний ответ)
@@ -181,7 +210,7 @@ export function todayView({ store, subscribe }) {
     toInbox.addEventListener('click', () => openTasksTab('inbox'));
     grid.append(el('section', { class: `card tile tile--inbox${old ? ' tile--warn' : ''}` }, [
       el('span', { class: 'tile__kicker', text: 'Входящие' }),
-      el('p', { class: 'tile__num', text: String(inbox.length) }),
+      el('p', { class: 'tile__num', text: String(inbox.length), 'data-count': '900' }),
       el('p', { class: old ? 'today-warn tile__meta' : 'muted tile__meta', text: !inbox.length ? 'Всё разобрано' : old ? `Старой записи ${days} дн.` : 'Есть неразобранные' }),
       toInbox,
     ]));

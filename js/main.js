@@ -1,4 +1,4 @@
-import { applyTheme, currentTheme } from './theme.js';
+import { applyTheme, currentTheme, invertTheme, effectiveColors } from './theme.js';
 import { createLock } from './pin.js';
 import { TABS, ICONS, renderRoute, statusText } from './views.js';
 import { initPlus } from './plus.js';
@@ -6,7 +6,9 @@ import { initSearch } from './search-view.js';
 import { load } from './storage.js';
 import { createStore } from './data/store.js';
 import { getSession } from './data/vault.js';
-import { applyAppearance, showSplash, playSound } from './appearance.js';
+import { applyAppearance, applyGlass, showSplash, playSound, motionAllowed } from './appearance.js';
+import { enterView, leaveView, themeWipe } from './motion-kit.js';
+import { initIsland, toast } from './island.js';
 import { initFx } from './fx.js';
 import { initCat } from './cat.js';
 import { sceneHero, initHero, setHeroTheme, setHeroProjects } from './hero.js';
@@ -94,6 +96,7 @@ function currentRoute() {
 
 // Смена темы: рамку со сценой не пересоздаём, ей отправляется новое имя темы.
 new MutationObserver(() => {
+  applyGlass();
   const full = currentRoute();
   if (full.includes('/')) return;
   const th = document.documentElement.dataset.theme;
@@ -102,7 +105,12 @@ new MutationObserver(() => {
     if (h) main.prepend(h);
   } else setHeroTheme(th, full);
 }).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+// светлая/тёмная меняет цвета через style: обои стекла подстраиваются (applyGlass сама ничего не пишет, если всё уже верно)
+new MutationObserver(() => applyGlass()).observe(document.documentElement, { attributes: true, attributeFilter: ['style'] });
 
+// Смена страницы: старая уходит за ~170 мс, новая выходит из блюра каскадом. Повторный переход во время анимации отменяет предыдущий.
+let routeToken = 0;
+let lastFull = null;
 function route() {
   subs.forEach((off) => off());
   subs = [];
@@ -115,13 +123,6 @@ function route() {
   } catch (_) {
     param = '';
   }
-  main.dataset.page = id;
-  const view = renderRoute(id, { onLockNow: () => lock.lockNow(), store, subscribe, param });
-  const hero = param ? null : sceneHero(document.documentElement.dataset.theme, id);
-  // рамку со сценой не трогаем (иначе она перезагрузится): меняем только содержимое страницы
-  [...main.children].forEach((c) => { if (c !== hero) c.remove(); });
-  if (hero && hero.parentNode !== main) main.prepend(hero);
-  main.append(view);
   const tab = TABS.find((t) => t.id === id);
   title.textContent = id === 'settings' ? 'Настройки' : id === 'more' ? 'Ещё' : tab ? tab.name : 'Хаб';
   document.title = `${title.textContent} · Хаб`;
@@ -132,12 +133,66 @@ function route() {
     if (r === activeId || isMoreParent || r === id) a.setAttribute('aria-current', 'page');
     else a.removeAttribute('aria-current');
   });
-  window.scrollTo(0, 0);
-  main.focus({ preventScroll: true });
+  const my = ++routeToken;
+  const changed = lastFull !== full;
+  const old = changed && lastFull !== null ? main.querySelector(':scope > .view') : null;
+  const swap = () => {
+    if (my !== routeToken) return;
+    lastFull = full;
+    main.dataset.page = id;
+    const view = renderRoute(id, { onLockNow: () => lock.lockNow(), store, subscribe, param });
+    const hero = param ? null : sceneHero(document.documentElement.dataset.theme, id);
+    // рамку со сценой не трогаем (иначе она перезагрузится): меняем только содержимое страницы
+    [...main.children].forEach((c) => { if (c !== hero) c.remove(); });
+    if (hero && hero.parentNode !== main) main.prepend(hero);
+    main.append(view);
+    if (changed) enterView(view);
+    window.scrollTo(0, 0);
+    main.focus({ preventScroll: true });
+  };
+  if (old && motionAllowed()) leaveView(old).then(swap);
+  else swap();
 }
 
 buildNav();
 initMotionUi({ nav });
+initIsland();
+
+// Кнопка «светлая / тёмная»: волнистая заливка растёт из кнопки (работает в любой теме, меняет местами фон и текст).
+const SUN = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>';
+const MOON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>';
+const themeBtns = [];
+function paintThemeBtns() {
+  const dark = effectiveColors(currentTheme()).dk;
+  themeBtns.forEach((b) => {
+    const lbl = dark ? 'Сделать тему светлой' : 'Сделать тему тёмной';
+    b.setAttribute('aria-label', lbl);
+    b.title = lbl;
+    b.querySelector('.themebtn__ic').innerHTML = dark ? MOON : SUN;
+    const t = b.querySelector('.nav__label');
+    if (t) t.textContent = dark ? 'Светлая тема' : 'Тёмная тема';
+  });
+}
+function toggleTheme(btn) {
+  themeWipe(btn, () => { invertTheme(currentTheme()); setHeroTheme(currentTheme(), currentRoute()); paintThemeBtns(); });
+}
+{
+  const top = document.querySelector('.topbar__right');
+  const a = document.createElement('button');
+  a.type = 'button';
+  a.className = 'iconbtn themebtn';
+  a.innerHTML = '<span class="themebtn__ic"></span>';
+  if (top) top.prepend(a);
+  const b = document.createElement('button');
+  b.type = 'button';
+  b.className = 'nav__item nav__item--desktop themebtn';
+  b.innerHTML = '<span class="themebtn__ic"></span><span class="nav__label"></span>';
+  const gearSide = nav.querySelector('#search-side');
+  if (gearSide) nav.insertBefore(b, gearSide); else nav.append(b);
+  [a, b].forEach((x) => { themeBtns.push(x); x.addEventListener('click', () => toggleTheme(x)); });
+  paintThemeBtns();
+  new MutationObserver(paintThemeBtns).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme', 'style'] });
+}
 document.getElementById('gear').innerHTML = ICONS.gear;
 document.getElementById('search-btn').innerHTML = ICONS.search;
 document.getElementById('fab').innerHTML = `${ICONS.plus}<span class="sr-only">Добавить запись</span>`;
@@ -146,8 +201,22 @@ initPlus({ button: document.getElementById('fab'), dialog: document.getElementBy
 initSearch({ store, button: document.getElementById('search-btn'), extraButtons: [document.getElementById('search-side')] });
 
 store.on(renderStatus);
+// Остров сообщает итог синхронизации, если её запустила ты или после неё ушли отложенные записи
+let manualSync = false;
+let prevSt = { state: '', pending: 0 };
+store.on((st) => {
+  const was = prevSt;
+  prevSt = { state: st.state, pending: st.pending || 0 };
+  if (st.state === 'syncing' || st.state === 'notoken') return;
+  if (was.state === 'syncing' || (was.pending > 0 && !st.pending)) {
+    if (st.state === 'error') toast('Не получилось синхронизировать', { icon: 'warn', ms: 3000 });
+    else if (st.state === 'offline') { if (manualSync) toast('Нет связи: записи подождут', { icon: 'warn', ms: 2800 }); }
+    else if (manualSync || was.pending > 0) toast('Синхронизировано', { icon: 'check', ms: 1800 });
+    manualSync = false;
+  }
+});
 document.addEventListener('click', (e) => {
-  if (e.target.closest && e.target.closest('[data-sync]')) store.syncNow();
+  if (e.target.closest && e.target.closest('[data-sync]')) { manualSync = true; store.syncNow(); }
 });
 
 // Входящие бота: разбираем при входе и при возврате в приложение (не чаще раза в минуту).

@@ -95,6 +95,14 @@ export function invertTheme(id = currentTheme()) {
   const next = { ...all, [th.engine]: { ...(all[th.engine] || {}), b: nb, t: nt, s: mix(nb, nt, 0.06) } };
   delete next[th.engine].ba;
   delete next[th.engine].dim;
+  // Акцент должен читаться на новом фоне: при слабом контрасте его приближаем к цвету текста; исходный цвет помним в a0
+  const base = (all[th.engine] || {}).a0 || c.a;
+  let na = base;
+  for (let k = 1; k <= 10 && contrast(na, nb) < 4.5; k++) na = mix(base, nt, k / 10);
+  if (na !== base) {
+    const cand = [nb, nt, '#ffffff', '#0a0b10'].sort((p, q) => contrast(q, na) - contrast(p, na))[0];
+    next[th.engine].a = na; next[th.engine].ba = cand; next[th.engine].a0 = base;
+  } else { delete next[th.engine].a0; if ((all[th.engine] || {}).a0) { next[th.engine].a = base; } }
   setOvr(next);
   applyTheme(th.id);
   return next;
@@ -105,5 +113,17 @@ export function resetThemeOvr(id = currentTheme()) {
   const all = { ...getOvr() };
   delete all[th.engine];
   setOvr(all);
+  applyTheme(th.id);
+}
+
+// Акцент темы одним цветом: подпись на кнопке подбирается по контрасту (белая или тёмная).
+export function setAccent(id, hex) {
+  if (!isHex(hex)) return;
+  const th = THEMES.find((t) => t.id === id) || THEMES[0];
+  const all = getOvr();
+  const ba = contrast(hex, '#ffffff') >= 4.5 ? '#ffffff' : '#0a0b10';
+  const o = { ...(all[th.engine] || {}), a: hex, ba };
+  delete o.a0;
+  setOvr({ ...all, [th.engine]: o });
   applyTheme(th.id);
 }

@@ -2,7 +2,10 @@
 import { el, ICONS, fmtTime } from './ui.js';
 import { load, save } from './storage.js';
 import { todayYmd, dueLabel, parseQuick, isYmd, isHm } from './dates.js';
-import { playSound } from './appearance.js';
+import { playSound, motionAllowed } from './appearance.js';
+import { sleep, flipSwap } from './motion-kit.js';
+import { toast } from './island.js';
+import { boardView } from './tasks-board.js';
 import { goalsPanel } from './goals-view.js';
 import { questionTile, allQuestions, copyButton } from './questions-view.js';
 import { NO_PROJECT } from './questions-calc.js';
@@ -56,7 +59,7 @@ export function tasksView({ store, subscribe }) {
     ]),
   ]);
 
-  let ui = { show: 'all', group: 'project', project: null, ...(load(KEY_UI, {}) || {}) };
+  let ui = { show: 'all', group: 'project', project: null, view: 'list', ...(load(KEY_UI, {}) || {}) };
   let want = load(KEY_TAB, 'tasks');
   save(KEY_TAB, 'tasks');
   let openBox = { inbox: want === 'inbox', goals: want === 'goals' };
@@ -67,7 +70,8 @@ export function tasksView({ store, subscribe }) {
 
   const body = el('div', { class: 'stack' });
   const live = el('p', { class: 'muted', role: 'status', 'aria-live': 'polite' });
-  const setUi = (patch) => { ui = { ...ui, ...patch }; save(KEY_UI, ui); render(); };
+  let skipFlip = false;
+  const setUi = (patch) => { if (patch.view !== undefined) skipFlip = true; ui = { ...ui, ...patch }; save(KEY_UI, ui); render(); };
 
   const openInbox = () => store.list('inbox').filter((it) => !it.resolved);
 
@@ -241,7 +245,7 @@ export function tasksView({ store, subscribe }) {
       setTimeout(() => li.querySelector('input') && li.querySelector('input').focus(), 0);
       return li;
     }
-    const li = el('li', { class: `qtile ttile${t.done ? ' ttile--done' : ''}`, 'data-status': t.done ? 'resolved' : 'open', 'data-kind': 'task' });
+    const li = el('li', { class: `qtile ttile${t.done ? ' ttile--done' : ''}`, 'data-status': t.done ? 'resolved' : 'open', 'data-kind': 'task', 'data-flip': t.id });
     const star = el('button', {
       type: 'button',
       class: 'iconbtn task__star',
@@ -278,7 +282,16 @@ export function tasksView({ store, subscribe }) {
       'aria-label': t.done ? `Вернуть в работу: ${t.title}` : `Выполнено: ${t.title}`,
       text: t.done ? 'Вернуть' : 'Готово',
     });
-    check.addEventListener('click', () => { if (!t.done) playSound('done'); store.update('tasks', t.id, { done: !t.done, doneAt: !t.done ? Date.now() : null, main: !t.done ? false : t.main }); });
+    check.addEventListener('click', async () => {
+      const prev = { done: !!t.done, doneAt: t.doneAt || null, main: !!t.main };
+      if (!t.done) {
+        playSound('done');
+        // галочка рисуется, заголовок зачёркивается, потом задача переезжает вниз
+        if (motionAllowed()) { li.classList.add('is-completing'); await sleep(450); }
+      }
+      store.update('tasks', t.id, { done: !t.done, doneAt: !t.done ? Date.now() : null, main: !t.done ? false : t.main });
+      if (!prev.done) toast(`Выполнено: ${t.title}`, { icon: 'check', ms: 2600, undo: () => store.update('tasks', t.id, prev) });
+    });
     const edit = el('button', { type: 'button', class: 'iconbtn', 'aria-label': `Изменить: ${t.title}`, html: ICONS.edit });
     edit.addEventListener('click', () => { editingId = t.id; render(); });
     const del = el('button', { type: 'button', class: 'iconbtn', 'aria-label': `Удалить: ${t.title}`, html: ICONS.close });
@@ -363,7 +376,10 @@ export function tasksView({ store, subscribe }) {
     stale = false;
     const today = todayYmd();
     const projects = mergedProjects(store);
-    const { list, counts, groupsForFilter } = renderList(projects, today);
+    const rendered = renderList(projects, today);
+    const { counts, groupsForFilter } = rendered;
+    const board = ui.view === 'board';
+    const list = board ? boardView({ store, tasks: store.list('tasks'), today, mainLimit: MAIN_LIMIT }) : rendered.list;
     const filters = el('div', { class: 'tfilters' }, [
       el('div', { class: 'seg seg--s', role: 'group', 'aria-label': 'Что показывать' }, [['all', `Всё ${counts.tasks + counts.questions}`], ['tasks', `Задачи ${counts.tasks}`], ['questions', `Вопросы ${counts.questions}`]].map(([k, t]) => {
         const b = el('button', { type: 'button', 'aria-pressed': String(ui.show === k), text: t });
@@ -377,7 +393,16 @@ export function tasksView({ store, subscribe }) {
     ]);
     const goalsBox = el('details', { class: 'tbox', ...(openBox.goals ? { open: '' } : {}) }, [el('summary', { text: 'Цели' }), goalsPanel({ store, rerender: render, editing: editingGoal, setEditing: (id) => { editingGoal = id; } })]);
     goalsBox.addEventListener('toggle', () => { openBox.goals = goalsBox.open; });
-    body.replaceChildren(addForm(projects), filters, list, el('div', { class: 'tpair' }, [inboxBox(), goalsBox]));
+    const viewSeg = el('div', { class: 'seg seg--s', role: 'group', 'aria-label': 'Вид списка' }, [['list', 'Список'], ['board', 'Доска']].map(([k, t]) => {
+      const b = el('button', { type: 'button', 'aria-pressed': String(ui.view === k), text: t });
+      b.addEventListener('click', () => setUi({ view: k }));
+      return b;
+    }));
+    filters.prepend(viewSeg);
+    if (board) filters.querySelectorAll('.seg:not([aria-label="Вид списка"]), .pfilters').forEach((n) => n.remove());
+    const swap = skipFlip ? (r, f) => f() : flipSwap;
+    skipFlip = false;
+    swap(root, () => body.replaceChildren(addForm(projects), filters, list, el('div', { class: 'tpair' }, [inboxBox(), goalsBox])));
     live.textContent = msg;
   }
 

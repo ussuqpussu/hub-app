@@ -1,0 +1,218 @@
+/* Движение и материалы, перенесённые из motion-kit (рилсы «Dashboard V14» и «Team project management dashboard»).
+   Все длительности, кривые и размеры острова лежат токенами в :root. Анимируются только transform, opacity, filter, clip-path.
+   Выключатель «Эффекты» (html[data-effects="off"]) и системное «уменьшить движение» отключают всё: классы движения тогда не ставятся вовсе. */
+
+@font-face { font-family: "Manrope"; font-style: normal; font-weight: 200 800; font-display: swap; src: url("../assets/fonts/manrope-cyrillic-wght-normal.woff2") format("woff2-variations"); unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116; }
+@font-face { font-family: "Manrope"; font-style: normal; font-weight: 200 800; font-display: swap; src: url("../assets/fonts/manrope-latin-wght-normal.woff2") format("woff2-variations"); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+
+:root {
+  --ease-snap: cubic-bezier(.25, 1, .5, 1);     /* плашки, тумблеры, нажатия: без перелёта */
+  --ease-island: cubic-bezier(.16, 1, .3, 1);   /* остров */
+  --mk-in: .7s;                                  /* появление карточки */
+  --mk-in-inner: .6s;                            /* появление содержимого карточки */
+  --mk-step: 70ms;                               /* шаг каскада */
+  --mk-inner-delay: 320ms;                       /* текст приходит позже карточки */
+  --mk-out: 170ms;                               /* уход старой страницы */
+  --mk-bar: .8s;
+  --mk-bar-step: 45ms;
+  --mk-ring: 1.4s;
+  --mk-line: 1.7s;
+  --mk-wipe: 750;                                /* «клякса» смены темы, мс (читает JS) */
+
+  /* остров-уведомления */
+  --island-bg: #08080b;
+  --island-fg: #ffffff;
+  --island-mute: #b4b4bd;
+  --island-amber: #ffb347;
+  --island-w: 390px;
+  --island-h: 150px;
+  --island-toast-w: 340px;
+  --island-toast-h: 46px;
+  --island-timer-w: 176px;
+  --island-timer-h: 38px;
+  --island-top: 12px;
+
+  /* стекло */
+  --glass-blur: 24px;
+  --glass-sat: 1.3;
+  --glass-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .05 0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
+  --glass-a: 9%;       /* верх заливки, доля цвета текста */
+  --glass-b: 3%;       /* низ заливки */
+  --glass-line: 11%;   /* рамка */
+  --wp-grad: none;
+}
+
+/* ---------- появление страницы ---------- */
+@keyframes mk-rise { from { opacity: 0; filter: blur(12px); transform: translateY(12px); } }
+@keyframes mk-rise-in { from { opacity: 0; filter: blur(6px); transform: translateY(8px); } }
+@keyframes mk-out { to { opacity: 0; filter: blur(6px); transform: translateY(-4px); } }
+@keyframes mk-grow { from { transform: scaleY(0); } }
+@keyframes mk-fill { from { transform: scaleX(0); } }
+@keyframes mk-pop { from { transform: scale(.4); opacity: 0; } }
+
+/* задержка каскада ограничена 8 шагами: длинные списки не «едут» секундами */
+.view.is-entering [data-rise] { animation: mk-rise var(--mk-in) var(--ease-out) backwards; animation-delay: calc(min(var(--i, 0), 8) * var(--mk-step) + 40ms); }
+.view.is-entering [data-rise] > * { animation: mk-rise-in var(--mk-in-inner) var(--ease-out) backwards; animation-delay: calc(min(var(--i, 0), 8) * var(--mk-step) + var(--mk-inner-delay)); }
+/* уход прежней страницы */
+.view.is-leaving, .view.is-leaving [data-rise] { animation: none; }
+.view.is-leaving > *, .view.is-leaving [data-rise] { animation: mk-out var(--mk-out) ease-in forwards !important; }
+.view.is-leaving [data-rise] > * { animation: none !important; }
+
+html[data-effects="off"] .view [data-rise], html[data-effects="off"] .view [data-rise] > *, html[data-effects="off"] .view.is-leaving > * { animation: none !important; }
+
+/* ---------- графики ---------- */
+.mk-bars { display: flex; align-items: flex-end; gap: var(--sp-2); height: 7.5rem; margin-top: var(--sp-3); }
+.mk-bars > i { flex: 1; min-width: 0; border-radius: var(--sp-1) var(--sp-1) 2px 2px; background: linear-gradient(var(--c-accent), color-mix(in srgb, var(--c-accent) 55%, var(--c-bg))); transform-origin: bottom; min-height: 2px; }
+.mk-bars > i[data-zero] { background: var(--c-line); }
+.mk-axis { display: flex; justify-content: space-between; gap: var(--sp-2); font-size: var(--fs-s); color: var(--c-dim); margin-top: var(--sp-1); }
+.mk-axis > span { flex: 1; text-align: center; min-width: 0; }
+.mk-draw .mk-bars > i { animation: mk-grow var(--mk-bar) var(--ease-out) backwards; animation-delay: calc(var(--bi, 0) * var(--mk-bar-step) + 450ms); }
+.mk-line { width: 100%; height: auto; display: block; margin-top: var(--sp-2); overflow: visible; }
+.mk-line .ln { fill: none; stroke: var(--c-accent); stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 1; stroke-dashoffset: 0; }
+.mk-line .ar { fill: url(#mk-grad); opacity: 1; }
+.mk-line .gs { stop-color: var(--c-accent); }
+.mk-draw .mk-line .ln { stroke-dashoffset: 1; }
+.mk-draw.mk-go .mk-line .ln { stroke-dashoffset: 0; transition: stroke-dashoffset var(--mk-line) var(--ease-out) .35s; }
+.mk-draw .mk-line .ar { opacity: 0; }
+.mk-draw.mk-go .mk-line .ar { opacity: 1; transition: opacity 1s 1.3s; }
+.mk-ring { width: 8rem; height: 8rem; flex: none; }
+.mk-ring circle { fill: none; stroke-width: 9; }
+.mk-ring .rb { stroke: color-mix(in srgb, var(--c-text) 10%, transparent); }
+.mk-ring .rf { stroke-linecap: round; stroke-dasharray: var(--c); stroke-dashoffset: calc(var(--c) * (1 - var(--p))); }
+.mk-draw .mk-ring .rf { stroke-dashoffset: var(--c); }
+.mk-draw.mk-go .mk-ring .rf { stroke-dashoffset: calc(var(--c) * (1 - var(--p))); transition: stroke-dashoffset var(--mk-ring) var(--ease-out); transition-delay: calc(var(--ri, 0) * 140ms + 300ms); }
+.mk-donut { position: relative; width: 11rem; height: 11rem; flex: none; }
+.mk-donut svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+.mk-donut circle { fill: none; stroke-width: 16; }
+.mk-donut .db { stroke: color-mix(in srgb, var(--c-text) 8%, transparent); }
+.mk-draw .mk-donut .dg { stroke-dasharray: 0 var(--c); }
+.mk-draw.mk-go .mk-donut .dg { stroke-dasharray: var(--len) var(--c); transition: stroke-dasharray 1s var(--ease-out); transition-delay: calc(var(--si, 0) * 110ms + 200ms); }
+.mk-donut__c { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; }
+.mk-donut__c b { font-size: var(--fs-xl); line-height: 1.1; font-variant-numeric: tabular-nums; }
+.mk-donut__c span { font-size: var(--fs-s); color: var(--c-dim); }
+.mk-wrap { display: flex; align-items: center; gap: var(--sp-4); flex-wrap: wrap; margin-top: var(--sp-2); }
+.mk-wrap .legend { flex: 1; min-width: 12rem; }
+.legend__bar > i { transform-origin: left; }
+.mk-draw .legend__bar > i { animation: mk-fill 1s var(--ease-out) backwards; animation-delay: .5s; }
+.mk-ringstat { display: grid; gap: var(--sp-2); font-size: var(--fs-s); color: var(--c-dim); }
+.mk-ringstat b { display: block; font-size: var(--fs-l); color: var(--c-text); font-variant-numeric: tabular-nums; line-height: 1.2; }
+html[data-effects="off"] .mk-draw .mk-bars > i, html[data-effects="off"] .mk-draw .legend__bar > i { animation: none; }
+html[data-effects="off"] .mk-draw .mk-line .ln, html[data-effects="off"] .mk-draw .mk-ring .rf, html[data-effects="off"] .mk-draw .mk-donut .dg { transition: none !important; }
+
+/* ---------- чекбокс задачи ---------- */
+.qtile__done { position: relative; }
+.qtile__done::before { content: ""; position: absolute; left: .7rem; top: 50%; width: .9rem; height: .9rem; margin-top: -.45rem; border-radius: 50%; box-shadow: inset 0 0 0 1.5px currentColor; opacity: 0; transition: opacity .2s, background .25s, box-shadow .25s; }
+.qtile__done::after { content: ""; position: absolute; left: calc(.7rem + .18rem); top: 50%; width: .55rem; height: .3rem; margin-top: -.2rem; border-left: 2px solid var(--c-on-accent); border-bottom: 2px solid var(--c-on-accent); transform: rotate(-45deg) scale(0); transform-origin: center; opacity: 0; transition: transform .3s var(--ease-snap) .1s, opacity .1s .1s; }
+.ttile.is-completing .qtile__done::before { opacity: 1; background: var(--c-accent); box-shadow: none; transform: scale(1.08); }
+.ttile.is-completing .qtile__done::after { opacity: 1; transform: rotate(-45deg) scale(1); }
+.ttile.is-completing .qtile__done { padding-left: 1.6rem; }
+.ttile .task__title, .ttile .qtile__text { position: relative; background: linear-gradient(currentColor, currentColor) 0 58% / 0 1.5px no-repeat; transition: background-size .4s var(--ease-out), color .3s; }
+.ttile.is-completing .qtile__text { background-size: 100% 1.5px; color: var(--c-dim); }
+
+/* ---------- остров ---------- */
+.island-wrap { position: fixed; z-index: 60; top: calc(var(--island-top) + env(safe-area-inset-top)); left: 50%; width: var(--island-w); max-width: calc(100vw - var(--sp-4)); height: var(--island-h); translate: -50% 0; pointer-events: none; filter: drop-shadow(0 12px 16px rgb(2 3 8 / .4)); }
+.island { position: absolute; inset: 0; background: var(--island-bg); color: var(--island-fg); cursor: pointer; pointer-events: none; opacity: 0; clip-path: inset(0 50% 100% 50% round 17px); transition: clip-path .6s var(--ease-island), opacity .25s; }
+.island[data-state="toast"] { opacity: 1; pointer-events: auto; clip-path: inset(0 calc((100% - var(--island-toast-w)) / 2) calc(100% - var(--island-toast-h)) calc((100% - var(--island-toast-w)) / 2) round 23px); }
+.island[data-state="timer"] { opacity: 1; pointer-events: auto; clip-path: inset(0 calc((100% - var(--island-timer-w)) / 2) calc(100% - var(--island-timer-h)) calc((100% - var(--island-timer-w)) / 2) round 19px); }
+.island[data-state="open"] { opacity: 1; pointer-events: auto; clip-path: inset(0 0 0 0 round 36px); }
+.island .layer { position: absolute; left: 50%; top: 0; translate: -50% 0; display: flex; align-items: center; gap: var(--sp-3); padding: 0 var(--sp-3); opacity: 0; filter: blur(6px); pointer-events: none; transition: opacity .2s, filter .2s; white-space: nowrap; font-size: var(--fs-s); }
+.l-toast { width: var(--island-toast-w); height: var(--island-toast-h); max-width: 100%; }
+.l-timer { width: var(--island-timer-w); height: var(--island-timer-h); }
+.l-open { width: var(--island-w); max-width: 100%; height: var(--island-h); }
+.island[data-state="toast"] .l-toast, .island[data-state="timer"] .l-timer, .island[data-state="open"] .l-open { opacity: 1; filter: blur(0); pointer-events: auto; transition: opacity .3s .14s, filter .3s .14s; }
+.island:focus-visible { outline: 0; }
+.island:focus-visible .layer { box-shadow: inset 0 0 0 2px var(--island-fg); }
+.island .ico { width: 1.75rem; height: 1.75rem; border-radius: 50%; display: grid; place-items: center; flex: none; color: #fff; background: #5b4bd6; }
+.island .ico.ok { background: #1f9d57; }
+.island .ico.warn { background: #b45309; }
+.island .ico svg { width: .95rem; height: .95rem; }
+.l-toast [data-role="text"] { overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.l-toast button { margin-left: auto; min-height: 2rem; padding: 0 var(--sp-3); border-radius: 99px; background: rgb(255 255 255 / .14); color: inherit; font-size: var(--fs-s); flex: none; }
+.l-timer b { margin-left: auto; color: var(--island-amber); font-variant-numeric: tabular-nums; }
+.l-timer .ring { width: .9rem; height: .9rem; border-radius: 50%; border: 2px solid var(--island-amber); border-top-color: transparent; animation: mk-spin 1.2s linear infinite; }
+.island[data-run="false"] .ring { animation-play-state: paused; }
+@keyframes mk-spin { to { rotate: 360deg; } }
+.l-open { flex-direction: column; align-items: stretch; justify-content: space-between; padding: var(--sp-4) var(--sp-5) var(--sp-3); }
+.o-top { display: flex; justify-content: space-between; align-items: flex-start; gap: var(--sp-5); }
+.o-top small { color: var(--island-mute); font-size: var(--fs-s); display: block; }
+.o-top b { font-size: 2.5rem; color: var(--island-amber); font-variant-numeric: tabular-nums; line-height: 1; }
+.o-btns { display: flex; gap: var(--sp-3); justify-content: flex-end; }
+.o-btns button { min-height: 2.75rem; min-width: 2.75rem; padding: 0 var(--sp-3); border-radius: 99px; background: rgb(255 255 255 / .12); color: inherit; font-size: var(--fs-s); display: inline-flex; align-items: center; justify-content: center; transition: transform .2s var(--ease-snap); }
+.o-btns button svg { width: 1rem; height: 1rem; }
+.o-btns button:active { transform: scale(.94); }
+.o-btns [data-a="pause"] { background: rgb(255 179 71 / .2); color: var(--island-amber); }
+.o-btns [data-a="stop"] { background: rgb(255 90 90 / .22); color: #ff8585; }
+html[data-effects="off"] .island, html[data-effects="off"] .island .layer { transition: none; }
+html[data-effects="off"] .l-timer .ring { animation: none; }
+@media (max-width: 30rem) { .island-wrap { width: calc(100vw - var(--sp-4)); } }
+
+/* ---------- кнопка светлая/тёмная ---------- */
+::view-transition-old(root), ::view-transition-new(root) { animation: none; mix-blend-mode: normal; }
+.themebtn__ic { display: contents; }
+.themebtn svg { width: 1.2rem; height: 1.2rem; }
+
+/* ---------- стекло для всех тем ---------- */
+/* Включается атрибутом html[data-glass="tinted|clear"]. Для тем с плоским фоном рисуем ровную диагональную заливку,
+   чтобы стеклу было что размывать. Рамка и внутренний блик вместо внешней тени. */
+html[data-glass]:not([data-wp]) body { background: var(--wp-grad, none), var(--c-bg); background-attachment: fixed; }
+html[data-glass="tinted"] { --glass-a: 9%; --glass-b: 3%; }
+html[data-glass="clear"] { --glass-a: 4%; --glass-b: 1.2%; }
+html[data-glass] :is(.card, .qtile, .sheet, .nav, .topbar, .lock__box, .tipcard, .empty) {
+  background: var(--glass-grain), linear-gradient(160deg, color-mix(in srgb, var(--c-text) var(--glass-a), transparent), color-mix(in srgb, var(--c-text) var(--glass-b), transparent));
+  border-color: color-mix(in srgb, var(--c-text) var(--glass-line), transparent);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--c-text) 7%, transparent);
+}
+html[data-glass] .nav { background-color: transparent; }
+html[data-glass] .topbar { border-bottom-color: color-mix(in srgb, var(--c-text) var(--glass-line), transparent); }
+html[data-glass] .qtile::before { opacity: .9; }
+@media (hover: hover) { html[data-glass] .card:hover, html[data-glass] .qtile:hover { transform: translateY(-3px); transition: transform .35s var(--ease-out); } }
+html[data-effects="off"][data-glass] .card:hover, html[data-effects="off"][data-glass] .qtile:hover { transform: none; }
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  html[data-glass] :is(.card, .qtile, .sheet, .nav, .topbar, .lock__box, .tipcard, .empty) { background: var(--c-surface); }
+}
+
+/* тема «Стекло»: Manrope, диагональные обои и акцент из набора */
+[data-theme="glass"] { --font-ui: "Manrope", "Segoe UI", system-ui, -apple-system, sans-serif; --wp-grad: linear-gradient(155deg, #2a2f4555 0%, #0a0b10aa 100%); }
+[data-theme="glass"] body { font-feature-settings: "tnum" 1; }
+html[data-theme="glass"]:not([data-wp]) body { background: var(--wp-grad), var(--c-bg); background-attachment: fixed; }
+.glasspick { display: grid; grid-template-columns: repeat(auto-fill, minmax(5.5rem, 1fr)); gap: var(--sp-3); margin-top: var(--sp-2); }
+.glasspick__wp { position: relative; aspect-ratio: 3 / 2; border-radius: var(--radius-s); border: 0; padding: 0; transition: transform .3s var(--ease-snap), box-shadow .3s; }
+@media (hover: hover) { .glasspick__wp:hover { transform: translateY(-2px); } }
+.glasspick__wp span { position: absolute; left: .5rem; bottom: .4rem; font-size: var(--fs-s); color: #fff; text-shadow: 0 1px 4px rgb(0 0 0 / .7); }
+.glasspick__wp[aria-pressed="true"] { box-shadow: 0 0 0 2px var(--c-text); }
+.glasspick__wp[aria-pressed="true"]::after { content: ""; position: absolute; right: .4rem; top: .4rem; width: 1.2rem; height: 1.2rem; border-radius: 50%; background: var(--c-accent) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6 9 17l-5-5'/%3E%3C/svg%3E") center / .75rem no-repeat; animation: mk-pop .4s var(--ease-snap); }
+.glassdots { display: flex; gap: var(--sp-4); margin-top: var(--sp-2); flex-wrap: wrap; }
+.glassdot { position: relative; width: 1.75rem; height: 1.75rem; border-radius: 50%; border: 0; padding: 0; transition: transform .3s var(--ease-snap), box-shadow .3s; }
+.glassdot::before { content: ""; position: absolute; inset: -.5rem; }
+.glassdot[aria-pressed="true"] { transform: scale(1.14); box-shadow: 0 0 0 3px var(--c-bg), 0 0 0 5px var(--c-text); }
+
+/* ---------- доска задач ---------- */
+.kan { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--sp-3); align-items: start; }
+@media (max-width: 47.999rem) { .kan { grid-template-columns: minmax(0, 1fr); } }
+.kan__col { background: color-mix(in srgb, var(--c-text) 4%, transparent); border: var(--border) var(--border-style) var(--c-line); border-radius: var(--radius-m); padding: var(--sp-2); min-height: 12rem; transition: background .25s, box-shadow .25s; min-width: 0; }
+.kan__col.over { background: color-mix(in srgb, var(--c-text) 9%, transparent); box-shadow: inset 0 0 0 1.5px var(--c-accent); }
+.kan__col h3 { font-size: var(--fs-s); display: flex; justify-content: space-between; margin: var(--sp-1) var(--sp-1) var(--sp-2); color: var(--c-text); }
+.kan__col h3 em { font-style: normal; color: var(--c-dim); }
+.kan__cards { display: grid; gap: var(--sp-2); min-height: 3rem; }
+.kc { display: flex; flex-direction: column; justify-content: space-between; gap: var(--sp-2); min-height: 5.5rem; background: var(--c-surface); border: var(--border) var(--border-style) var(--c-line); border-radius: var(--radius-s); padding: var(--sp-3); cursor: grab; user-select: none; -webkit-user-select: none; position: relative; font-size: var(--fs-s); transition: box-shadow .25s; min-width: 0; }
+.kc b { font-weight: 600; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; }
+.kc__meta { color: var(--c-dim); font-size: var(--fs-s); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.kc__meta--late { color: var(--c-danger); }
+.kc__grip { position: absolute; right: .25rem; top: .25rem; width: 2.75rem; height: 2.75rem; display: grid; place-items: center; color: var(--c-dim); touch-action: none; cursor: grab; border-radius: var(--radius-s); }
+.kc__grip svg { width: 1rem; height: 1rem; }
+.kc:has(.kc__grip) b { padding-right: 2rem; }
+.kc.drag { cursor: grabbing; z-index: 30; box-shadow: 0 24px 40px -12px rgb(0 0 0 / .55); transition: none; }
+.kc:focus-visible { outline: 2px solid var(--c-accent); outline-offset: 2px; }
+.kc[data-done="1"] b { text-decoration: line-through; color: var(--c-dim); }
+.kan__empty { color: var(--c-dim); font-size: var(--fs-s); padding: var(--sp-3); text-align: center; }
+@media (hover: hover) and (pointer: fine) { .kc__grip { display: none; } .kc:has(.kc__grip) b { padding-right: 0; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .view [data-rise], .view [data-rise] > *, .island, .island .layer, .mk-draw .mk-bars > i, .mk-draw .legend__bar > i { animation: none !important; transition: none !important; }
+  .mk-draw .mk-line .ln, .mk-draw .mk-ring .rf, .mk-draw .mk-donut .dg, .mk-draw .mk-line .ar { transition: none !important; }
+}
+
+/* узкий телефон: заголовку остаётся место рядом с новой кнопкой темы */
+@media (max-width: 30rem) { .topbar .sync-chip { max-width: 5rem; } .topbar__title { min-width: 5.5rem; } }

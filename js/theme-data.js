@@ -254,5 +254,28 @@ export const THEME_DEFS = [
    "#4a4d55",
    "#d4d4d4"
   ]
+ },
+ {
+  "id": "glass",
+  "name": "Стекло",
+  "group": "Тёмные",
+  "note": "Тёмная: матовое стекло, диагональные обои, Manrope, капсула-остров",
+  "dark": true,
+  "bg": "#0a0b10",
+  "surface": "#14161f",
+  "text": "#f1f2f6",
+  "accent": "#3b82f6",
+  "onAccent": "#0a0b10",
+  "dim": "#a3a9bb",
+  "font": "Manrope,'Segoe UI Variable','Segoe UI',system-ui,sans-serif",
+  "card": "1.5em",
+  "btn": "99px",
+  "layout": "float",
+  "pal": [
+   "#3b82f6",
+   "#8b5cf6",
+   "#232842",
+   "#f1f2f6"
+  ]
  }
 ];

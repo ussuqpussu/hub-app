@@ -28,4 +28,6 @@ export const NEW_THEMES = [
     bg: '#f3eddc', surface: '#fbf7ea', text: '#181512', accent: '#c0261d', onAccent: '#ffffff', dim: '#5b5448', font: SERIF, card: '0', btn: '0', layout: 'side', pal: ['#c0261d', '#181512', '#e1d8bd', '#6a5f45'] },
   { id: 'myth', name: 'Мифы', group: 'Тёмные', dark: true, note: 'Тёмная: чёрно-серебряная, по мотивам God of War и мифологии', desc: 'Греческая и скандинавская мифология. Анимации из символов: гончарный круг, где комок глины становится амфорой; созвездие Стрелец; песочные часы; свиток',
     bg: '#050505', surface: '#101010', text: '#d4d4d4', accent: '#f2f2f2', onAccent: '#050505', dim: '#a0a0a0', font: SERIF, card: '.3em', btn: '.3em', layout: 'side', pal: ['#f2f2f2', '#9097a6', '#4a4d55', '#d4d4d4'] },
+  { id: 'glass', name: 'Стекло', group: 'Тёмные', dark: true, note: 'Тёмная: матовое стекло, диагональные обои, Manrope, капсула-остров', desc: 'Матовое стекло из рилсов. Анимации: кольца активности, бублик с легендой, линия с заливкой, капсула-остров, меняющая форму',
+    bg: '#0a0b10', surface: '#14161f', text: '#f1f2f6', accent: '#3b82f6', onAccent: '#0a0b10', dim: '#a3a9bb', font: "Manrope,'Segoe UI Variable','Segoe UI',system-ui,sans-serif", card: '1.5em', btn: '99px', layout: 'float', pal: ['#3b82f6', '#8b5cf6', '#232842', '#f1f2f6'] },
 ];

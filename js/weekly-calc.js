@@ -42,7 +42,7 @@ export function summarizeWeek({ day, tasks = [], posts = [], records = [], event
   const deadlines = open.filter((t) => t.due && t.due >= nextFrom && t.due <= nextTo).sort((a, b) => a.due.localeCompare(b.due) || (a.time || '').localeCompare(b.time || '')).map((t) => ({ title: t.title, due: t.due, time: t.time || '', project: t.project || '' }));
   return {
     week: weekId(day), from, to,
-    tasks: { closed, openCount: open.length, overdue: open.filter((t) => t.due && t.due < from).length },
+    tasks: { closed, byDay: Array.from({ length: 7 }, (_, i) => tasks.filter((t) => t.done && t.doneAt && dayOf(t.doneAt) === addDays(from, i)).length), openCount: open.length, overdue: open.filter((t) => t.due && t.due < from).length },
     rupor: { published, counts, total: counts.dzen + counts.vk + counts.tg },
     events: evs,
     deadlines,
