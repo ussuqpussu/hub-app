@@ -1,45 +1,180 @@
-/* «Дневник»: временный простой вид. Оформление и анимацию шкалы подключит сессия дизайна.
-   Хуки для дизайна: [data-mood="-3..3"] на форме, карточках и полосе дней; .diary-scale — шкала; .diary-face — место под фигуру настроения. */
+/* «Дневник»: оформление. Фигура настроения рисуется в js/diary-bloom.js, запись собирается в js/diary-flow.js.
+   Экраны записи всегда тёмные (фигура светится), цвет подложки следует за уровнем настроения (--dm-h/--dm-s, их ставит скрипт).
+   Остальное (карточки, статистика) берёт цвета темы хаба. Уровень настроения в разметке: data-mood="-3..3". */
 :root {
-  --c-mood-n3: color-mix(in srgb, var(--c-danger) 90%, var(--c-text));
-  --c-mood-n2: var(--c-danger);
-  --c-mood-n1: color-mix(in srgb, var(--c-danger) 45%, var(--c-warn));
-  --c-mood-0: var(--c-dim);
-  --c-mood-p1: color-mix(in srgb, var(--c-ok) 45%, var(--c-warn));
-  --c-mood-p2: var(--c-ok);
-  --c-mood-p3: color-mix(in srgb, var(--c-ok) 85%, var(--c-accent));
+  --dm-n3: hsl(268 78% 64%);
+  --dm-n2: hsl(236 84% 68%);
+  --dm-n1: hsl(212 88% 70%);
+  --dm-0: hsl(194 70% 72%);
+  --dm-p1: hsl(122 62% 58%);
+  --dm-p2: hsl(58 88% 60%);
+  --dm-p3: hsl(24 94% 66%);
   --diary-bar-h: 0.6rem;
   --diary-cell: 1.4rem;
-  --diary-face: 4.5rem;
+  --dflow-ease: cubic-bezier(0.2, 0.9, 0.25, 1);
+  --dflow-ink: #f3f3f6;
+  --dflow-dim: rgb(255 255 255 / 0.58);
+  --dflow-glass: rgb(255 255 255 / 0.12);
+  --dflow-accent: #6f78f6;
+  --dflow-on-accent: #fff;
 }
-[data-mood="-3"] { --c-mood: var(--c-mood-n3); }
-[data-mood="-2"] { --c-mood: var(--c-mood-n2); }
-[data-mood="-1"] { --c-mood: var(--c-mood-n1); }
-[data-mood="0"] { --c-mood: var(--c-mood-0); }
-[data-mood="1"] { --c-mood: var(--c-mood-p1); }
-[data-mood="2"] { --c-mood: var(--c-mood-p2); }
-[data-mood="3"] { --c-mood: var(--c-mood-p3); }
+[data-mood="-3"] { --c-mood: var(--dm-n3); }
+[data-mood="-2"] { --c-mood: var(--dm-n2); }
+[data-mood="-1"] { --c-mood: var(--dm-n1); }
+[data-mood="0"] { --c-mood: var(--dm-0); }
+[data-mood="1"] { --c-mood: var(--dm-p1); }
+[data-mood="2"] { --c-mood: var(--dm-p2); }
+[data-mood="3"] { --c-mood: var(--dm-p3); }
+html[data-theme="mythmono"] { --dflow-accent: #f2f2f3; --dflow-on-accent: #08080a; }
 
-.diary-top { display: grid; gap: var(--sp-3); }
+/* ---------- фигура ---------- */
+.bloom { display: block; width: 100%; height: auto; overflow: visible; filter: drop-shadow(0 0 0.9rem var(--bloom-glow, transparent)); }
+
+/* ---------- страница дневника ---------- */
+.diary-top { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--sp-4); align-items: center; }
+.diary-top__fig { width: 4.6rem; height: 4.6rem; }
+.diary-top__fig.is-empty { border-radius: 50%; border: calc(var(--border) * 2) dashed var(--c-line); }
+.diary-top__body { display: grid; gap: var(--sp-2); min-width: 0; }
+.diary-top__body p { margin: 0; }
 .diary-actions { display: flex; flex-wrap: wrap; gap: var(--sp-2); }
-.diary-face { width: var(--diary-face); height: var(--diary-face); border-radius: 50%; background: var(--c-mood, var(--c-dim)); justify-self: center; transition: background-color 0.3s; }
-.diary-scale { display: grid; gap: var(--sp-2); text-align: center; }
-.diary-scale__label { font-size: var(--fs-l); font-weight: 600; }
-.diary-scale input[type="range"] { width: 100%; accent-color: var(--c-mood, var(--c-accent)); }
-.diary-scale__ends { display: flex; justify-content: space-between; font-size: var(--fs-s); color: var(--c-dim); }
+@media (max-width: 30rem) { .diary-top { grid-template-columns: minmax(0, 1fr); } .diary-top__fig { justify-self: center; } }
 .diary-group { display: grid; gap: var(--sp-2); }
-.diary-group h3 { font-size: var(--fs-s); color: var(--c-dim); font-weight: 600; margin: 0; }
-.diary-group .chips { margin-bottom: 0; }
-
+.diary-filters { display: grid; gap: var(--sp-2); }
 .diary-day { display: grid; gap: var(--sp-2); }
 .diary-day__head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--sp-3); }
 .diary-day__head h2 { font-size: var(--fs-l); margin: 0; }
-.diary-entry { display: grid; gap: var(--sp-2); border-left: calc(var(--border) * 4) solid var(--c-mood, var(--c-line)); }
-.diary-entry__head { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-2); }
-.diary-entry__mood { font-weight: 600; }
-.diary-entry__text { white-space: pre-wrap; margin: 0; }
 .diary-list { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--sp-5); }
 
+/* карточка записи */
+.diary-entry { display: block; padding: 0; overflow: visible; position: relative; }
+.de__band { display: flex; align-items: center; gap: var(--sp-4); margin: var(--sp-2) var(--sp-2) 0; padding: var(--sp-3) var(--sp-4); border-radius: calc(var(--radius-m) * 0.8); background: linear-gradient(180deg, color-mix(in srgb, var(--c-mood, var(--c-dim)) 34%, #1b1b1e), #0d0d0f); color: #e9e9ee; }
+.de__fig { flex: none; width: 4.2rem; height: 4.2rem; }
+.de__lines { min-width: 0; display: grid; gap: 0.15rem; }
+.de__lines p { margin: 0; }
+.de__l1 { font-size: var(--fs-m, 1rem); line-height: 1.25; }
+.de__l2 { font-size: var(--fs-s); color: rgb(255 255 255 / 0.62); }
+.de__l3 { font-size: var(--fs-s); color: rgb(255 255 255 / 0.4); }
+.de__text { margin: 0; padding: var(--sp-4) var(--sp-4) var(--sp-2); white-space: pre-wrap; line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 5; -webkit-box-orient: vertical; overflow: hidden; }
+.de__foot { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-3); margin-top: var(--sp-2); padding: var(--sp-2) var(--sp-4); border-top: var(--border) solid var(--c-line); font-size: var(--fs-s); color: var(--c-dim); }
+.de__tools { position: relative; }
+.de__more { min-width: var(--tap); min-height: var(--tap); margin: calc(var(--sp-2) * -1) calc(var(--sp-3) * -1) calc(var(--sp-2) * -1) 0; border: 0; background: none; color: var(--c-dim); letter-spacing: 0.15em; font: inherit; font-weight: 700; cursor: pointer; border-radius: var(--radius-pill); }
+.de__more:hover { color: var(--c-text); }
+.de__menu { position: absolute; z-index: 6; right: 0; bottom: calc(100% + var(--sp-1)); min-width: 9.5rem; display: grid; padding: var(--sp-1); background: var(--c-surface); border: var(--border) solid var(--c-line); border-radius: var(--radius-m); box-shadow: 0 18px 40px -16px rgb(0 0 0 / 0.6); }
+.de__menu[hidden] { display: none; }
+.de__menu button { min-height: var(--tap); padding: 0 var(--sp-3); text-align: left; border: 0; background: none; color: var(--c-text); font: inherit; cursor: pointer; border-radius: var(--radius-s); }
+.de__menu button:hover { background: var(--c-fill); }
+.de__menu .is-danger { color: var(--c-danger); }
+
+/* ответ после записи */
+.diary-reply { display: grid; gap: var(--sp-3); }
+.diary-reply p { margin: 0; }
+.diary-reply__fig { width: 6.5rem; margin: 0 auto; }
+.diary-reply h2 { text-align: center; }
+.diary-help { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--sp-2); }
+.diary-help a { font-weight: 600; font-size: var(--fs-l); }
+
+/* ---------- запись: экран, карточка настроения, страница чувств ---------- */
+html.dflow-open { overflow: hidden; }
+.dflow { position: fixed; inset: 0; z-index: 90; display: grid; place-items: end center; color: var(--dflow-ink); font-family: var(--font-ui); --dm-h: 194; --dm-s: 70%; --dm-l: 72%; }
+.dflow__shade { position: absolute; inset: 0; background: rgb(0 0 0 / 0); transition: background 0.3s; }
+.dflow.is-in .dflow__shade { background: rgb(0 0 0 / 0.62); }
+.dflow__main { position: relative; width: 100%; height: 100dvh; display: flex; flex-direction: column; overflow: hidden; background: #1c1a24; opacity: 0; transform: translateY(16px); transition: transform 0.42s var(--dflow-ease), opacity 0.3s; }
+.dflow.is-in .dflow__main { opacity: 1; transform: none; }
+html[data-theme="mythmono"] .dflow__main { background: #0e0e10; }
+@media (min-width: 48rem) {
+  .dflow { place-items: center; }
+  .dflow__main { width: min(34rem, 94vw); height: min(54rem, 92dvh); border-radius: 2rem; box-shadow: 0 40px 90px -20px #000, inset 0 0 0 1px rgb(255 255 255 / 0.08); }
+}
+.dflow__bar { display: flex; align-items: center; gap: var(--sp-3); padding: calc(0.85rem + env(safe-area-inset-top)) 1rem 0.6rem; }
+.dflow__bar .dseg { margin: 0 auto; }
+.dbtn { flex: none; display: grid; place-items: center; width: 2.9rem; height: 2.9rem; padding: 0; border: 0; border-radius: 50%; color: #fff; background: var(--dflow-glass); cursor: pointer; transition: transform 0.15s, background-color 0.2s; -webkit-tap-highlight-color: transparent; }
+.dbtn svg { width: 1.25rem; height: 1.25rem; }
+.dbtn:active { transform: scale(0.92); }
+.dbtn:focus-visible, .dpill:focus-visible, .dchip:focus-visible, .drow:focus-visible, .dmore:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+.dbtn--accent { background: var(--dflow-accent); color: var(--dflow-on-accent); }
+.dbtn--accent:disabled { opacity: 0.5; }
+.dbtn--light { background: rgb(255 255 255 / 0.85); color: #101012; }
+.dseg { display: inline-flex; padding: 0.2rem; gap: 0.15rem; border-radius: 99px; background: rgb(255 255 255 / 0.09); }
+.dseg button { min-height: 2.3rem; padding: 0 1rem; border: 0; border-radius: 99px; background: none; color: var(--dflow-dim); font: inherit; font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: background-color 0.2s, color 0.2s; }
+.dseg button[aria-pressed="true"] { background: rgb(255 255 255 / 0.18); color: #fff; }
+.dseg button:disabled { cursor: default; }
+.dflow__meta { display: flex; gap: var(--sp-2); padding: 0.2rem 1.2rem 0; }
+.dfield { height: 2.2rem; padding: 0 0.9rem; border: 0; border-radius: 99px; background: rgb(255 255 255 / 0.08); color: var(--dflow-ink); font: inherit; font-size: 0.8rem; color-scheme: dark; min-width: 0; }
+.dfield[hidden] { display: none; }
+.dchip { display: flex; align-items: center; gap: 0.85rem; width: calc(100% - 2.4rem); margin: 0.8rem 1.2rem 0; padding: 0.55rem 0.9rem 0.55rem 0.6rem; border: var(--border) solid rgb(255 255 255 / 0.09); border-radius: 1.3rem; background: linear-gradient(120deg, hsl(var(--dm-h) calc(var(--dm-s) * 0.42) 28% / 0.95), rgb(255 255 255 / 0.04)); color: var(--dflow-ink); font: inherit; text-align: left; cursor: pointer; transition: transform 0.15s; }
+.dchip[hidden] { display: none; }
+.dchip:active { transform: scale(0.985); }
+.dchip__fig { flex: none; width: 3.1rem; height: 3.1rem; }
+.dchip__txt { flex: 1; min-width: 0; display: grid; gap: 0.1rem; }
+.dchip__t { font-weight: 700; }
+.dchip__s { font-size: 0.8rem; color: var(--dflow-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dchip__go svg { width: 1.1rem; height: 1.1rem; color: var(--dflow-dim); }
+.dtext { flex: 1; min-height: 0; width: 100%; padding: 1.1rem 1.5rem; border: 0; outline: 0; resize: none; background: transparent; color: var(--dflow-ink); font: inherit; font-size: 1.08rem; line-height: 1.6; box-sizing: border-box; }
+.dtext::placeholder { color: rgb(255 255 255 / 0.34); }
+.dflow__err { margin: 0; padding: 0 1.5rem 0.6rem; min-height: 1.4rem; color: #ffb4a9; font-size: 0.82rem; }
+
+/* карточка настроения (выезжает снизу) */
+.dcard { position: absolute; z-index: 3; left: 0.6rem; right: 0.6rem; bottom: calc(0.6rem + env(safe-area-inset-bottom)); padding: 0.9rem 1.2rem 1.35rem; border-radius: 2.2rem; text-align: center; color: var(--dflow-ink); background: radial-gradient(70% 52% at 50% 54%, hsl(var(--dm-h) calc(var(--dm-s) * 0.5) 44% / 0.5), transparent 74%), linear-gradient(180deg, hsl(var(--dm-h) calc(var(--dm-s) * 0.3) 27%), hsl(var(--dm-h) calc(var(--dm-s) * 0.22) 14%)); box-shadow: 0 -10px 50px -18px rgb(0 0 0 / 0.7), inset 0 0 0 1px rgb(255 255 255 / 0.07); transform: translateY(115%); transition: transform 0.55s var(--dflow-ease); touch-action: pan-x; }
+.dcard.is-in { transform: none; }
+.dcard[hidden] { display: none; }
+.dcard.is-shake { animation: dshake 0.4s; }
+@keyframes dshake { 20%, 60% { transform: translateX(-6px); } 40%, 80% { transform: translateX(6px); } }
+.dgrab { position: absolute; left: 50%; top: 0.55rem; width: 3rem; height: 0.3rem; margin-left: -1.5rem; border-radius: 99px; background: rgb(255 255 255 / 0.38); }
+.dcard .dbtn { position: absolute; top: 0.95rem; width: 2.7rem; height: 2.7rem; }
+.dcard .dbtn:first-of-type { left: 0.95rem; }
+.dcard .dbtn:nth-of-type(2) { right: 0.95rem; }
+.dcard__q { font-family: inherit; margin: 2.3rem 0.5rem 0.2rem; font-size: 1.2rem; line-height: 1.3; font-weight: 700; }
+.dcard__fig { width: clamp(7rem, 34vw, 8.8rem); margin: 0.6rem auto 0.2rem; }
+.dcard__label, .dpage__label { font-size: 1.4rem; font-weight: 700; min-height: 2rem; margin: 0.3rem 0 1.1rem; }
+.is-swap { animation: dswap 0.28s var(--dflow-ease); }
+@keyframes dswap { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: none; } }
+.dslider { position: relative; height: 3.1rem; border-radius: 99px; background: rgb(255 255 255 / 0.14); touch-action: none; cursor: grab; --p: 0.5; }
+.dslider:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
+.dslider__thumb { position: absolute; top: 0; left: calc((100% - 3.1rem) * var(--p)); width: 3.1rem; height: 3.1rem; border-radius: 50%; background: #fff; box-shadow: 0 4px 16px rgb(0 0 0 / 0.35); transition: transform 0.15s; }
+.dslider.is-drag { cursor: grabbing; }
+.dslider.is-drag .dslider__thumb { transform: scale(1.08); }
+.dcard__ends { display: flex; justify-content: space-between; gap: 1rem; padding: 0.75rem 0.4rem 0; font-size: 0.68rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: rgb(255 255 255 / 0.82); }
+
+/* страница чувств и влияния */
+.dpage { position: absolute; z-index: 4; inset: 0.7rem 0 0; overflow-y: auto; overscroll-behavior: contain; border-radius: 2.2rem 2.2rem 0 0; padding-bottom: calc(2rem + env(safe-area-inset-bottom)); background: linear-gradient(180deg, hsl(var(--dm-h) calc(var(--dm-s) * 0.18) 40%) 0, hsl(var(--dm-h) calc(var(--dm-s) * 0.14) 17%) 42%, #050506 100%); transform: translateY(104%); transition: transform 0.5s var(--dflow-ease); }
+.dpage.is-in { transform: none; }
+.dpage[hidden] { display: none; }
+.dpage .dbtn { position: absolute; top: 1.1rem; z-index: 2; }
+.dpage .dbtn:first-of-type { left: 1.1rem; }
+.dpage .dbtn:nth-of-type(2) { right: 1.1rem; }
+.dpage__fig { width: 8.2rem; margin: 3.3rem auto 0; }
+.dpage__label { text-align: center; margin-bottom: 1.8rem; }
+.dsec { padding: 0 1.5rem; margin-bottom: 1.6rem; }
+.dsec__h { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding-bottom: 0.85rem; border-bottom: var(--border) solid rgb(255 255 255 / 0.12); }
+.dsec__h h3, .dlist__q, .dflow h2, .dflow h3 { font-family: var(--font-ui); } .dsec__h h3 { margin: 0; font-size: 1.2rem; line-height: 1.3; font-weight: 700; }
+.dinfo { flex: none; display: grid; place-items: center; width: 2rem; height: 2rem; border-radius: 50%; background: rgb(255 255 255 / 0.14); color: rgb(255 255 255 / 0.8); }
+.dinfo svg { width: 1rem; height: 1rem; }
+.dpills { display: flex; flex-wrap: wrap; gap: 0.6rem; margin: 1.1rem 0 0.6rem; }
+.dpills--g { margin-top: 1.5rem; }
+.dpills--g:first-of-type { margin-top: 1.1rem; }
+.dpill { padding: 0.75rem 1.15rem; border: 0; border-radius: 99px; background: rgb(255 255 255 / 0.12); color: var(--dflow-ink); font: inherit; font-size: 1.02rem; cursor: pointer; transition: background-color 0.2s, color 0.2s, transform 0.15s; -webkit-tap-highlight-color: transparent; }
+.dpill:active { transform: scale(0.95); }
+.dpill[aria-pressed="true"] { background: #f2f2f4; color: #101012; font-weight: 600; }
+.dmore { display: inline-flex; align-items: center; gap: 0.3rem; margin: 0.4rem 0 0 0.3rem; padding: 0.5rem 0.3rem; border: 0; background: none; color: rgb(255 255 255 / 0.78); font: inherit; font-size: 1rem; cursor: pointer; }
+.dmore svg { width: 0.95rem; height: 0.95rem; }
+
+/* полный список слов */
+.dlist { position: absolute; z-index: 5; inset: 0.7rem 0 0; border-radius: 2.2rem 2.2rem 0 0; background: #1b1b1d; transform: translateY(104%); transition: transform 0.5s var(--dflow-ease); }
+.dlist.is-in { transform: none; }
+.dlist[hidden] { display: none; }
+.dlist .dbtn { position: absolute; top: 1.1rem; z-index: 2; }
+.dlist .dbtn:first-of-type { left: 1.1rem; }
+.dlist .dbtn:nth-of-type(2) { right: 1.1rem; }
+.dlist__q { margin: 0; padding: 4.6rem 1.5rem 0.9rem; font-size: 1.1rem; font-weight: 700; }
+.dlist__box { position: absolute; left: 1rem; right: 1rem; top: 7.2rem; bottom: calc(1rem + env(safe-area-inset-bottom)); margin: 0; padding: 0; list-style: none; overflow-y: auto; overscroll-behavior: contain; border-radius: 1.5rem; background: #2a2a2d; }
+.drow { display: flex; align-items: center; gap: 1rem; width: 100%; padding: 0 1.2rem; min-height: 3.5rem; border: 0; background: none; color: var(--dflow-ink); font: inherit; font-size: 1.05rem; text-align: left; cursor: pointer; }
+.dlist__box li + li .drow { box-shadow: inset 0 var(--border) 0 rgb(255 255 255 / 0.08); margin-left: 3.6rem; width: calc(100% - 3.6rem); padding-left: 0; }
+.dlist__box li + li .drow .drow__c { margin-left: -3.6rem; }
+.drow__c { flex: none; position: relative; width: 1.55rem; height: 1.55rem; border-radius: 50%; border: 2px solid rgb(255 255 255 / 0.32); transition: background-color 0.2s, border-color 0.2s; }
+.drow[aria-checked="true"] .drow__c { background: var(--dflow-accent); border-color: var(--dflow-accent); }
+.drow[aria-checked="true"] .drow__c::after { content: ""; position: absolute; left: 0.43rem; top: 0.18rem; width: 0.35rem; height: 0.7rem; border: solid var(--dflow-on-accent); border-width: 0 2px 2px 0; transform: rotate(40deg); }
+
+/* ---------- статистика ---------- */
 .diary-strip { display: grid; grid-template-columns: repeat(30, minmax(0, 1fr)); gap: 2px; }
 .diary-strip span { height: var(--diary-cell); border-radius: var(--radius-s); background: var(--c-mood, var(--c-fill)); }
 .diary-strip span[data-empty] { background: var(--c-fill); opacity: 0.6; }
@@ -53,15 +188,14 @@
 .diary-kpi span { font-size: var(--fs-s); color: var(--c-dim); }
 .diary-obs { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--sp-2); }
 .diary-obs li { display: grid; gap: var(--sp-1); }
-.diary-obs li[data-kind="care"] { border-left: calc(var(--border) * 4) solid var(--c-warn); }
-.diary-obs li[data-kind="praise"] { border-left: calc(var(--border) * 4) solid var(--c-ok); }
+.diary-obs li[data-kind="care"] { border-left: calc(var(--border) * 4) solid var(--dm-n1); }
+.diary-obs li[data-kind="praise"] { border-left: calc(var(--border) * 4) solid var(--dm-p2); }
 .diary-tablewrap { overflow-x: auto; max-width: 100%; }
 .diary-table { width: 100%; border-collapse: collapse; font-size: var(--fs-s); }
 .diary-table th, .diary-table td { text-align: left; padding: var(--sp-1) var(--sp-2); border-bottom: var(--border) solid var(--c-line); }
 .diary-table td.num, .diary-table th.num { text-align: right; font-variant-numeric: tabular-nums; }
-.diary-reply { display: grid; gap: var(--sp-3); }
-.diary-reply p { margin: 0; }
-.diary-help { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--sp-2); }
-.diary-help a { font-weight: 600; font-size: var(--fs-l); }
-.diary-filters { display: grid; gap: var(--sp-2); }
-@media (prefers-reduced-motion: reduce) { .diary-face { transition: none; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .dflow__main, .dcard, .dpage, .dlist, .dflow__shade, .dpill, .dbtn, .dslider__thumb { transition: none; }
+  .is-swap, .dcard.is-shake { animation: none; }
+}

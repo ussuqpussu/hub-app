@@ -1,12 +1,14 @@
 // Вкладка «Дневник»: записи по дням, форма с шкалой настроения, чувствами и факторами, статистика и наблюдения.
-// Вид временный и простой: оформление и анимацию шкалы подключит сессия дизайна (хуки в css/diary.css).
+// Оформление: фигура настроения (js/diary-bloom.js), запись (js/diary-flow.js), стили css/diary.css.
 // Данные: модуль 'diary' в hub-data (шифруется ключом, как остальные), офлайн через общую очередь хранилища.
-import { el, ICONS } from './ui.js';
+import { el } from './ui.js';
 import { load, save } from './storage.js';
 import { openSheet, confirmSheet } from './subs-form.js';
-import { SCALE, scaleOf, KINDS, feelingsFor, feelingOf, FACTORS, FACTOR_GROUPS, factorLabel } from './diary-data.js';
+import { scaleOf, feelingOf, FACTORS, factorLabel } from './diary-data.js';
+import { openDiaryFlow } from './diary-flow.js';
+import { staticBloom } from './diary-bloom.js';
 import {
-  ymd, addDays, dayTitle, cleanEntry, dayMap, daysSorted, summary, observations, extras, respond, promptFor, nudge,
+  ymd, addDays, dayTitle, cleanEntry, dayMap, daysSorted, summary, observations, extras, respond, nudge,
   filterEntries, searchDoc, levelName, signed1, plural, WEEKDAYS, validEntry,
 } from './diary-calc.js';
 import { buildIndex, search } from './search-calc.js';
@@ -15,128 +17,92 @@ const UI_KEY = 'hub.diaryUi';
 const RECENT_KEY = 'hub.diaryRecent';
 const M = 'diary';
 const today = () => ymd(new Date());
-const nowTime = () => { const d = new Date(); return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`; };
 export const dayId = (date) => `day-${date}`;
 
 function recentSet() { return new Set(load(RECENT_KEY, []) || []); }
 function remember(lines) { const r = [...(load(RECENT_KEY, []) || []), ...lines].slice(-60); save(RECENT_KEY, r); }
 
 // ---------- ответ хаба после записи ----------
-function replySheet(res) {
+function replySheet(res, mood) {
   openSheet((close) => {
     const ok = el('button', { type: 'button', class: 'btn btn--primary', text: 'Спасибо' });
     ok.addEventListener('click', close);
-    const body = [el('h2', { text: res.title }), ...res.lines.map((t) => el('p', { text: t }))];
+    const body = [mood == null ? '' : el('div', { class: 'diary-reply__fig', 'data-mood': String(mood) }, [staticBloom(mood)]), el('h2', { text: res.title }), ...res.lines.map((t) => el('p', { text: t }))];
     if (res.crisis) body.push(el('ul', { class: 'diary-help' }, res.help.map((h) => el('li', { class: 'card' }, [el('span', { class: 'muted', text: h.name }), el('a', { href: `tel:${h.tel}`, text: h.show })]))));
     return el('div', { class: 'sheet__form diary-reply', role: 'status' }, [...body, ok]);
   }, { tall: false });
 }
 
 // ---------- форма записи ----------
-function entryForm(store, entry, { kind: kind0 = 'day', date: date0 = today() } = {}, close) {
-  const isEdit = !!entry;
-  const st = {
-    kind: entry ? entry.kind : kind0,
-    date: entry ? entry.date : date0,
-    time: entry ? entry.time || '' : nowTime(),
-    mood: entry ? entry.mood : 0,
-    feelings: new Set(entry ? entry.feelings || [] : []),
-    factors: new Set(entry ? entry.factors || [] : []),
-  };
-  // Для «весь день» без явной записи подставим существующую запись этой даты (одна на день).
-  let prefill = entry ? entry.text || '' : '';
-  if (!isEdit && st.kind === 'day') {
-    const ex = store.list(M).find((e) => e.id === dayId(st.date));
-    if (ex) { Object.assign(st, { mood: ex.mood, feelings: new Set(ex.feelings || []), factors: new Set(ex.factors || []) }); prefill = ex.text || ''; }
-  }
-  const root = el('form', { class: 'sheet__form stack', 'data-mood': String(st.mood) });
-  const kindSeg = el('div', { class: 'seg seg--s', role: 'group', 'aria-label': 'Вид записи' });
-  const date = el('input', { class: 'field', type: 'date', 'aria-label': 'Дата', value: st.date, max: today() });
-  const time = el('input', { class: 'field', type: 'time', 'aria-label': 'Время', value: st.time });
-  const face = el('div', { class: 'diary-face', 'aria-hidden': 'true' });
-  const label = el('div', { class: 'diary-scale__label', 'aria-live': 'polite' });
-  const range = el('input', { type: 'range', min: '-3', max: '3', step: '1', value: String(st.mood), 'aria-label': 'Настроение', 'aria-valuetext': scaleOf(st.mood).label });
-  const scale = el('div', { class: 'diary-scale' }, [face, label, range, el('div', { class: 'diary-scale__ends' }, [el('span', { text: 'Очень неприятно' }), el('span', { text: 'Очень приятно' })])]);
-  const feelBox = el('div', { class: 'diary-group' });
-  const factBox = el('div', { class: 'diary-group' });
-  const text = el('textarea', { class: 'field field--area', rows: '5', maxlength: '20000', 'aria-label': 'Заметка о дне' });
-  text.value = prefill;
-  const err = el('p', { class: 'err', role: 'alert' });
-  const submit = el('button', { type: 'submit', class: 'btn btn--primary', text: isEdit ? 'Сохранить' : 'Записать' });
-
-  const paintKind = () => {
-    kindSeg.replaceChildren(...KINDS.map((k) => {
-      const b = el('button', { type: 'button', 'aria-pressed': String(st.kind === k.id), text: k.label, title: k.about, ...(isEdit ? { disabled: '' } : {}) });
-      b.addEventListener('click', () => { st.kind = k.id; paintKind(); });
-      return b;
-    }));
-    time.hidden = st.kind !== 'moment';
-  };
-  const chip = (on, txt, toggle) => { const b = el('button', { type: 'button', class: 'chip', 'aria-pressed': String(on), text: txt }); b.addEventListener('click', () => { toggle(); b.setAttribute('aria-pressed', String(!(b.getAttribute('aria-pressed') === 'true'))); }); return b; };
-  const paintFeel = () => {
-    const list = feelingsFor(st.mood);
-    const shown = new Set(list.map((f) => f.id));
-    [...st.feelings].forEach((f) => { if (!shown.has(f)) list.push(feelingOf(f)); });
-    feelBox.replaceChildren(el('h3', { text: 'Что чувствовал' }), el('div', { class: 'chips', role: 'group', 'aria-label': 'Чувства' }, list.filter(Boolean).map((f) => chip(st.feelings.has(f.id), f.label, () => (st.feelings.has(f.id) ? st.feelings.delete(f.id) : st.feelings.add(f.id))))));
-  };
-  const paintFactors = () => {
-    factBox.replaceChildren(el('h3', { text: 'Что влияло' }), ...FACTOR_GROUPS.map((g) => el('div', { class: 'chips', role: 'group', 'aria-label': g.label }, FACTORS.filter((f) => f.group === g.id).map((f) => chip(st.factors.has(f.id), f.label, () => (st.factors.has(f.id) ? st.factors.delete(f.id) : st.factors.add(f.id)))))));
-  };
-  const paintMood = () => {
-    const s = scaleOf(st.mood);
-    label.textContent = s.label;
-    range.setAttribute('aria-valuetext', s.label);
-    root.dataset.mood = String(st.mood);
-    text.placeholder = promptFor(st.mood, `${st.date}${st.mood}`) || 'Что произошло за день?';
-  };
-  range.addEventListener('input', () => { const v = Number(range.value); if (v !== st.mood) { st.mood = v; paintMood(); paintFeel(); } });
-  paintKind(); paintMood(); paintFeel(); paintFactors();
-
-  const head = el('div', { class: 'task-form__row' }, [date, time]);
-  root.append(el('h2', { text: isEdit ? 'Изменить запись' : 'Новая запись' }), kindSeg, head, scale, feelBox, factBox, text, err, submit);
-  root.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const fields = cleanEntry({ kind: st.kind, date: date.value, time: st.kind === 'moment' ? time.value : '', mood: st.mood, feelings: [...st.feelings], factors: [...st.factors], text: text.value });
-    if (fields.date > today()) { err.textContent = 'Дата не может быть в будущем.'; return; }
-    submit.disabled = true;
-    let saved;
-    try {
-      if (fields.kind === 'day') {
-        // Одна запись «весь день» на дату: стабильный id, чтобы с телефона и компьютера не появилось двух.
-        if (entry && entry.kind === 'day' && entry.id !== dayId(fields.date)) await store.remove(M, entry.id);
-        saved = await store.upsert(M, dayId(fields.date), fields);
-      } else if (isEdit) saved = (await store.update(M, entry.id, fields)) || { ...entry, ...fields, updatedAt: Date.now() };
-      else saved = await store.add(M, fields);
-    } catch (x) {
-      submit.disabled = false;
-      err.textContent = x && x.message === 'locked' ? 'Хаб заблокирован: открой его PIN-кодом и попробуй снова.' : 'Не получилось сохранить. Попробуй ещё раз.';
-      return;
-    }
-    if (close) close();
-    const res = respond(saved, store.list(M), today(), recentSet());
-    remember(res.lines);
-    replySheet(res);
+// Оболочка (карточка с фигурой, страница чувств, список слов) в js/diary-flow.js; здесь только сохранение.
+export function openEntryForm(store, entry, { kind = 'day', date = today() } = {}) {
+  const day = !entry && kind === 'day' ? store.list(M).find((e) => e.id === dayId(date)) || null : null;
+  openDiaryFlow({
+    entry, kind, date, existingDay: day,
+    async onSubmit(raw) {
+      const fields = cleanEntry(raw);
+      let saved;
+      try {
+        if (fields.kind === 'day') {
+          // Одна запись «весь день» на дату: стабильный id, чтобы с телефона и компьютера не появилось двух.
+          if (entry && entry.kind === 'day' && entry.id !== dayId(fields.date)) await store.remove(M, entry.id);
+          saved = await store.upsert(M, dayId(fields.date), fields);
+        } else if (entry) saved = (await store.update(M, entry.id, fields)) || { ...entry, ...fields, updatedAt: Date.now() };
+        else saved = await store.add(M, fields);
+      } catch (x) {
+        return x && x.message === 'locked' ? 'Хаб заблокирован: открой его PIN-кодом и попробуй снова.' : 'Не получилось сохранить. Попробуй ещё раз.';
+      }
+      const res = respond(saved, store.list(M), today(), recentSet());
+      remember(res.lines);
+      setTimeout(() => replySheet(res, saved.mood), 320);
+      return null;
+    },
   });
-  return root;
-}
-export function openEntryForm(store, entry, opts) {
-  openSheet((close) => entryForm(store, entry, opts || {}, close));
 }
 
 // ---------- карточки ----------
+const WD_SHORT = ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'];
+const MON_SHORT = ['янв.', 'февр.', 'марта', 'апр.', 'мая', 'июня', 'июля', 'авг.', 'сент.', 'окт.', 'нояб.', 'дек.'];
+function stamp(e) {
+  const [y, m, d] = e.date.split('-').map(Number);
+  const dt = new Date(y, m - 1, d);
+  let hm = e.time;
+  if (!hm) { const c = new Date(e.created || e.updatedAt || Date.now()); hm = `${String(c.getHours()).padStart(2, '0')}:${String(c.getMinutes()).padStart(2, '0')}`; }
+  return `${WD_SHORT[dt.getDay()]}, ${d} ${MON_SHORT[m - 1]}, ${hm}`;
+}
+const names = (arr, max) => (arr.length > max ? `${arr.slice(0, max).join(', ')} и ещё ${arr.length - max}` : arr.join(', '));
+let closeMenu = null;
 function entryCard(store, e) {
   const s = scaleOf(e.mood);
-  const edit = el('button', { type: 'button', class: 'iconbtn', 'aria-label': `Изменить запись: ${s.label}`, html: ICONS.edit });
-  edit.addEventListener('click', () => openEntryForm(store, e));
-  const del = el('button', { type: 'button', class: 'iconbtn', 'aria-label': `Удалить запись: ${s.label}`, html: ICONS.close });
-  del.addEventListener('click', () => confirmSheet({ title: 'Удалить запись?', text: `${dayTitle(e.date, today())}: ${s.label}`, action: 'Удалить', onConfirm: () => store.remove(M, e.id) }));
-  const kind = e.kind === 'day' ? 'Весь день' : `Момент${e.time ? `, ${e.time}` : ''}`;
-  const pills = [...(e.feelings || []).map((f) => (feelingOf(f) || { label: f }).label), ...(e.factors || []).map(factorLabel)];
-  return el('li', { class: 'card diary-entry', 'data-mood': String(e.mood), 'data-kind': e.kind, 'data-id': e.id }, [
-    el('div', { class: 'diary-entry__head' }, [el('span', {}, [el('span', { class: 'diary-entry__mood', text: s.label }), el('span', { class: 'muted', text: ` · ${kind}` })]), el('span', { class: 'task__tools' }, [edit, del])]),
-    pills.length ? el('div', { class: 'pillrow' }, pills.map((p) => el('span', { class: 'pill', text: p }))) : '',
-    e.text ? el('p', { class: 'diary-entry__text', text: e.text }) : '',
-  ]);
+  const feel = (e.feelings || []).map((f) => (feelingOf(f) || { label: f }).label);
+  const fact = (e.factors || []).map(factorLabel);
+  const kind = e.kind === 'day' ? 'Весь день' : `Момент${e.time ? ` · ${e.time}` : ''}`;
+  const more = el('button', { type: 'button', class: 'de__more', 'aria-label': 'Действия с записью', 'aria-haspopup': 'true', 'aria-expanded': 'false', text: '•••' });
+  const menu = el('div', { class: 'de__menu', role: 'menu', hidden: '' });
+  const act = (txt, fn, cls) => { const b = el('button', { type: 'button', role: 'menuitem', class: cls || '', text: txt }); b.addEventListener('click', () => { menu.hidden = true; more.setAttribute('aria-expanded', 'false'); fn(); }); return b; };
+  menu.append(
+    act('Изменить', () => openEntryForm(store, e)),
+    act('Удалить', () => confirmSheet({ title: 'Удалить запись?', text: `${dayTitle(e.date, today())}: ${s.label}`, action: 'Удалить', onConfirm: () => store.remove(M, e.id) }), 'is-danger'),
+  );
+  more.addEventListener('click', (ev) => {
+    ev.stopPropagation();
+    const open = menu.hidden;
+    if (closeMenu) closeMenu();
+    if (open) {
+      menu.hidden = false; more.setAttribute('aria-expanded', 'true');
+      closeMenu = () => { menu.hidden = true; more.setAttribute('aria-expanded', 'false'); closeMenu = null; };
+      setTimeout(() => document.addEventListener('click', () => { if (closeMenu) closeMenu(); }, { once: true }), 0);
+    }
+  });
+  const lines = [el('b', { class: 'de__l1', text: feel.length ? names(feel, 2) : s.label })];
+  if (fact.length) lines.push(el('p', { class: 'de__l2', text: names(fact, 2) }));
+  lines.push(el('p', { class: 'de__l3', text: kind }));
+  const body = [el('div', { class: 'de__band' }, [el('span', { class: 'de__fig' }, [staticBloom(e.mood)]), el('div', { class: 'de__lines' }, lines)])];
+  if (e.text) body.push(el('p', { class: 'de__text', text: e.text }));
+  body.push(el('div', { class: 'de__foot' }, [el('span', { text: stamp(e) }), el('span', { class: 'de__tools' }, [more, menu])]));
+  const li = el('li', { class: 'card diary-entry', 'data-mood': String(e.mood), 'data-kind': e.kind, 'data-id': e.id }, body);
+  li.setAttribute('aria-label', `${s.label}. ${stamp(e)}`);
+  return li;
 }
 
 // ---------- статистика ----------
@@ -218,10 +184,11 @@ export function diaryView({ store, subscribe }) {
     dayBtn.addEventListener('click', () => openEntryForm(store, td && td.dayEntry ? td.dayEntry : null, { kind: 'day' }));
     const momBtn = el('button', { type: 'button', class: 'btn', text: 'Что чувствую сейчас' });
     momBtn.addEventListener('click', () => openEntryForm(store, null, { kind: 'moment' }));
-    const line = td ? el('p', { 'data-mood': String(Math.round(td.mood)) }, [el('strong', { text: 'Сегодня: ' }), levelName(td.mood).toLowerCase(), td.entries.length > 1 ? el('span', { class: 'muted', text: ` · ${td.entries.length} ${plural(td.entries.length, 'запись', 'записи', 'записей')}` }) : '']) : el('p', { class: 'muted', text: nudge(t) });
+    const line = td ? el('p', { class: 'diary-top__now' }, [el('strong', { text: 'Сегодня: ' }), levelName(td.mood).toLowerCase(), td.entries.length > 1 ? el('span', { class: 'muted', text: ` · ${td.entries.length} ${plural(td.entries.length, 'запись', 'записи', 'записей')}` }) : '']) : el('p', { class: 'muted diary-top__now', text: nudge(t) });
     const s = summary(all, t);
     const obs = observations(s, t)[0];
-    return el('div', { class: 'card diary-top' }, [line, obs ? el('p', { class: 'muted', text: obs.text }) : '', el('div', { class: 'diary-actions' }, [dayBtn, momBtn])]);
+    const fig = el('div', { class: `diary-top__fig${td ? '' : ' is-empty'}`, 'aria-hidden': 'true' }, td ? [staticBloom(Math.round(td.mood))] : []);
+    return el('div', { class: 'card diary-top', ...(td ? { 'data-mood': String(Math.round(td.mood)) } : {}) }, [fig, el('div', { class: 'diary-top__body' }, [line, obs ? el('p', { class: 'muted', text: obs.text }) : '', el('div', { class: 'diary-actions' }, [dayBtn, momBtn])])]);
   }
 
   function listView(all) {
@@ -253,7 +220,7 @@ export function diaryView({ store, subscribe }) {
   function render() {
     const all = store.list(M).filter(validEntry);
     const tabs = el('div', { class: 'seg', role: 'tablist', 'aria-label': 'Разделы дневника' }, [['list', 'Записи'], ['stats', 'Статистика']].map(([k, txt]) => { const b = el('button', { type: 'button', role: 'tab', 'aria-selected': String(ui.tab === k), 'aria-pressed': String(ui.tab === k), text: txt }); b.addEventListener('click', () => setUi({ tab: k })); return b; }));
-    root.replaceChildren(el('div', { class: 'view__head' }, [el('h1', { text: 'Дневник' }), el('p', { class: 'muted', text: 'Как прошёл день, что чувствовал и что на это влияло.' })]), top(all));
+    root.replaceChildren(el('div', { class: 'view__head' }, [el('h1', { text: 'Дневник' }), el('p', { class: 'muted', text: all.length ? `${all.length} ${plural(all.length, 'запись', 'записи', 'записей')}` : 'Как прошёл день, что чувствовал и что на это влияло.' })]), top(all));
     if (!all.length) { root.append(el('div', { class: 'empty' }, [el('strong', { text: 'Пока ни одной записи' }), el('span', { text: 'Начни с кнопки «Как прошёл день?». Чем больше записей, тем точнее статистика и наблюдения.' })])); return; }
     root.append(tabs);
     if (ui.tab === 'stats') root.append(statsView(all));
