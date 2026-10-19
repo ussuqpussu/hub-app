@@ -72,10 +72,12 @@ function pathAt(v, scale, round) {
 const reduced = () => !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
 
 const LAYERS = [
-  { s: 98, round: 1, rot: 5.5, a: 0.5, fill: 0.1, w: 1.1 },
-  { s: 78, round: 0.85, rot: -7.5, a: 0.7, fill: 0.17, w: 1.1 },
-  { s: 54, round: 0.65, rot: 9, a: 1, fill: 1, w: 0 },
+  { s: 100, round: 1, rot: 4, fill: 0.2, w: 1.2 },
+  { s: 80, round: 0.88, rot: -6, fill: 0.36, w: 1.2 },
 ];
+const CORE = { s: 56, round: 0.92, rot: 5 };
+const K = 60; // граней у середины
+const lightA = -Math.PI * 0.72; // откуда падает свет
 
 // живая фигура: set(v, ms) плавно переводит к уровню v; destroy() останавливает анимацию
 export function createBloom({ live = true } = {}) {
@@ -83,10 +85,6 @@ export function createBloom({ live = true } = {}) {
   svg.setAttribute('viewBox', '-110 -110 220 220');
   svg.setAttribute('class', 'bloom');
   svg.setAttribute('aria-hidden', 'true');
-  const uid = `bg${Math.random().toString(36).slice(2, 8)}`;
-  const defs = document.createElementNS(NS, 'defs');
-  defs.innerHTML = `<radialGradient id="${uid}"><stop class="g0" offset="0"/><stop class="g1" offset="1"/></radialGradient>`;
-  svg.append(defs);
   const groups = LAYERS.map((L) => {
     const g = document.createElementNS(NS, 'g');
     const p = document.createElementNS(NS, 'path');
@@ -94,35 +92,74 @@ export function createBloom({ live = true } = {}) {
     g.append(p); svg.append(g);
     return { g, p, L };
   });
+  // второй, тонкий контур у кромки: двоит край, как стекло
+  groups.forEach((o) => {
+    const p2 = document.createElementNS(NS, 'path');
+    p2.setAttribute('fill', 'none'); p2.setAttribute('stroke-linejoin', 'round');
+    o.g.append(p2); o.p2 = p2;
+  });
+  const core = document.createElementNS(NS, 'g');
+  const facets = [];
+  for (let k = 0; k < K; k += 1) {
+    const f = document.createElementNS(NS, 'path');
+    core.append(f); facets.push(f);
+  }
+  const rim = document.createElementNS(NS, 'path');
+  rim.setAttribute('fill', 'none'); rim.setAttribute('stroke-linejoin', 'round');
+  const sheen = document.createElementNS(NS, 'ellipse');
+  sheen.setAttribute('rx', '15'); sheen.setAttribute('ry', '8'); sheen.setAttribute('cx', '-6'); sheen.setAttribute('cy', '-12');
+  sheen.setAttribute('transform', 'rotate(-28 -6 -12)');
+  core.append(rim);
+  svg.append(core);
   const dot = document.createElementNS(NS, 'circle');
-  dot.setAttribute('r', '2.4');
-  svg.append(dot);
-  const stop0 = defs.querySelector('.g0'); const stop1 = defs.querySelector('.g1');
+  dot.setAttribute('r', '2');
+  svg.append(sheen, dot);
 
   let cur = 0; let from = 0; let to = 0; let t0 = 0; let dur = 0; let raf = 0; let alive = true; let ph = Math.random() * 6;
   const listeners = new Set();
 
+  let lastV = null;
+  function shape(v, c) {
+    groups.forEach(({ p, p2, L }) => {
+      p.setAttribute('d', pathAt(v, L.s, L.round));
+      p2.setAttribute('d', pathAt(v, L.s * 0.955, L.round));
+      p.setAttribute('fill', hsl(c, L.fill)); p.setAttribute('stroke', hsl(c, 0.85, 22)); p.setAttribute('stroke-width', String(L.w));
+      p2.setAttribute('stroke', hsl(c, 0.5, 30)); p2.setAttribute('stroke-width', '0.6');
+    });
+    // грани середины: свет слева сверху, выступающие части светлее
+    const x = clamp(v) + 3; const i = Math.min(5, Math.floor(x)); const t = x - i;
+    const A = radii[i]; const B = radii[i + 1];
+    const rad = (k) => { const r = lerp(A[k % N], B[k % N], t); return 1 + (r - 1) * CORE.round; };
+    const step = N / K;
+    for (let k = 0; k < K; k += 1) {
+      const i0 = Math.round(k * step); const i1 = Math.round((k + 1) * step);
+      const th0 = (i0 / N) * Math.PI * 2; const th1 = (i1 / N) * Math.PI * 2;
+      const r0 = rad(i0); const r1 = rad(i1);
+      const mid = (th0 + th1) / 2; const rm = (r0 + r1) / 2;
+      const lit = Math.cos(mid - lightA);
+      const l = c[2] - 12 + lit * 9 + (rm - 0.85) * 55;
+      const d = `M0 0L${(Math.cos(th0) * r0 * CORE.s).toFixed(2)} ${(Math.sin(th0) * r0 * CORE.s).toFixed(2)}L${(Math.cos(th1) * r1 * CORE.s).toFixed(2)} ${(Math.sin(th1) * r1 * CORE.s).toFixed(2)}Z`;
+      const f = facets[k];
+      f.setAttribute('d', d);
+      const col = `hsl(${c[0].toFixed(1)} ${Math.min(100, c[1] + 6).toFixed(1)}% ${Math.max(18, Math.min(92, l)).toFixed(1)}%)`;
+      f.setAttribute('fill', col); f.setAttribute('stroke', col); f.setAttribute('stroke-width', '0.35');
+    }
+    rim.setAttribute('d', pathAt(v, CORE.s, CORE.round));
+    rim.setAttribute('stroke', hsl(c, 0.9, 26)); rim.setAttribute('stroke-width', '0.9');
+    sheen.setAttribute('fill', 'rgb(255 255 255 / 0.26)');
+    dot.setAttribute('fill', hsl([c[0], c[1], 30], 0.85));
+    svg.style.setProperty('--bloom-glow', hsl(c, 0.6));
+  }
+
   function paint(v, time) {
     const c = colorAt(v);
+    if (v !== lastV) { shape(v, c); lastV = v; }
     const breathe = 1 + Math.sin(time / 1900 + ph) * 0.022;
-    groups.forEach(({ g, p, L }, i) => {
-      p.setAttribute('d', pathAt(v, L.s, L.round));
-      if (i < 2) {
-        p.setAttribute('fill', hsl(c, L.fill));
-        p.setAttribute('stroke', hsl(c, L.a, 12));
-        p.setAttribute('stroke-width', String(L.w));
-      } else {
-        p.setAttribute('fill', `url(#${uid})`);
-        p.setAttribute('stroke', hsl(c, 0.9, 20));
-        p.setAttribute('stroke-width', '0.8');
-      }
-      const ang = (time / 1000) * L.rot * (live ? 1 : 0) + i * 17;
-      g.setAttribute('transform', `rotate(${ang.toFixed(2)}) scale(${(i === 2 ? breathe : 1 + (breathe - 1) * 0.6).toFixed(4)})`);
+    const rot = (time / 1000) * (live ? 1 : 0);
+    groups.forEach(({ g, L }, i) => {
+      g.setAttribute('transform', `rotate(${(rot * L.rot + i * 17).toFixed(2)}) scale(${(1 + (breathe - 1) * 0.6).toFixed(4)})`);
     });
-    stop0.setAttribute('stop-color', hsl(c, 1, 24));
-    stop1.setAttribute('stop-color', hsl(c, 0.95, -6));
-    dot.setAttribute('fill', hsl([c[0], c[1], 22], 0.8));
-    svg.style.setProperty('--bloom-glow', hsl(c, 0.55));
+    core.setAttribute('transform', `rotate(${(rot * CORE.rot + 31).toFixed(2)}) scale(${breathe.toFixed(4)})`);
     cur = v;
     listeners.forEach((fn) => fn(v, c));
   }
