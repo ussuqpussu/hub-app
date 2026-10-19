@@ -1,7 +1,9 @@
 // Экономный режим: хаб не должен мешать играм и тяжёлым программам.
-//  - окно хаба не в фокусе (например, запущена игра): декоративные анимации на паузе, сцены 6 кадров/с, живые обои редко;
-//  - страница скрыта или сцена вне экрана: сцена не рисуется вообще;
-//  - «Экономный режим» (авто на слабых устройствах, можно включить вручную): без размытия стекла и тяжёлых теней, сцены 20 кадров/с.
+//  - страница скрыта (свёрнута, закрыта другим окном или полноэкранной игрой): анимации на паузе, сцена не рисуется;
+//  - сцена вне экрана: не рисуется;
+//  - окно просто без фокуса (рядом открыта другая программа) больше НЕ тормозит анимации: раньше сцена падала до 6 кадров/с,
+//    и это выглядело как лаги;
+//  - «Экономный режим» (авто на слабых устройствах, можно включить вручную): без размытия стекла и тяжёлых теней, сцены 30 кадров/с.
 import { getAppearance, onAppearance } from './appearance.js';
 
 const state = { idle: false, lite: false };
@@ -12,7 +14,7 @@ export function autoLite() {
   return (n.hardwareConcurrency && n.hardwareConcurrency <= 4) || (n.deviceMemory && n.deviceMemory <= 4) || !!(n.connection && n.connection.saveData);
 }
 const liteNow = () => { const m = getAppearance().lite; return m === 'on' || (m === 'auto' && autoLite()); };
-const idleNow = () => document.hidden || !document.hasFocus();
+const idleNow = () => document.hidden;
 
 export const frameGap = () => (state.idle ? 160 : state.lite ? 50 : 33);
 export const isLite = () => state.lite;
@@ -20,7 +22,7 @@ export const isLite = () => state.lite;
 function fpsFor(frame) {
   if (document.hidden) return 0;
   if (seen.get(frame) === false) return 0;
-  return state.idle ? 6 : state.lite ? 20 : 30;
+  return state.idle ? 0 : state.lite ? 30 : 60;
 }
 function broadcast() {
   document.querySelectorAll('iframe').forEach((f) => {
@@ -38,8 +40,6 @@ function apply() {
 
 export function initPerf() {
   apply();
-  window.addEventListener('blur', apply);
-  window.addEventListener('focus', apply);
   document.addEventListener('visibilitychange', apply);
   onAppearance(apply);
   window.addEventListener('message', (e) => { if (e.data && e.data.type === 'hub-engine-ready') broadcast(); });

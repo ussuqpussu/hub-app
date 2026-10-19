@@ -50,24 +50,10 @@ export function appearanceBlock() {
   function renderGlass() {
     const a = getAppearance();
     const sel = el('select', { class: 'field', 'aria-label': 'Стекло' });
-    [['auto', 'Как у темы (включено в «Стекле»)'], ['off', 'Выкл, сплошные панели'], ['tinted', 'Тонированное'], ['clear', 'Прозрачное, виднее обои']].forEach(([v, t]) => sel.append(el('option', { value: v, text: t })));
+    [['auto', 'Как у темы (включено в «Бенто» и «Монолите»)'], ['off', 'Выкл, сплошные панели'], ['tinted', 'Тонированное'], ['clear', 'Прозрачное, виднее обои']].forEach(([v, t]) => sel.append(el('option', { value: v, text: t })));
     sel.value = a.glass;
     sel.addEventListener('change', () => { setAppearance({ glass: sel.value }); renderGlass(); });
     const kids = [el('h3', { text: 'Стекло' }), el('p', { class: 'muted', text: 'Матовые панели с зерном и тонкой рамкой. Размытие нагружает слабые телефоны, поэтому в других темах по умолчанию выключено. «Выкл» даёт сплошные панели для лучшей читаемости.' }), sel];
-    if (currentTheme() === 'glass') {
-      const walls = el('div', { class: 'glasspick', role: 'group', 'aria-label': 'Обои-заливки' }, GLASS_WALLS.map(([name, c1, c2], i) => {
-        const b = el('button', { type: 'button', class: 'glasspick__wp', 'aria-pressed': String(a.wpGrad === i), 'aria-label': name, style: `background:linear-gradient(135deg,${c1},${c2})` }, [el('span', { text: name })]);
-        b.addEventListener('click', () => { setAppearance({ wpGrad: a.wpGrad === i ? -1 : i }); renderGlass(); });
-        return b;
-      }));
-      const cur = effectiveColors('glass').a.toLowerCase();
-      const dots = el('div', { class: 'glassdots', role: 'group', 'aria-label': 'Акцент' }, GLASS_ACCENTS.map(([name, hex]) => {
-        const b = el('button', { type: 'button', class: 'glassdot', 'aria-pressed': String(cur === hex), 'aria-label': name, title: name, style: `background:${hex}` });
-        b.addEventListener('click', () => { setAccent('glass', hex); renderGlass(); });
-        return b;
-      }));
-      kids.push(el('h3', { text: 'Обои стекла' }), walls, el('h3', { text: 'Акцент' }), dots);
-    }
     glassBox.replaceChildren(...kids);
   }
 

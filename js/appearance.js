@@ -52,15 +52,15 @@ export const GLASS_WALLS = [['Пепел', '#2a2f45', '#0a0b10'], ['Песок',
 export const GLASS_ACCENTS = [['Синий', '#3b82f6'], ['Фиолетовый', '#8b5cf6'], ['Розовый', '#ec4899'], ['Оранжевый', '#f97316'], ['Зелёный', '#22c55e'], ['Серый', '#9ca3af']];
 export const wallGrad = (i, dark = true) => (GLASS_WALLS[i] ? `linear-gradient(155deg, ${GLASS_WALLS[i][1]}${dark ? '55' : '40'} 0%, ${GLASS_WALLS[i][2]}${dark ? 'aa' : '30'} 100%)` : '');
 
-// Стекло: «как у темы» включает его только в теме «Стекло»; вручную можно включить в любой теме.
+// Стекло: «как у темы» включает его в «Бенто» и «Монолите»; вручную можно включить в любой теме.
 // Заливка обоев своя для тёмной и светлой темы (на светлой она бледнее), поэтому вызывается и при смене светлая/тёмная.
 export function applyGlass() {
   const root = document.documentElement;
   const a = getAppearance();
   const theme = root.dataset.theme;
-  const mode = a.glass === 'auto' ? (theme === 'glass' || theme === 'mythbento' || theme === 'mythmock' ? 'tinted' : '') : a.glass === 'off' ? '' : a.glass;
+  const mode = a.glass === 'auto' ? (theme === 'mythbento' || theme === 'mythmono' ? 'tinted' : '') : a.glass === 'off' ? '' : a.glass;
   if (mode) { if (root.dataset.glass !== mode) root.dataset.glass = mode; } else if (root.dataset.glass) delete root.dataset.glass;
-  const idx = a.wpGrad >= 0 ? a.wpGrad : theme === 'glass' ? 0 : -1;
+  const idx = a.wpGrad >= 0 ? a.wpGrad : -1;
   let dk = true;
   try { dk = effectiveColors(theme).dk; } catch (_) { dk = true; }
   const want = mode && idx >= 0 ? wallGrad(idx, dk) : '';

@@ -7,12 +7,14 @@
   var KEY = 'hub.themeOvr';
   // Ограничение кадров: хаб сообщает, сколько кадров в секунду можно (0 = сцена скрыта или окно спрятано)
   (function () {
-    var raf = window.requestAnimationFrame.bind(window), fps = 30, curT = -1, run = true, lastRun = 0;
+    // fps 60 и выше: каждый кадр экрана без обёртки. Меньше: ровно каждый N-й кадр (без рывков на 75/120/144 Гц).
+    var raf = window.requestAnimationFrame.bind(window), fps = 60, curT = -1, run = true, lastRun = 0;
     window.addEventListener('message', function (e) { var d = e.data; if (d && d.type === 'hub-perf' && typeof d.fps === 'number') fps = d.fps; });
     window.requestAnimationFrame = function (cb) {
       return raf(function w(t) {
         if (fps <= 0 || document.hidden) { setTimeout(function () { raf(w); }, 400); return; }
-        if (t !== curT) { curT = t; run = t - lastRun >= 1000 / fps - 2; if (run) lastRun = t; }
+        if (fps >= 60) { cb(t); return; }
+        if (t !== curT) { curT = t; run = t - lastRun >= 1000 / fps - 4; if (run) lastRun = t; }
         if (run) cb(t); else raf(w);
       });
     };
@@ -66,22 +68,25 @@
     PROJECTS.length = 0;
     ['Орион', 'Лира', 'Кассиопея', 'Андромеда', 'Персей', 'Лебедь', 'Пегас'].forEach(function (n, i) { PROJECTS.push({ id: 'c' + i, name: n, type: 'созвездие', st: 'в работе', pr: 30 + i * 9, next: '', upd: '' }); });
   }
+  // В режиме сцены видна только одна анимация. Остальные холсты и ASCII-блоки превью скрыты, но их циклы всё равно
+  // рисовали каждый кадр (15 холстов и текстовые блоки): после каждой отрисовки убираем скрытые из документа.
+  if (MODE === 'stage' && typeof renderBig === 'function') {
+    var rbPrune = renderBig;
+    renderBig = function () {
+      rbPrune.apply(this, arguments);
+      try {
+        document.querySelectorAll('.h9-cv, .lc-ascii, pre.ad-asc, canvas').forEach(function (n) {
+          if (!n.getClientRects().length) n.remove();
+        });
+      } catch (e) { /* не вышло: просто рисуем как раньше */ }
+    };
+  }
   cur = themeIndex(q('t'));
   ADPG = +q('pg') || 0;
   if (typeof z33Sync === 'function') z33Sync();
   renderBig();
 
-  // Кот темы (тот же рисунок и настройки, что в превью): отправляем хабу, он сажает кота на кнопку «+».
-  function sendCat() {
-    try {
-      var th = getT(cur);
-      var c = th.cat || (th.L === 'adam' ? { p: 'tuxedo', b: '#a9a9a9', s: '#f2f2f2', t: '#f2f2f2', e: '#111', n: '#8a8a8a' } : null);
-      var svg = c ? String(petSvg(c) || '') : '';
-      if (/^myth/.test(th.k) && typeof mythPetSvg === 'function') svg = mythPetSvg();
-      parent.postMessage({ type: 'hub-cat', theme: T[cur].n, svg: svg }, '*');
-    } catch (e) { /* без кота */ }
-  }
-  function rerender() { if (typeof z33Sync === 'function') z33Sync(); renderBig(); sendCat(); }
+  function rerender() { if (typeof z33Sync === 'function') z33Sync(); renderBig(); }
   window.addEventListener('storage', function (e) { if (e.key === KEY && loadOvr()) rerender(); });
   window.addEventListener('message', function (e) {
     var d = e.data;
@@ -101,6 +106,5 @@
     // правки каталога сохраняются сразу; хаб подхватывает их через событие storage
     setInterval(saveOvr, 300);
   }
-  sendCat();
   try { parent.postMessage({ type: 'hub-engine-ready', mode: MODE }, '*'); } catch (e) { /* без родителя */ }
 })();

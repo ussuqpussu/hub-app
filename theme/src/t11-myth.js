@@ -181,7 +181,7 @@ function myRaven(){var G=["..................................", "...............
   h=h.replace(/<div class="ad-tabs">[\s\S]*?<\/div>(?=<pre)/,'<div class="ad-tabs">'+tabs+'</div><div class="myth-rage" title="Ярость растёт с каждой закрытой задачей и медленно остывает"><span>Ярость</span><u><i style="width:'+Math.round(MYD.rage)+'%"></i></u><b>'+Math.round(MYD.rage)+'%</b>'+chips+'</div>');
   if(P.video)h=h.replace(/<pre class="ad-asc"[\s\S]*?<\/pre>/,'<div class="myth-st" data-sc="'+P.video+'">'+myVid(P.video,1)+'</div>');
   else if(P.c)h=h.replace(/<pre class="ad-asc"[\s\S]*?<\/pre>/,'<div class="myth-st" data-sc="'+P.c+'">'+myVid(P.c,1)+'</div>');
-  h=h.replace(/<svg class="[^"]*ad-cat"[\s\S]*?<\/svg>/,myRaven());
+  h=h.replace(/<svg class="[^"]*ad-cat"[\s\S]*?<\/svg>/,"");
   var j=h.indexOf("</svg>",h.indexOf('class="ad-card"')),k2=h.indexOf('<div class="h9-side">');
   if(j>0&&k2>j)h=h.slice(0,j+6)+myRows(P)+'</div>'+h.slice(k2);
   h=h.replace(/<div class="h9-side">[\s\S]*?<\/div><\/div><\/div>$/,'<div class="h9-side"><blockquote class="myq"><p>«'+P.q[0]+'»</p><cite>— '+P.q[1]+'</cite></blockquote>'+(P.b?'<div class="ad-btn">'+P.b+'</div>':'')+'</div></div></div>');
@@ -474,7 +474,7 @@ MYD.lore=Math.min(40,MYD.lore+myFound().length);
   var rw=t.closest(".ad-row");if(rw&&/Предания/.test(rw.textContent)){var n=Math.min(MYCHR.length,Math.floor(MYD.lore/4));window._ci=((window._ci||0)%Math.max(1,n));myChrCard(window._ci);window._ci++;return}
  },true);
  MYSEC.konami="Код Спарты";
- function fly(){var L=document.querySelector("#big .lay.ad-myth");if(L&&!document.hidden&&!L.querySelector(".myth-fly")){var d=document.createElement("div");d.className="myth-fly";d.style.top=(10+Math.random()*22)+"%";d.title="Ворон Одина";
+ function fly(){var L=document.querySelector("#big .lay.ad-myth");if(L&&!/(^|[#&])stage/.test(location.hash||"")&&!document.hidden&&!L.querySelector(".myth-fly")){var d=document.createElement("div");d.className="myth-fly";d.style.top=(10+Math.random()*22)+"%";d.title="Ворон Одина";
   d.innerHTML='<svg viewBox="0 0 46 30"><path d="M23 14C14 6 6 4 1 8C8 8 14 12 18 18Z" fill="#14161c"/><path d="M23 14C32 6 40 4 45 8C38 8 32 12 28 18Z" fill="#14161c"/><path d="M16 17C16 11 30 11 30 17C30 23 26 26 23 26C20 26 16 23 16 17Z" fill="#1d2029"/><path d="M29 15L36 17L29 19Z" fill="#cdbf9a"/><circle cx="26.6" cy="15" r="1" fill="#ff9a3c"/></svg>';L.appendChild(d);setTimeout(function(){d.remove()},8200)}
   }
 
@@ -547,7 +547,7 @@ MYART[3]=["Мьёльнир","mjolnir","ᛗᛃᛟᛚᚾᛁᚱ","Молот То�
   var o={n:"Мифы",g:"Тёмные",L:"adam",k:"myth",b:"#050505",s:"#101010",t:"#d4d4d4",a:"#f2f2f2",ba:"#050505",fx:"adam8",d:"Тема по мотивам God of War, греческой и скандинавской мифологии: 7 страниц, у каждой своя анимация из символов. «Сегодня»: руки и искра. «Проекты»: гончарный круг, комок глины становится амфорой. «Задачи»: созвездие Стрелец собирается из звёзд. «Итоги недели»: монеты падают в ящик. «Заметки»: свиток. «Подписки»: песочные часы, которые переворачиваются. «Настройки»: шестерёнки. Кнопка «заставка» на странице показывает вход в хаб: звезда загорается, тускнеет, фон темнеет, открывается хаб."};
  for(var k in o)th[k]=o[k];
  th.L="adam";th.x10=0;delete th.ts;
- [["Бенто","mythbento"],["Макет","mythmock"]].forEach(function(v){var t2=T.filter(function(x){return x.n===v[0]})[0];if(!t2)return;var oc=Object.assign({},o,{n:v[0],k:v[1]});for(var k2 in oc)t2[k2]=oc[k2];t2.L="adam";t2.x10=0;delete t2.ts})
+ [["Бенто","mythbento"],["Монолит","mythmono"]].forEach(function(v){var t2=T.filter(function(x){return x.n===v[0]})[0];if(!t2)return;var oc=Object.assign({},o,{n:v[0],k:v[1]});for(var k2 in oc)t2[k2]=oc[k2];t2.L="adam";t2.x10=0;delete t2.ts})
  var HMODE=/(^|[#&])stage/.test(location.hash||"");
  /* страницы хаба (9) -> сцены Мифов (7) */
  var MAP=[0,"b",2,1,"b",5,4,"b",6,3];
@@ -565,13 +565,7 @@ MYART[3]=["Мьёльнир","mjolnir","ᛗᛃᛟᛚᚾᛁᚱ","Молот То�
  document.head.appendChild(hs);
 })();
 
-/* ---- Мифы в хабе: ворон вместо кота, палитры меняют цвета самого хаба, заставка ---- */
-function mythPetSvg() {
-  var p = MYPALS[MYPAL] || MYPALS.base;
-  return myRaven()
-    .replace('class="cl-cat ad-cat myth-raven"', 'class="pet"')
-    .replace(/var\(--rv1\)/g, p.r1).replace(/var\(--rv2\)/g, p.r2).replace(/var\(--a\)/g, p.a);
-}
+/* ---- Мифы в хабе: палитры меняют цвета самого хаба, заставка ---- */
 (function () {
   var H = location.hash || '', EDITOR = /(^|[#&])editor/.test(H), STAGE = /(^|[#&])stage/.test(H);
   if (!EDITOR && !STAGE) return;
@@ -589,7 +583,7 @@ function mythPetSvg() {
     rb();
     try {
       var th = getT(cur), inf = document.querySelector('#big .info');
-      if (EDITOR && th && /^(Мифы|Бенто|Макет)/.test(th.n) && inf && !inf.querySelector('.myth-pal2')) {
+      if (EDITOR && th && /^(Мифы|Бенто|Монолит)/.test(th.n) && inf && !inf.querySelector('.myth-pal2')) {
         var h = '<div class="myth-pal2" style="margin:0 0 1em;display:flex;flex-wrap:wrap;gap:.5em;align-items:center"><span class="myth-pal">';
         for (var k in MYPALS) h += '<button type="button" data-mypal="' + k + '"' + (k === MYPAL ? ' class="on"' : '') + '>' + MYPALS[k].n + '</button>';
         h += '</span><button class="myth-sp" type="button" data-mysp="1">▶ заставка</button></div>';

@@ -10,7 +10,7 @@ const lum = (h) => { const v = parseInt(h.slice(1), 16); const c = [(v >> 16) & 
 const cr = (a, b) => { const [x, y] = [lum(a), lum(b)].sort((p, q) => q - p); return (x + 0.05) / (y + 0.05); };
 
 assert.equal(readFileSync(new URL('../css/themes.css', import.meta.url), 'utf8'), css(), 'themes.css не совпадает с theme-data.js: запусти node scripts/gen-themes.mjs'); n += 1;
-assert.equal(THEME_DEFS.length, 14); n += 1;
+assert.equal(THEME_DEFS.length, 3); n += 1;
 const engine = readFileSync(new URL('../theme/engine.html', import.meta.url), 'utf8');
 for (const t of THEME_DEFS) {
   assert.ok(engine.includes(`hubAddTheme({"n":"${t.name}"`), `${t.id}: нет в движке`);
