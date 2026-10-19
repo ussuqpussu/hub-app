@@ -1,0 +1,380 @@
+/* ======================= Тема «Монолит»: копия «Бенто» точь-в-точь по четырём макетам =======================
+   Размеры сняты с макетов (макет 640×400 = экран 1280×800 при двукратном увеличении).
+   Подписи без засечек, крупные числа и даты с засечками (Times: у Georgia цифры «прыгают»). */
+
+html[data-theme="mythmono"] {
+  --mono-font: "Segoe UI Variable", "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+  --mono-serif: "Times New Roman", Times, "PT Serif", serif;
+  --mono-bg: #050506;
+  --mono-tile-a: rgb(255 255 255 / .075);
+  --mono-tile-b: rgb(255 255 255 / .022);
+  --mono-line: rgb(255 255 255 / .085);
+  --mono-hi: rgb(255 255 255 / .14);
+  --mono-dim: #8b8c94;
+  --mono-dim2: #6d6e75;
+  --mono-text: #e6e6ea;
+  --mono-light-a: #f5f5f6;
+  --mono-light-b: #cfd0d4;
+  --mono-r: 1.5rem;          /* скругление плиток */
+  --mono-r-s: .9rem;
+  --mono-gap: 1rem;
+  --mono-rail-w: 3.5rem;
+  --mono-rail-x: 2rem;
+  --mono-top: 3.5rem;        /* место под капсулу сверху */
+  --mono-side: 2rem;         /* правое поле */
+  --mono-bottom: 2rem;
+  --font-ui: var(--mono-font);
+  --font-head: var(--mono-serif);
+  --fw-head: 400;
+  --radius-m: var(--mono-r);
+  --radius-s: var(--mono-r-s);
+  --radius-pill: 99px;
+  --c-bg: var(--mono-bg);
+  --chart-1: #f2f2f2; --chart-2: #f2f2f2; --chart-3: #8d8f98; --chart-4: #686a72; --chart-5: #d7d8dd; --chart-6: #a0a2aa; --chart-7: #55575e;
+  --glass-blur: 14px; --glass-sat: 1.1; --glass-line: 9%;
+}
+html[data-theme="mythmono"] body { font-family: var(--mono-font); font-size: 14px; background: var(--mono-bg); }
+html[data-theme="mythmono"]:not([data-wp]) { --wp-grad:
+    radial-gradient(38rem 30rem at 18% 4%, rgb(255 255 255 / .09), transparent 70%),
+    radial-gradient(44rem 40rem at 104% 30%, rgb(160 165 185 / .10), transparent 70%),
+    radial-gradient(40rem 28rem at 40% 112%, rgb(255 255 255 / .05), transparent 70%); }
+
+/* ---------- плитка ---------- */
+html[data-theme="mythmono"] .card,
+html[data-theme="mythmono"] .qtile {
+  background: linear-gradient(158deg, var(--mono-tile-a), var(--mono-tile-b));
+  border: 1px solid var(--mono-line);
+  border-radius: var(--mono-r);
+  box-shadow: inset 0 1px 0 var(--mono-hi), 0 24px 40px -26px rgb(0 0 0 / .9);
+  -webkit-backdrop-filter: none; backdrop-filter: none;
+}
+html[data-theme="mythmono"] .mt { position: relative; display: flex; flex-direction: column; min-width: 0; min-height: 0; padding: 1.15rem 1.25rem; overflow: hidden; color: var(--mono-text); text-decoration: none; }
+html[data-theme="mythmono"] .mt-k { display: block; font-size: .62rem; letter-spacing: .17em; text-transform: uppercase; color: var(--mono-dim); line-height: 1.2; }
+html[data-theme="mythmono"] .mt-h { font-family: var(--mono-font); font-size: .9rem; font-weight: 500; color: var(--mono-text); margin: 0; }
+html[data-theme="mythmono"] .mt-head { display: flex; align-items: center; justify-content: space-between; gap: .6rem; }
+html[data-theme="mythmono"] .mt-num { font-family: var(--mono-serif); font-weight: 400; font-size: 2.35rem; line-height: 1; letter-spacing: -.01em; color: var(--mono-text); margin: 0; font-variant-numeric: lining-nums tabular-nums; }
+html[data-theme="mythmono"] .mt-num--s { font-size: 1.55rem; }
+html[data-theme="mythmono"] .mt-num--m { font-size: 1.9rem; }
+html[data-theme="mythmono"] .mt-num--xl { font-size: 3.4rem; }
+html[data-theme="mythmono"] .mt-num small { font-family: var(--mono-serif); font-size: 1.05rem; margin-left: .3rem; color: var(--mono-text); }
+html[data-theme="mythmono"] .mt-sub { display: block; font-size: .68rem; color: var(--mono-dim); line-height: 1.3; }
+html[data-theme="mythmono"] .mt-empty { color: var(--mono-dim); font-size: .8rem; margin: .8rem 0 0; }
+html[data-theme="mythmono"] .mt-chip { flex: none; font-size: .64rem; line-height: 1; padding: .3rem .6rem; border-radius: 99px; background: rgb(255 255 255 / .1); color: #c9cad0; white-space: nowrap; }
+html[data-theme="mythmono"] .mt-link { position: absolute; inset: 0; z-index: 1; border-radius: inherit; }
+html[data-theme="mythmono"] .mt-link:focus-visible { outline: 2px solid #fff; outline-offset: -3px; }
+html[data-theme="mythmono"] .mt-add, html[data-theme="mythmono"] .mt-pill { flex: none; min-height: 1.75rem; padding: 0 .85rem; border-radius: 99px; background: #f2f2f3; color: #0b0b0c; font: 600 .7rem/1 var(--mono-font); border: 0; cursor: pointer; }
+html[data-theme="mythmono"] .mt-pill { background: rgb(255 255 255 / .9); }
+html[data-theme="mythmono"] .mt-add:active, html[data-theme="mythmono"] .mt-pill:active, html[data-theme="mythmono"] .mt-go:active { transform: scale(.96); }
+
+/* светлая плитка (фокус, события проектов) */
+html[data-theme="mythmono"] .tile--focus { background: linear-gradient(160deg, var(--mono-light-a), var(--mono-light-b)); border-color: transparent; box-shadow: inset 0 1px 0 #fff, 0 24px 40px -24px rgb(0 0 0 / .9); color: #0a0a0b; }
+html[data-theme="mythmono"] .tile--focus .mt-k, html[data-theme="mythmono"] .tile--focus .mt-sub { color: #5d5e64; }
+html[data-theme="mythmono"] .tile--focus .mt-num { color: #070708; }
+html[data-theme="mythmono"] .mt-go { align-self: flex-start; margin-top: auto; min-height: 1.85rem; padding: 0 1rem; border-radius: 99px; border: 0; background: #08080a; color: #fff; font: 600 .7rem/1 var(--mono-font); cursor: pointer; }
+html[data-theme="mythmono"] .mt-go:disabled { opacity: .7; cursor: default; }
+html[data-theme="mythmono"] .mt-focus__time { margin-top: 1.1rem; }
+
+/* кольца: без подписей виджета, цифры свои */
+html[data-theme="mythmono"] .mt-rings { flex: 1 1 auto; min-height: 0; display: grid; place-items: center; }
+html[data-theme="mythmono"] .mt-rings .mk-wrap { margin: 0; display: block; height: 100%; }
+html[data-theme="mythmono"] .mt-rings .mk-ringstat { display: none; }
+html[data-theme="mythmono"] .mt-rings .mk-ring { width: auto; height: 100%; max-height: 8.6rem; aspect-ratio: 1; display: block; }
+html[data-theme="mythmono"] .mk-ring circle { stroke-width: 7; }
+html[data-theme="mythmono"] .mk-ring .rb { stroke: rgb(255 255 255 / .1); }
+html[data-theme="mythmono"] .mk-ring .rf:nth-of-type(2) { stroke-width: 9; }
+html[data-theme="mythmono"] .mt-pair { display: flex; justify-content: space-between; align-items: flex-end; gap: .6rem; }
+html[data-theme="mythmono"] .mt-right { text-align: right; }
+html[data-theme="mythmono"] .mt-pair .mt-sub { margin-top: .3rem; }
+
+/* задачи */
+html[data-theme="mythmono"] .mt-tasks { list-style: none; margin: .9rem 0 0; padding: 0; display: grid; gap: .1rem; min-height: 0; overflow: hidden; }
+html[data-theme="mythmono"] .mt-task { display: flex; align-items: center; gap: .7rem; min-height: 2.2rem; font-size: .8rem; color: var(--mono-text); }
+html[data-theme="mythmono"] .mt-task__t { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+html[data-theme="mythmono"] .mt-task.is-done .mt-task__t { color: var(--mono-dim); }
+html[data-theme="mythmono"] .mt-check { flex: none; width: 1.05rem; height: 1.05rem; padding: 0; border-radius: 50%; border: 1.5px solid rgb(255 255 255 / .45); background: transparent; cursor: pointer; position: relative; }
+html[data-theme="mythmono"] .mt-check::before { content: ""; position: absolute; inset: -.7rem; }
+html[data-theme="mythmono"] .mt-check:hover { border-color: #fff; }
+html[data-theme="mythmono"] .mt-task.is-done .mt-check { background: #f2f2f3; border-color: #f2f2f3; }
+
+/* расписание: точки на линии */
+html[data-theme="mythmono"] .mt-line { list-style: none; margin: 1rem 0 0; padding: 0 0 0 1.05rem; display: grid; gap: .95rem; position: relative; }
+html[data-theme="mythmono"] .mt-line::before { content: ""; position: absolute; left: .26rem; top: .45rem; bottom: .9rem; width: 1px; background: rgb(255 255 255 / .1); }
+html[data-theme="mythmono"] .mt-pair-i { position: relative; }
+html[data-theme="mythmono"] .mt-pair-i::before { content: ""; position: absolute; left: -1.05rem; top: .3rem; width: .5rem; height: .5rem; border-radius: 50%; background: #f2f2f3; box-shadow: 0 0 0 3px rgb(5 5 6 / .9); }
+html[data-theme="mythmono"] .mt-pair-i__t { margin: 0; font-size: .78rem; color: var(--mono-text); }
+html[data-theme="mythmono"] .mt-pair-i__t b { font-weight: 700; }
+html[data-theme="mythmono"] .mt-pair-i.is-past::before { background: #55565c; }
+html[data-theme="mythmono"] .mt-pair-i.is-past .mt-pair-i__t { color: var(--mono-dim); }
+html[data-theme="mythmono"] .mt-pair-i .mt-sub { margin-top: .2rem; }
+
+/* неделя: столбики, сегодняшний светлый */
+html[data-theme="mythmono"] .mt-week .mt-num { margin-top: .55rem; }
+html[data-theme="mythmono"] .mt-week [data-draw] { margin-top: auto; }
+html[data-theme="mythmono"] .mt .mk-bars { gap: .55rem; height: 4.6rem; margin-top: .6rem; }
+html[data-theme="mythmono"] .mt .mk-bars > i { border-radius: .35rem; background: rgb(255 255 255 / .16); min-height: 22%; }
+html[data-theme="mythmono"] .mt .mk-bars > i[data-zero] { background: rgb(255 255 255 / .1); }
+html[data-theme="mythmono"] .mt .mk-bars > i.is-today { background: linear-gradient(#ffffff, #d9dade); box-shadow: 0 0 0 1px rgb(255 255 255 / .5); }
+html[data-theme="mythmono"] .mt .mk-axis { font-size: .58rem; color: var(--mono-dim2); margin-top: .35rem; }
+
+/* ---------- «Сегодня»: сетка (макет 1) ---------- */
+html[data-theme="mythmono"] .main[data-page="today"] { position: relative; }
+html[data-theme="mythmono"][data-hero-pos] .main, html[data-theme="mythmono"][data-hero-pos] .main[data-page] { display: block; }
+html[data-theme="mythmono"] .monov { display: block; }
+html[data-theme="mythmono"] .mt-grid--home {
+  display: grid; gap: var(--mono-gap);
+  grid-template-columns: 330fr 128fr 96fr;
+  grid-template-rows: 112fr 52fr 174fr;
+  grid-template-areas: "hero closed focus" "hero closed subs" "row2 row2 row2";
+  height: calc(100dvh - var(--mono-top) - var(--mono-bottom));
+  min-height: 34rem;
+}
+html[data-theme="mythmono"] .mt-grid--home > .mt-hero { grid-area: hero; }
+html[data-theme="mythmono"] .mt-grid--home > .mt-closed { grid-area: closed; }
+html[data-theme="mythmono"] .mt-grid--home > .mt-focus { grid-area: focus; }
+html[data-theme="mythmono"] .mt-grid--home > .mt-subs { grid-area: subs; }
+/* вторая строка своими долями (на макете ширины другие, чем в первой) */
+html[data-theme="mythmono"] .mt-grid--home > .mt-todo { grid-row: 3; grid-column: 1 / -1; width: calc((100% - 2 * var(--mono-gap)) * 232 / 554); }
+html[data-theme="mythmono"] .mt-grid--home > .mt-sched { grid-row: 3; grid-column: 1 / -1; width: calc((100% - 2 * var(--mono-gap)) * 136 / 554); margin-left: calc((100% - 2 * var(--mono-gap)) * 232 / 554 + var(--mono-gap)); }
+html[data-theme="mythmono"] .mt-grid--home > .mt-week { grid-row: 3; grid-column: 1 / -1; width: calc((100% - 2 * var(--mono-gap)) * 186 / 554); margin-left: calc((100% - 2 * var(--mono-gap)) * 368 / 554 + 2 * var(--mono-gap)); }
+html[data-theme="mythmono"] .mt-closed .mt-rings { margin: .6rem 0; }
+
+/* карточка с руками: прозрачная, сцена подложена под неё из .main */
+html[data-theme="mythmono"] .mt-hero { background: transparent; justify-content: flex-end; padding: 1.4rem 1.6rem; }
+html[data-theme="mythmono"] .mt-hero__txt { position: relative; z-index: 2; }
+html[data-theme="mythmono"] .mt-date { font-family: var(--mono-serif); font-weight: 400; font-size: 2.3rem; line-height: 1.1; margin: .55rem 0 0; color: #f1f1f3; letter-spacing: -.01em; }
+html[data-theme="mythmono"] .mt-quote { margin: 0; font-family: var(--mono-serif); font-style: italic; font-size: .78rem; color: #d6d6da; }
+html[data-theme="mythmono"] .mt-hero__q { position: absolute; z-index: 2; right: 1.6rem; bottom: 1.5rem; max-width: 45%; text-align: right; }
+html[data-theme="mythmono"] .main[data-page="today"] > .hero {
+  position: absolute !important; z-index: 0; margin: 0 !important;
+  left: var(--hx, 0); top: var(--hy, 0); width: var(--hw, 0) !important; height: var(--hh, 0) !important;
+  border-radius: var(--mono-r); overflow: hidden; pointer-events: none;
+  background: radial-gradient(60% 70% at 52% 38%, rgb(255 255 255 / .06), transparent 70%), #08080a;
+  border: 0; box-shadow: none; display: block; grid-column: auto; grid-row: auto;
+}
+html[data-theme="mythmono"] .main[data-page="today"] > .hero .hero__frame { position: absolute !important; left: 0; top: 0; width: 100% !important; height: 74% !important; aspect-ratio: auto !important; flex: none; }
+html[data-theme="mythmono"] .main > .hero .hero__quote { display: none !important; }
+html[data-theme="mythmono"] .main[data-page="today"] > .view { position: relative; z-index: 1; }
+html[data-theme="mythmono"] .main[data-page="today"]:not(:has(.mt-hero)) > .hero { display: none; }
+
+/* ---------- «Сегодня»: руки на весь экран (макет 3) ---------- */
+@media (min-width: 48rem) {
+  html[data-theme="mythmono"] .main[data-page="today"]:has(.monov[data-mode="stage"]) > .hero {
+    display: block; position: fixed !important; inset: 0 !important; width: 100vw !important; height: 100dvh !important; border-radius: 0; z-index: 0;
+    background: transparent; opacity: .45;
+  }
+  html[data-theme="mythmono"] .main[data-page="today"]:has(.monov[data-mode="stage"]) > .hero .hero__frame { top: 8%; height: 84% !important; }
+  html[data-theme="mythmono"] .monov[data-mode="stage"] { display: flex; flex-direction: column; justify-content: space-between; min-height: calc(100dvh - var(--mono-top) - var(--mono-bottom)); }
+  html[data-theme="mythmono"] .mt-stagehead { text-align: center; padding-top: 1.3rem; }
+  html[data-theme="mythmono"] .mt-date--xl { font-size: 4.2rem; margin-top: 1rem; }
+  html[data-theme="mythmono"] .mt-stagehead__q { margin-top: 1.1rem; font-size: .82rem; }
+  html[data-theme="mythmono"] .mt-grid--stage { display: grid; gap: var(--mono-gap); grid-template-columns: 324fr 268fr 264fr 268fr; height: 16.5rem; }
+  html[data-theme="mythmono"] .mt-grid--stage .mt { background: linear-gradient(158deg, rgb(22 22 24 / .94), rgb(11 11 13 / .96)); }
+  html[data-theme="mythmono"] .mt-grid--stage .tile--focus { background: linear-gradient(160deg, var(--mono-light-a), var(--mono-light-b)); }
+  html[data-theme="mythmono"] .mt-closed--stage, html[data-theme="mythmono"] .mt-week--stage { align-items: stretch; }
+  html[data-theme="mythmono"] .mt-closed--stage .mt-rings { margin: .8rem 0 .5rem; }
+  html[data-theme="mythmono"] .mt-closed--stage .mt-num--m { text-align: center; }
+  html[data-theme="mythmono"] .mt-week--stage [data-draw] { margin-top: auto; }
+  html[data-theme="mythmono"] .mt-week--stage .mk-axis { display: none; }
+  html[data-theme="mythmono"] .mt-week--stage .mt-num--m { margin-top: .7rem; }
+  /* рейки нет: она выезжает, когда мышь у левого края */
+  html[data-theme="mythmono"][data-mono-home="stage"] .app:has(.main[data-page="today"]) .nav { transform: translateX(calc(-100% - 2.5rem)); transition: transform .45s var(--ease-out, ease); }
+  html[data-theme="mythmono"][data-mono-home="stage"] .app:has(.main[data-page="today"]) .nav:hover,
+  html[data-theme="mythmono"][data-mono-home="stage"] .app:has(.main[data-page="today"]) .nav:focus-within,
+  html[data-theme="mythmono"][data-mono-home="stage"] .app:has(.main[data-page="today"]) .mono-edge:hover + .nav { transform: none; }
+  html[data-theme="mythmono"][data-mono-home="stage"] .app:has(.main[data-page="today"]) { grid-template-columns: 0 1fr; }
+  html[data-theme="mythmono"][data-mono-home="stage"] .main[data-page="today"] { padding-left: 3.5rem; padding-right: 3.5rem; }
+}
+
+/* ---------- рейка (ПК) ---------- */
+@media (min-width: 48rem) {
+  html[data-theme="mythmono"] { --side-w: 6.75rem; }
+  html[data-theme="mythmono"] .app { grid-template-columns: var(--side-w) 1fr; }
+  html[data-theme="mythmono"] .nav {
+    position: fixed; z-index: 20; left: var(--mono-rail-x); top: 1.75rem; bottom: 1.75rem; height: auto; width: var(--mono-rail-w);
+    margin: 0; padding: .9rem 0; gap: .55rem; align-items: center; overflow: visible;
+    border: 1px solid var(--mono-line); border-radius: 1.75rem;
+    background: linear-gradient(170deg, rgb(255 255 255 / .085), rgb(255 255 255 / .025));
+    box-shadow: inset 0 1px 0 var(--mono-hi), 0 24px 40px -24px #000;
+    -webkit-backdrop-filter: blur(var(--glass-blur)); backdrop-filter: blur(var(--glass-blur));
+  }
+  html[data-theme="mythmono"] .nav__logo { display: grid; place-items: center; width: 2.4rem; height: 2.4rem; margin-bottom: .5rem; padding: 0; border: 0; background: none; color: #f2f2f3; font: 400 1.35rem/1 var(--mono-serif); cursor: pointer; border-radius: 50%; }
+  html[data-theme="mythmono"] .nav__logo:hover { background: rgb(255 255 255 / .08); }
+  html[data-theme="mythmono"] .nav__item { width: 2.3rem; height: 2.3rem; min-height: 2.3rem; padding: 0; justify-content: center; border-radius: 50%; color: #a9aab1; flex: none; }
+  html[data-theme="mythmono"] .nav__item svg { width: 1.05rem; height: 1.05rem; }
+  html[data-theme="mythmono"] .nav__item:hover { background: rgb(255 255 255 / .08); color: #fff; }
+  html[data-theme="mythmono"] .nav__item[aria-current="page"] { background: transparent; color: #08080a; }
+  html[data-theme="mythmono"] .nav__ind { background: #f4f4f5; border-radius: 50%; }
+  html[data-theme="mythmono"] .nav__label, html[data-theme="mythmono"] .sync-chip--side, html[data-theme="mythmono"] .nav__item--phone { display: none !important; }
+  /* порядок и состав, как на макете: Сегодня, Расписание, Задачи, Проекты, Итоги, Заметки */
+  html[data-theme="mythmono"] .nav > [data-route="today"] { order: 1; }
+  html[data-theme="mythmono"] .nav > [data-route="schedule"] { order: 2; }
+  html[data-theme="mythmono"] .nav > [data-route="tasks"] { order: 3; }
+  html[data-theme="mythmono"] .nav > [data-route="projects"] { order: 4; }
+  html[data-theme="mythmono"] .nav > [data-route="weekly"] { order: 5; }
+  html[data-theme="mythmono"] .nav > [data-route="notes"] { order: 6; }
+  html[data-theme="mythmono"] .nav > .nav__logo { order: 0; }
+  html[data-theme="mythmono"] .nav > .nav__sep { order: 7; display: block; flex: 1; }
+  html[data-theme="mythmono"] .nav > [data-route="subscriptions"], html[data-theme="mythmono"] .nav > [data-route="knowledge"],
+  html[data-theme="mythmono"] .nav > .themebtn, html[data-theme="mythmono"] .nav > #search-side, html[data-theme="mythmono"] .nav > [data-route="settings"] { order: 8; display: none; }
+  /* навигация «значки»: остальное маленькими значками внизу */
+  html[data-theme="mythmono"][data-mono-nav="icons"] .nav > [data-route="subscriptions"], html[data-theme="mythmono"][data-mono-nav="icons"] .nav > [data-route="knowledge"],
+  html[data-theme="mythmono"][data-mono-nav="icons"] .nav > .themebtn, html[data-theme="mythmono"][data-mono-nav="icons"] .nav > #search-side, html[data-theme="mythmono"][data-mono-nav="icons"] .nav > [data-route="settings"] { display: flex; width: 1.9rem; height: 1.9rem; min-height: 1.9rem; color: #7d7e85; }
+  html[data-theme="mythmono"][data-mono-nav="icons"] .nav > :is([data-route="subscriptions"], [data-route="knowledge"], .themebtn, #search-side, [data-route="settings"]) svg { width: .9rem; height: .9rem; }
+  html[data-theme="mythmono"] .main { grid-column: 2; grid-row: 1; max-width: none; margin: 0; padding: var(--mono-top) var(--mono-side) var(--mono-bottom) 0; }
+  html[data-theme="mythmono"] .fab { display: none; }
+}
+.nav__logo { display: none; }
+.mono-edge { display: none; }
+@media (min-width: 48rem) {
+  html[data-theme="mythmono"][data-mono-home="stage"] .app:has(.main[data-page="today"]) .mono-edge { display: block; position: fixed; z-index: 19; left: 0; top: 0; bottom: 0; width: 1.25rem; }
+}
+
+/* меню по «Х» */
+.mono-menu { position: fixed; z-index: 70; min-width: 12.5rem; padding: .45rem; border-radius: 1.1rem; background: rgb(18 18 20 / .96); border: 1px solid rgb(255 255 255 / .1); box-shadow: 0 24px 50px -12px rgb(0 0 0 / .8), inset 0 1px 0 rgb(255 255 255 / .1); display: grid; gap: .1rem; font-family: "Segoe UI Variable", "Segoe UI", system-ui, sans-serif; }
+.mono-menu[hidden] { display: none; }
+.mono-menu__i { display: flex; align-items: center; gap: .7rem; min-height: 2.5rem; padding: 0 .8rem; border: 0; border-radius: .7rem; background: none; color: #e6e6ea; font: 400 .85rem/1 inherit; text-align: left; cursor: pointer; }
+.mono-menu__i:hover, .mono-menu__i:focus-visible { background: rgb(255 255 255 / .08); outline: 0; }
+.mono-menu__i svg { width: 1rem; height: 1rem; color: #a9aab1; }
+
+/* ---------- шапка страниц без сцены (макет 2) ---------- */
+.mono-tools { display: none; }
+html[data-theme="mythmono"] .app { position: relative; }
+html[data-theme="mythmono"] .mono-tools { display: flex; position: absolute; z-index: 5; top: 1.9rem; right: var(--mono-side); gap: .7rem; align-items: center; }
+html[data-theme="mythmono"] .app:has(.main[data-page="today"]) .mono-tools { display: none; }
+html[data-theme="mythmono"] .mono-search { display: flex; align-items: center; gap: .5rem; height: 2.1rem; width: 15.5rem; padding: 0 .9rem; border-radius: 99px; border: 1px solid var(--mono-line); background: rgb(255 255 255 / .05); color: var(--mono-dim); font: 400 .74rem/1 var(--mono-font); cursor: pointer; }
+html[data-theme="mythmono"] .mono-search svg { width: .85rem; height: .85rem; }
+html[data-theme="mythmono"] .mono-search:hover { background: rgb(255 255 255 / .09); color: #fff; }
+html[data-theme="mythmono"] .mono-me { width: 2.1rem; height: 2.1rem; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #ffffff, #c9cacf 60%, #8e8f95); box-shadow: inset 0 0 0 1px rgb(255 255 255 / .6); }
+html[data-theme="mythmono"] .view__head { display: flex; flex-direction: column-reverse; align-items: flex-start; gap: .3rem; margin-bottom: .4rem; }
+html[data-theme="mythmono"] .view__head h1 { font-family: var(--mono-serif); font-weight: 400; font-size: 2.15rem; line-height: 1.1; letter-spacing: -.01em; color: #f1f1f3; margin: 0; }
+html[data-theme="mythmono"] .view__head > .muted { font-size: .62rem; letter-spacing: .17em; text-transform: uppercase; color: var(--mono-dim); }
+html[data-theme="mythmono"] .main:not([data-page="today"]) > .view { padding-top: 0; }
+html[data-theme="mythmono"] .main:not([data-page="today"]) { padding-top: 1.6rem; }
+html[data-theme="mythmono"] .btn { border-radius: 99px; }
+html[data-theme="mythmono"] .btn--primary { background: #f2f2f3; color: #08080a; border-color: transparent; font-weight: 600; }
+html[data-theme="mythmono"] .island { box-shadow: 0 12px 30px rgb(0 0 0 / .7), inset 0 0 0 1px rgb(255 255 255 / .1); }
+html[data-theme="mythmono"] .sched-day--today { box-shadow: 0 0 0 1px rgb(255 255 255 / .35); }
+
+/* ---------- «Итоги недели» (макет 2) ---------- */
+html[data-theme="mythmono"] .monov--weekly { display: flex; flex-direction: column; gap: 1.3rem; }
+html[data-theme="mythmono"] .mt-grid--weekly {
+  display: grid; gap: var(--mono-gap); height: calc(100dvh - 1.6rem - var(--mono-bottom) - 6.2rem); min-height: 30rem;
+  grid-template-columns: 185fr 136fr 70fr 89fr;
+  grid-template-rows: minmax(0, 124fr) minmax(0, 62fr) minmax(0, 132fr);
+  grid-template-areas: "cum spend ev ev" "cum spend rup quote" "goals board board board";
+}
+html[data-theme="mythmono"] .mw-cum { grid-area: cum; }
+html[data-theme="mythmono"] .mw-spend { grid-area: spend; }
+html[data-theme="mythmono"] .mw-events { grid-area: ev; }
+html[data-theme="mythmono"] .mw-small:not(.mw-quote) { grid-area: rup; }
+html[data-theme="mythmono"] .mw-quote { grid-area: quote; }
+html[data-theme="mythmono"] .mw-goals-t { grid-area: goals; }
+html[data-theme="mythmono"] .mw-board { grid-area: board; }
+html[data-theme="mythmono"] .mw-cum .mt-num--xl { margin-top: .9rem; display: flex; align-items: baseline; }
+html[data-theme="mythmono"] .mw-cum__line { margin: auto -1.25rem -1.15rem; }
+html[data-theme="mythmono"] .mw-cum__line .mk-line { height: 7.5rem; margin: 0; }
+html[data-theme="mythmono"] .mw-cum__line .mk-line .ln { stroke: #f2f2f3; stroke-width: 3; }
+html[data-theme="mythmono"] .mw-cum__line .mk-line .gs { stop-color: #ffffff; }
+html[data-theme="mythmono"] .mw-donut { flex: 1; min-height: 0; display: grid; place-items: center; margin: .5rem 0; }
+html[data-theme="mythmono"] .mw-donut .mk-donut { width: auto; height: 100%; max-height: 8rem; aspect-ratio: 1; }
+html[data-theme="mythmono"] .mw-donut .mk-donut circle { stroke-width: 22; }
+html[data-theme="mythmono"] .mw-donut .mk-donut .db { stroke: rgb(255 255 255 / .08); }
+html[data-theme="mythmono"] .mw-donut .mk-donut__c { display: none; }
+html[data-theme="mythmono"] .mw-legend { list-style: none; margin: 0; padding: 0; display: grid; gap: .55rem; }
+html[data-theme="mythmono"] .mw-legend li { display: flex; align-items: center; gap: .5rem; font-size: .72rem; color: var(--mono-text); }
+html[data-theme="mythmono"] .mw-legend li span:first-of-type { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+html[data-theme="mythmono"] .mw-legend i { width: .45rem; height: .45rem; border-radius: 50%; flex: none; }
+html[data-theme="mythmono"] .mw-events .mt-num--xl { margin-top: .7rem; }
+html[data-theme="mythmono"] .mw-events .mt-sub { margin-top: .5rem; font-size: .7rem; }
+html[data-theme="mythmono"] .mw-small .mt-num--m { margin-top: .6rem; }
+html[data-theme="mythmono"] .mw-quote__t { margin: .45rem 0 .25rem; font-family: var(--mono-serif); font-style: italic; font-size: .76rem; line-height: 1.3; color: var(--mono-text); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+html[data-theme="mythmono"] .mt-qbtn { width: 1.5rem; height: 1.5rem; padding: 0; border-radius: 50%; border: 1px solid var(--mono-line); background: rgb(255 255 255 / .06); color: var(--mono-dim); font-size: .75rem; cursor: pointer; transition: transform .35s var(--ease-out, ease); }
+html[data-theme="mythmono"] .mt-qbtn:hover { color: #fff; transform: rotate(180deg); }
+html[data-theme="mythmono"] .mw-goals { list-style: none; margin: .9rem 0 0; padding: 0; display: grid; gap: .85rem; }
+html[data-theme="mythmono"] .mw-goal__row { display: flex; justify-content: space-between; gap: .5rem; font-size: .74rem; color: var(--mono-text); }
+html[data-theme="mythmono"] .mw-goal__row span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+html[data-theme="mythmono"] .mw-bar { height: .3rem; margin-top: .4rem; border-radius: 99px; background: rgb(255 255 255 / .1); overflow: hidden; }
+html[data-theme="mythmono"] .mw-bar i { display: block; height: 100%; width: var(--w); border-radius: inherit; background: #f2f2f3; transform-origin: left; }
+html[data-theme="mythmono"] .mw-board > .stack { margin-top: .8rem; min-height: 0; }
+html[data-theme="mythmono"] .mw-board .sched-note { display: none; }
+html[data-theme="mythmono"] .mw-board .kan { gap: .7rem; }
+html[data-theme="mythmono"] .mw-board .kan__col { background: rgb(255 255 255 / .035); border: 1px solid rgb(255 255 255 / .06); border-radius: 1rem; padding: .55rem; min-height: 0; }
+html[data-theme="mythmono"] .mw-board .kan__col h3 { font-size: .58rem; letter-spacing: .17em; text-transform: uppercase; color: var(--mono-dim); font-weight: 400; margin: .25rem .3rem .55rem; }
+html[data-theme="mythmono"] .mw-board .kan__col h3 em { display: none; }
+html[data-theme="mythmono"] .mw-board .kan__cards { gap: .45rem; }
+html[data-theme="mythmono"] .mw-board .kc { min-height: 0; padding: .6rem .75rem; border-radius: .75rem; background: rgb(255 255 255 / .07); border: 1px solid rgb(255 255 255 / .06); font-size: .74rem; }
+html[data-theme="mythmono"] .mw-board .kc b { font-weight: 400; color: var(--mono-text); text-decoration: none; }
+html[data-theme="mythmono"] .mw-board .kc__meta { display: none; }
+html[data-theme="mythmono"] .mw-board .kan__empty { font-size: .68rem; padding: .4rem; color: var(--mono-dim2); }
+html[data-theme="mythmono"] .mw-board .kan__col[data-col="done"] .kc:nth-child(n+5) { display: none; }
+
+/* ---------- телефон (макет 4) ---------- */
+@media (max-width: 47.99rem) {
+  html[data-theme="mythmono"] { --nav-h: 3.75rem; --mono-gap: .8rem; --mono-r: 1.6rem; }
+  html[data-theme="mythmono"] .topbar { display: none; }
+  html[data-theme="mythmono"] .app { grid-template-rows: 1fr; }
+  html[data-theme="mythmono"] .main { padding: calc(3.7rem + env(safe-area-inset-top)) 1.1rem calc(var(--nav-h) + 2.2rem + env(safe-area-inset-bottom)); }
+  html[data-theme="mythmono"] .fab { display: none; }
+  html[data-theme="mythmono"] .mt-grid--phone { display: grid; gap: var(--mono-gap); grid-template-columns: 1fr 1fr; grid-template-rows: 9rem 6.9rem 7rem minmax(17rem, 1fr); min-height: calc(100dvh - 3.7rem - var(--nav-h) - 2.2rem - env(safe-area-inset-top) - env(safe-area-inset-bottom)); }
+  html[data-theme="mythmono"] .mt-grid--phone > .mt-hero, html[data-theme="mythmono"] .mt-grid--phone > .mt-closed, html[data-theme="mythmono"] .mt-grid--phone > .mt-todo { grid-column: 1 / -1; }
+  html[data-theme="mythmono"] .mt-grid--phone .mt-hero { padding: 1rem 1.1rem; }
+  html[data-theme="mythmono"] .mt-grid--phone .mt-date { font-size: 1.85rem; margin-top: .35rem; }
+  html[data-theme="mythmono"] .mt-grid--phone .mt-hero__q { display: none; }
+  html[data-theme="mythmono"] .main[data-page="today"] > .hero .hero__frame { height: 62% !important; }
+  html[data-theme="mythmono"] .mt-grid--phone .mt-num { font-size: 2.35rem; margin-top: .9rem; }
+  html[data-theme="mythmono"] .mt-grid--phone .mt { padding: 1rem 1.15rem; }
+  html[data-theme="mythmono"] .mt-grid--phone .mt-k { font-size: .66rem; }
+  html[data-theme="mythmono"] .mt-focus { cursor: pointer; }
+  html[data-theme="mythmono"] .mt-closed--phone { flex-direction: row; align-items: center; gap: 1.3rem; }
+  html[data-theme="mythmono"] .mt-closed--phone .mt-rings { flex: none; height: 100%; }
+  html[data-theme="mythmono"] .mt-closed--phone .mt-num { margin-top: .5rem; }
+  html[data-theme="mythmono"] .mt-grid--phone .mt-todo .mt-h { font-family: var(--mono-serif); font-size: 1.05rem; font-weight: 400; }
+  html[data-theme="mythmono"] .mt-grid--phone .mt-task { min-height: 2.75rem; font-size: .92rem; border-bottom: 1px solid rgb(255 255 255 / .07); }
+  html[data-theme="mythmono"] .mt-grid--phone .mt-task:last-child { border-bottom: 0; }
+  html[data-theme="mythmono"] .mt-grid--phone .mt-check { width: 1.35rem; height: 1.35rem; }
+  html[data-theme="mythmono"] .mt-grid--phone .mt-chip { font-size: .72rem; padding: .32rem .65rem; }
+  /* нижняя капсула */
+  html[data-theme="mythmono"] .nav {
+    left: 1.1rem; right: 1.1rem; bottom: calc(1rem + env(safe-area-inset-bottom)); height: var(--nav-h); padding: 0 .55rem;
+    border: 1px solid var(--mono-line); border-radius: 99px; align-items: center; gap: 0; overflow-x: auto; scrollbar-width: none;
+    background: linear-gradient(170deg, rgb(28 28 31 / .92), rgb(14 14 16 / .94));
+    box-shadow: inset 0 1px 0 var(--mono-hi), 0 18px 34px -16px #000;
+    scroll-snap-type: x mandatory;
+  }
+  html[data-theme="mythmono"] .nav::-webkit-scrollbar { display: none; }
+  html[data-theme="mythmono"] .nav__item { flex: 0 0 calc((100vw - 2.2rem - 1.1rem) / 5); height: 2.75rem; color: #a9aab1; scroll-snap-align: start; }
+  html[data-theme="mythmono"] .nav__item svg { width: 1.25rem; height: 1.25rem; }
+  html[data-theme="mythmono"] .nav__label { display: none; }
+  html[data-theme="mythmono"] .nav__item[aria-current="page"] { color: #08080a; }
+  html[data-theme="mythmono"] .nav__item[aria-current="page"]::before { content: ""; position: absolute; width: 2.75rem; height: 2.75rem; border-radius: 50%; background: #f4f4f5; z-index: -1; }
+  html[data-theme="mythmono"] .nav__item { position: relative; isolation: isolate; }
+  html[data-theme="mythmono"] .nav__ind { display: none; }
+  html[data-theme="mythmono"] .nav > [data-route="today"] { order: 1; }
+  html[data-theme="mythmono"] .nav > [data-route="schedule"] { order: 2; }
+  html[data-theme="mythmono"] .nav > [data-route="tasks"] { order: 3; }
+  html[data-theme="mythmono"] .nav > [data-route="projects"] { order: 4; }
+  html[data-theme="mythmono"] .nav > [data-route="weekly"] { order: 5; display: grid; }
+  html[data-theme="mythmono"] .nav > [data-route="more"] { order: 6; }
+  html[data-theme="mythmono"] .nav > .sync-chip, html[data-theme="mythmono"] .nav > .nav__sep { display: none !important; }
+  /* «меню»: капсула листается, за пятью значками — остальные разделы; «Ещё» не нужна */
+  html[data-theme="mythmono"]:not([data-mono-nav="icons"]) .nav > [data-route="more"] { display: none; }
+  html[data-theme="mythmono"]:not([data-mono-nav="icons"]) .nav > :is([data-route="notes"], [data-route="subscriptions"], [data-route="knowledge"], #search-side, [data-route="settings"]) { display: grid; order: 7; }
+  html[data-theme="mythmono"][data-mono-nav="icons"] .nav > :is([data-route="notes"], [data-route="subscriptions"], [data-route="knowledge"], #search-side, [data-route="settings"]) { display: none; }
+  html[data-theme="mythmono"][data-mono-nav="icons"] .nav__item { flex-basis: calc((100vw - 2.2rem - 1.1rem) / 6); }
+  html[data-theme="mythmono"] .nav > .themebtn { display: none; }
+  html[data-theme="mythmono"] .mono-tools { top: calc(.9rem + env(safe-area-inset-top)); right: 1.1rem; }
+  html[data-theme="mythmono"] .mono-search { width: 2.4rem; height: 2.4rem; padding: 0; justify-content: center; }
+  html[data-theme="mythmono"] .mono-search__t { display: none; }
+  html[data-theme="mythmono"] .mono-me { width: 2.4rem; height: 2.4rem; }
+  html[data-theme="mythmono"] .main:not([data-page="today"]) { padding-top: calc(4rem + env(safe-area-inset-top)); }
+  html[data-theme="mythmono"] .view__head h1 { font-size: 1.8rem; }
+  html[data-theme="mythmono"] .monov--weekly { min-height: 0; }
+  html[data-theme="mythmono"] .mt-grid--weekly { height: auto; grid-template-columns: 1fr 1fr; grid-template-rows: auto; grid-template-areas: "cum cum" "spend spend" "ev ev" "rup quote" "goals goals" "board board"; min-height: 0; }
+  html[data-theme="mythmono"] .mw-cum { min-height: 15rem; }
+  html[data-theme="mythmono"] .mw-spend { min-height: 15rem; }
+  html[data-theme="mythmono"] .mw-board .kan { grid-template-columns: 1fr; }
+}
+
+/* экономный режим: плитки сплошные */
+html[data-theme="mythmono"][data-lite] .card, html[data-theme="mythmono"][data-lite] .nav { background: #111113 !important; -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
+html[data-theme="mythmono"][data-lite] .tile--focus { background: #e8e8ea !important; }

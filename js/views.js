@@ -1,4 +1,6 @@
 import { appearanceBlock } from './appearance-view.js';
+import { monoToday, monoWeekly } from './mono-view.js';
+const mono = () => document.documentElement.dataset.theme === 'mythmono';
 import { AUTOLOCK_OPTIONS, getAutolock, setAutolock } from './pin.js';
 import { hasTrust, enableTrust, disableTrust, verifyPin, changePin, getRecoveryCode, setToken, clearToken, getSession } from './data/vault.js';
 import { createGithub } from './data/github.js';
@@ -17,7 +19,7 @@ import { todayView } from './today-view.js';
 
 export { ICONS, fmtTime };
 
-export const VERSION = '0.38.0 («Знания» по-настоящему: хроника по проектам, скиллы и промпты из hub-projects/knowledge, поиск по ним; питомец со страниц и остатки Telegram-бота убраны, погода напрямую из Open-Meteo)';
+export const VERSION = '0.39.0 (темы: Сотворение, Мифы, Бенто и новая «Монолит» по четырём макетам; ворон и коты убраны из сцен; анимации облегчены)';
 
 // Вкладки. group: main (в нижней панели телефона), more (внутри «Ещё»).
 export const TABS = [
@@ -302,11 +304,11 @@ export function renderRoute(route, ctx) {
   if (route === 'settings') return settingsView(ctx);
   if (route === 'tasks') return tasksView(ctx);
   if (route === 'schedule') return scheduleView(ctx);
-  if (route === 'weekly') return weeklyView(ctx);
+  if (route === 'weekly') return mono() ? monoWeekly(ctx) : weeklyView(ctx);
   if (route === 'notes') return notesView(ctx);
   if (route === 'subscriptions') return subsView(ctx);
   if (route === 'projects') return ctx.param ? projectPage(ctx, ctx.param) : projectsView(ctx);
-  if (route === 'today') return todayView(ctx);
+  if (route === 'today') return mono() ? monoToday(ctx) : todayView(ctx);
   if (route === 'more') return moreView();
   if (route === 'knowledge') return knowledgeView();
   if (PLACEHOLDERS[route]) return placeholderView(route);

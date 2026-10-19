@@ -15,6 +15,8 @@ import { sceneHero, initHero, setHeroTheme, setHeroProjects } from './hero.js';
 import { initSky } from './sky.js';
 import { initMotionUi } from './motion-ui.js';
 import { refreshWeather } from './weather-sync.js';
+import { initMonoNav } from './mono-nav.js';
+import { monoTools } from './mono-view.js';
 import { onProjects, getProjectsState } from './projects-data.js';
 import { mergedProjects } from './projects-view.js';
 
@@ -95,9 +97,13 @@ function currentRoute() {
 }
 
 // Смена темы: рамку со сценой не пересоздаём, ей отправляется новое имя темы.
+let wasMono = document.documentElement.dataset.theme === 'mythmono';
 new MutationObserver(() => {
   applyGlass();
   const full = currentRoute();
+  // «Монолит» рисует «Сегодня» и «Итоги» по-своему: при входе в тему и выходе из неё страница строится заново
+  const isMono = document.documentElement.dataset.theme === 'mythmono';
+  if (isMono !== wasMono) { wasMono = isMono; if (!document.getElementById('app').hidden && ['today', 'weekly'].includes(full)) { route(); return; } }
   if (full.includes('/')) return;
   const th = document.documentElement.dataset.theme;
   if (!main.querySelector(':scope > .hero')) {
@@ -155,6 +161,9 @@ function route() {
 }
 
 buildNav();
+initMonoNav({ nav });
+{ const edge = document.createElement('div'); edge.className = 'mono-edge'; edge.setAttribute('aria-hidden', 'true'); nav.before(edge); }
+document.getElementById('app').append(monoTools());
 initMotionUi({ nav });
 initIsland();
 

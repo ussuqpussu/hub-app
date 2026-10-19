@@ -78,6 +78,8 @@
         document.querySelectorAll('.h9-cv, .lc-ascii, pre.ad-asc, canvas').forEach(function (n) {
           if (!n.getClientRects().length) n.remove();
         });
+        // в «Монолите» рун под сценой нет (на макетах их нет)
+        if (T[cur] && T[cur].n === 'Монолит') document.querySelectorAll('.myth-runes').forEach(function (n) { n.remove(); });
       } catch (e) { /* не вышло: просто рисуем как раньше */ }
     };
   }

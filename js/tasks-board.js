@@ -24,9 +24,9 @@ export function patchFor(task, to, now = Date.now()) {
   return null;
 }
 
-export function boardView({ store, tasks, today, mainLimit }) {
+export function boardView({ store, tasks, today, mainLimit, labels = ['В очереди', 'Главные на сегодня', 'Сделано'] }) {
   const cols = boardColumns(tasks);
-  const defs = [['queue', 'В очереди'], ['main', 'Главные на сегодня'], ['done', 'Сделано']];
+  const defs = [['queue', labels[0]], ['main', labels[1]], ['done', labels[2]]];
   const live = el('p', { class: 'sr-only', role: 'status', 'aria-live': 'polite' });
   const wrap = el('div', { class: 'kan', role: 'group', 'aria-label': 'Доска задач' });
   defs.forEach(([key, title]) => {

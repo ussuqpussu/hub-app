@@ -8,7 +8,8 @@ import { QUOTES_GOW, QUOTES_MACH } from './data/quotes-gow.js';
 
 export const PAGE_INDEX = { today: 0, schedule: 1, tasks: 2, projects: 3, 'smart-home': 4, subscriptions: 5, notes: 6, knowledge: 7, settings: 8 };
 // у «Итогов недели» сцена есть только в «Мифах» (индекс 9 в их карте страниц)
-const pgOf = (route, name) => (route === 'weekly' ? (/^(Мифы|Бенто|Макет)/.test(name) ? 9 : null) : PAGE_INDEX[route]);
+// у «Монолита» сцена только на «Сегодня» (остальные страницы по макету «Итогов»: без сцены)
+const pgOf = (route, name) => (name === 'Монолит' ? (route === 'today' ? 0 : null) : route === 'weekly' ? (/^(Мифы|Бенто)/.test(name) ? 9 : null) : PAGE_INDEX[route]);
 const ENGINE = new URL('../theme/engine.html', import.meta.url).href;
 
 let box = null; // { el, frame, ready, pending, theme }
@@ -18,17 +19,32 @@ let sent = ''; // что уже отправлено рамке, чтобы не
 
 // Цитата дня лежит на фоне под анимацией: только текст и автор, без плитки и кнопок. Меняется раз в сутки.
 function dayQuote(name) {
-  const list = name === 'Мифы' ? QUOTES_GOW : /^(Бенто|Макет)$/.test(name) ? [...QUOTES_GOW, ...QUOTES_MACH] : QUOTES;
+  const list = name === 'Мифы' ? QUOTES_GOW : /^(Бенто|Монолит)$/.test(name) ? [...QUOTES_GOW, ...QUOTES_MACH] : QUOTES;
   const n = Math.floor(Date.now() / QUOTE_MS) + qShift;
   return list[((n % list.length) + list.length) % list.length];
 }
 const QUOTE_MS = 5 * 60 * 1000;
 let qShift = 0;
-setInterval(() => { if (box) fillQuote(box.el, engineName(box.theme)); }, 30000);
+let lastQ = '';
+setInterval(() => {
+  if (box) fillQuote(box.el, engineName(box.theme));
+  // страницы без сцены (цитата в плитке «Монолита») узнают о смене цитаты из события
+  const id = document.documentElement.dataset.theme;
+  const q = dayQuote(engineName(id)).join('|');
+  if (q !== lastQ) { lastQ = q; document.dispatchEvent(new CustomEvent('hub:quote')); }
+}, 30000);
 function fillQuote(el, name) {
   const [text, who] = dayQuote(name);
   el.querySelector('.hero__q').textContent = `«${text}»`;
   el.querySelector('.hero__who').textContent = who;
+}
+// Текущая цитата темы: [текст, автор]. nextQuote — кнопка «другая цитата» на любой странице.
+export const currentQuote = (themeId) => dayQuote(engineName(themeId));
+export function nextQuote() {
+  qShift += 1;
+  if (box) fillQuote(box.el, engineName(box.theme));
+  lastQ = currentQuote(document.documentElement.dataset.theme).join('|');
+  document.dispatchEvent(new CustomEvent('hub:quote'));
 }
 
 const engineName = (themeId) => (THEMES.find((t) => t.id === themeId) || {}).engine || null;
@@ -74,7 +90,7 @@ export function sceneHero(themeId, route) {
   quote.className = 'hero__quote';
   quote.innerHTML = '<blockquote class="hero__q"></blockquote><figcaption class="hero__who"></figcaption><button type="button" class="hero__qn" aria-label="Другая цитата" title="Другая цитата">↻</button>';
   el.append(frame, quote);
-  quote.querySelector('.hero__qn').addEventListener('click', () => { qShift += 1; fillQuote(el, engineName(box ? box.theme : themeId)); });
+  quote.querySelector('.hero__qn').addEventListener('click', () => nextQuote());
   fillQuote(el, name);
   sent = '';
   box = { el, frame, ready: false, pending: null, theme: themeId };
