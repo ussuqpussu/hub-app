@@ -6,7 +6,6 @@ import { STATUS_LABEL, STATUS_ORDER, NO_COMPANY, NO_TYPE, parseTags, companies, 
 import { mergedProjects, saveFields, askDelete, mark } from './projects-view.js';
 import { getProjectsState, onProjects, schemaOf, saveSchema, loadProjects } from './projects-data.js';
 import { normalizeArch, emptyArch, freezeLayout, addNode, removeNode, setGroup } from './arch-calc.js';
-import { pulseOf } from './bot-sync.js';
 import { renderDiagram, nodePanel, nodeEditor, edgeEditor } from './arch-view.js';
 
 export function projectPage({ store, subscribe }, id) {
@@ -280,11 +279,6 @@ export function projectPage({ store, subscribe }, id) {
       el('div', { class: 'pcard__top' }, [mark(p), el('div', { class: 'pcard__title' }, [el('h1', { text: p.name }), el('span', { class: 'muted', text: [p.company || NO_COMPANY, p.types.join(', ') || NO_TYPE].join(' · ') })])]),
       el('div', { class: 'pillrow' }, [el('span', { class: 'pill', text: STATUS_LABEL[p.status] }), p.source === 'obsidian' ? el('span', { class: 'pill pill--src', text: 'Obsidian' }) : '', ...p.tags.map((t) => el('span', { class: 'pill', text: `#${t}` }))]),
     );
-    const pulse = pulseOf(p);
-    if (pulse) {
-      const when = pulse.checkedAt ? new Date(pulse.checkedAt).toLocaleString('ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '';
-      root.append(el('section', { class: 'card', 'aria-label': 'Пульс проекта' }, [el('strong', { text: 'Сайт: ' }), pulse.ok ? 'отвечает' : `не отвечает${pulse.code ? ` (код ${pulse.code})` : ''}`, el('span', { class: 'muted', text: when ? ` · проверено ${when}` : '' })]));
-    }
     if (p.nextAction) root.append(el('section', { class: 'card' }, [el('strong', { text: 'Следующее действие: ' }), p.nextAction]));
     if (p.summary) root.append(el('section', { class: 'card stack stack--tight' }, [el('h2', { text: 'Сводка' }), el('p', { class: 'pre', text: p.summary })]));
     const rc = relatedCard(p, list, false);

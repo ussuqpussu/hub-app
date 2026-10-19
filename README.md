@@ -4,7 +4,7 @@
 Здесь только код приложения. Личные данные и ключи в этот репозиторий не попадают:
 данные лежат в приватном репозитории `hub-data`.
 
-Статус: подготовка (этап 0). Код ещё не написан.
+Статус: работает на GitHub Pages. Вкладка «Знания» читает папку knowledge из hub-projects (index.json собирает scripts/build-knowledge.mjs в GitHub Actions).
 
 ## Шрифты и лицензии
 - Manrope (assets/fonts, тема «Стекло»): SIL Open Font License 1.1, текст лицензии в assets/fonts/Manrope-OFL.txt. Файлы взяты из пакета @fontsource-variable/manrope.

@@ -12,7 +12,7 @@ import { ruporPosts } from './rupor-view.js';
 import { pendingPost, publishedCount, recOf, dayNeed } from './rupor-calc.js';
 import { liveSummary, ensureSnapshot } from './weekly-view.js';
 import { mountSky, bodyPos } from './sky.js';
-import { getWeather, refreshWeather } from './bot-sync.js';
+import { getWeather, refreshWeather } from './weather-sync.js';
 import { weatherState, cityLine, dayLine } from './weather-calc.js';
 import { getAppearance, motionAllowed } from './appearance.js';
 import { rings } from './mk-widgets.js';

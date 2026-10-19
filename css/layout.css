@@ -760,29 +760,9 @@ body, .card, .tile, .sheet, .field, .nav, .topbar { transition: background-color
 html[data-hero-pos="bg"] .main > .hero { position: fixed; inset: 0; width: 100%; height: 100%; margin: 0; z-index: -1; opacity: .15; pointer-events: none; border-radius: 0; }
 html[data-hero-pos="bg"] .hero__frame { pointer-events: none; }
 
-/* Кот сидит на плоской поверхности: верхний край плитки или панели */
-.has-cat { position: relative; overflow: visible; }
-.cat-holder { position: absolute; left: 0; right: 0; top: 0; height: 0; z-index: 3; pointer-events: none; font-size: 16px; }
-.cat-holder .pet { position: absolute; right: 1.1em; bottom: -1px; width: 3.8em; height: 3.09em; overflow: visible; filter: drop-shadow(0 0 .3px rgba(0,0,0,.75)) drop-shadow(0 0 .8px rgba(0,0,0,.25)); }
-.cat-holder .pet .pb { fill: var(--pb); } .cat-holder .pet .ps { fill: var(--ps); } .cat-holder .pet .pt { fill: var(--pt); } .cat-holder .pet .pe { fill: var(--pe); } .cat-holder .pet .pn { fill: var(--pn); }
-.cat-holder .cl-eyes { transform-box: fill-box; transform-origin: 50% 50%; animation: catblink2 4.6s infinite; }
-.cat-holder .cl-tail { transform-box: fill-box; transform-origin: 0% 100%; animation: tailsw2 3.4s ease-in-out infinite; }
-.cat-holder .cl-body { transform-box: fill-box; transform-origin: 50% 100%; animation: catbr 4s ease-in-out infinite; }
-@keyframes catblink2 { 0%, 89%, 100% { transform: scaleY(1); } 92%, 96% { transform: scaleY(.12); } }
-@keyframes tailsw2 { 0%, 100% { transform: rotate(-6deg); } 50% { transform: rotate(9deg); } }
-@keyframes catbr { 0%, 100% { transform: scaleY(1); } 50% { transform: scaleY(1.018); } }
-html[data-effects="off"] .cat-holder .pet *, .cat-holder .pet[data-still] * { animation: none !important; }
-
 /* Цитата дня на широком экране: в правом нижнем углу, рядом с кнопкой «+» */
 @media (min-width: 70rem) {
 }
-
-/* Мифы: ворон-питомец (вместо кота) */
-.cat-holder .pet .rv-head { transform-box: view-box; transform-origin: 21px 12px; animation: rvtilt 7s ease-in-out infinite; }
-.cat-holder .pet .rv-eye { animation: rvblink 5s infinite; }
-@keyframes rvtilt { 0%, 62%, 100% { transform: rotate(0); } 68% { transform: rotate(-9deg); } 76% { transform: rotate(4deg); } 84% { transform: rotate(-3deg); } }
-@keyframes rvblink { 0%, 92%, 100% { opacity: 1; } 95% { opacity: .1; } }
-@media (prefers-reduced-motion: reduce) { .cat-holder .pet .rv-head, .cat-holder .pet .rv-eye { animation: none; } }
 
 /* ===== Плавные ползунки (0.31.0): боковая и нижняя панель, сегменты ===== */
 .nav { isolation: isolate; }
@@ -883,18 +863,38 @@ html[data-hero-pos="bg"] .hero__qn { display: none; }
 .theme-tile > * { min-width: 0; max-width: 100%; }
 .field { box-sizing: border-box; max-width: 100%; }
 
-/* ворон стоит на верхней кромке карточки; места над ней хватает, чтобы не наезжать на текст выше */
-.view .has-cat { margin-top: 3rem; }
 .hero__qn { pointer-events: auto; z-index: 2; }
-.bento > .has-cat { margin-top: 0; }
 .main[data-page="today"] .hero__quote { min-height: 0; }
 
-/* Расписание: плитки не вылезают за сетку, длинные слова переносятся; плитка с вороном опускается вниз */
+/* Расписание: плитки не вылезают за сетку, длинные слова переносятся */
 .sched-body > .sched-day { min-width: 0; transition: margin-top .45s cubic-bezier(.22,1,.36,1); }
 .sched-day .pair > * { min-width: 0; }
 .sched-day .pair__subject, .sched-day .pair__meta { overflow-wrap: break-word; word-break: normal; hyphens: none; }
 .pair__time { flex: none; }
 @media (max-width: 479px) { .sched-day .pair { grid-template-columns: minmax(0, 1fr); } .sched-day .pair__time { display: flex; gap: var(--sp-2); align-items: baseline; } .sched-day .pair__time b { display: inline; } }
-@keyframes cathop { 0% { transform: translateY(-1.4rem); opacity: 0; } 55% { transform: translateY(-.5rem); opacity: 1; } 100% { transform: none; } }
-.cat-holder--hop .pet { animation: cathop .6s cubic-bezier(.22,1,.36,1); }
-html[data-effects="off"] .cat-holder--hop .pet { animation: none; }
+
+/* ===== Знания (0.38.0): хроника по дням, фильтр проектов ===== */
+.kn-status { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--sp-2); margin-bottom: var(--sp-3); font-size: var(--fs-s); }
+.kn-status__err { color: var(--c-warn); }
+.kn-chips { display: flex; flex-wrap: wrap; gap: var(--sp-2); }
+.kn-day { margin: var(--sp-4) 0 0; font-size: var(--fs-m); font-weight: 600; color: var(--c-dim); letter-spacing: .01em; }
+.kn-day:first-child { margin-top: 0; }
+.kn-entry { display: grid; gap: var(--sp-2); min-width: 0; }
+.kn-entry__head { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-2); }
+.kn-entry__project { border: 0; cursor: pointer; color: var(--c-text); font: inherit; font-size: var(--fs-s); font-weight: 600; }
+.kn-entry__project:hover { background: var(--c-accent); color: var(--c-on-accent); }
+.kn-entry__src { font-size: var(--fs-xs); }
+.kn-entry__title { margin: 0; font-size: var(--fs-m); }
+.kn-entry__sec { margin: var(--sp-1) 0 0; font-size: var(--fs-s); font-weight: 600; }
+.kn-list { margin: 0; padding-left: 1.2rem; display: grid; gap: var(--sp-1); }
+.kn-list li { overflow-wrap: anywhere; line-height: 1.45; }
+.kn-list li::marker { color: var(--c-accent); }
+.kn-seg button { white-space: nowrap; min-width: 0; }
+@media (max-width: 599px) {
+  .kn-seg button { font-size: var(--fs-s); padding-inline: var(--sp-2); }
+  .kn-chips { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; padding-bottom: var(--sp-1); -webkit-overflow-scrolling: touch; }
+  .kn-chips::-webkit-scrollbar { display: none; }
+  .kn-chips .chip { flex: none; }
+}
+.kn-about { margin: 0; overflow-wrap: anywhere; }
+.kn-about--clamp { display: -webkit-box; -webkit-line-clamp: 4; line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; cursor: pointer; }

@@ -9,9 +9,11 @@ import { ruporPosts } from './rupor-view.js';
 import { noteTitle } from './notes-calc.js';
 import { STATUS_LABEL } from './projects-calc.js';
 import { buildIndex, search, matchCompanies } from './search-calc.js';
+import { getKnowledgeState, loadKnowledge } from './knowledge-data.js';
+import { chronicleText } from './knowledge-calc.js';
 
-const KIND = { project: 'Проекты', task: 'Задачи', note: 'Заметки и ссылки', question: 'Открытые вопросы', event: 'События', post: 'Рупор', inbox: 'Входящие', sub: 'Подписки', goal: 'Цели' };
-const ORDER = ['project', 'task', 'question', 'note', 'event', 'post', 'goal', 'sub', 'inbox'];
+const KIND = { project: 'Проекты', task: 'Задачи', note: 'Заметки и ссылки', question: 'Открытые вопросы', event: 'События', post: 'Рупор', inbox: 'Входящие', sub: 'Подписки', goal: 'Цели', chronicle: 'Хроника', skill: 'Скиллы и промпты' };
+const ORDER = ['project', 'task', 'question', 'note', 'chronicle', 'event', 'post', 'skill', 'goal', 'sub', 'inbox'];
 const PER_KIND = 5;
 
 export function buildDocs(store) {
@@ -25,6 +27,12 @@ export function buildDocs(store) {
   store.list('subs').forEach((s) => docs.push({ id: `s:${s.id}`, kind: 'sub', title: s.name, text: s.category || '', tags: [], hash: '#/subscriptions', meta: s.status === 'active' ? 'активна' : '' }));
   allQuestions(store, projects).forEach((q, i) => docs.push({ id: `q:${i}:${q.text}`, kind: 'question', title: q.text, text: q.project || '', tags: [], hash: '#/tasks', meta: q.project || '' }));
   buildFeed(projects).slice(0, 400).forEach((e, i) => docs.push({ id: `e:${i}`, kind: 'event', title: e.text, text: e.project, tags: [], hash: `#/projects/${encodeURIComponent(e.projectId)}`, meta: `${e.project} · ${e.date}` }));
+  const kn = getKnowledgeState().data;
+  if (kn) {
+    kn.chronicle.slice(0, 400).forEach((e) => docs.push({ id: `c:${e.id}`, kind: 'chronicle', title: e.title || `${e.project}: ${e.sections[0].items[0]}`, text: `${e.project} ${chronicleText(e)}`, tags: [], hash: '#/knowledge', meta: `${e.project} · ${e.date.split('-').reverse().join('.')}` }));
+    kn.skills.forEach((k) => docs.push({ id: `k:${k.id}`, kind: 'skill', title: k.name, text: k.about, tags: k.tags, hash: '#/knowledge', meta: 'Скилл' }));
+    kn.prompts.forEach((pr) => docs.push({ id: `pr:${pr.id}`, kind: 'skill', title: pr.name, text: `${pr.about} ${pr.body.slice(0, 400)}`, tags: pr.tags, hash: '#/knowledge', meta: 'Промпт' }));
+  }
   ruporPosts(store).forEach((p) => docs.push({ id: `r:${p.id}`, kind: 'post', title: p.title, text: [p.topic, p.rubric, p.texts.dzen.text].join(' '), tags: p.hashtags.map((h) => h.slice(1)), post: p.id, meta: p.date }));
   return { docs, projects };
 }
@@ -113,6 +121,7 @@ export function initSearch({ store, button, extraButtons = [] }) {
   function open() {
     if (!dlg.open) { if (typeof dlg.showModal === 'function') dlg.showModal(); else dlg.setAttribute('open', ''); }
     loadProjects({ refresh: false });
+    if (!getKnowledgeState().loaded) loadKnowledge({ refresh: false }).then(paint);
     input.focus();
     input.select();
     paint();

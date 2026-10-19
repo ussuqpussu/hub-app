@@ -1,6 +1,6 @@
 // Service worker: оболочка открывается без сети.
 // При изменении любого файла оболочки увеличивай VERSION, чтобы кэш обновился.
-const VERSION = 'hub-shell-v73';
+const VERSION = 'hub-shell-v74';
 const SHELL = [
   './',
   './index.html',
@@ -19,7 +19,6 @@ const SHELL = [
   './js/tasks-board.js',
   './js/mk-widgets.js',
   './js/main.js',
-  './bot/weather.js',
   './js/storage.js',
   './js/theme.js',
   './js/theme-data.js',
@@ -64,11 +63,11 @@ const SHELL = [
   './js/notes-calc.js',
   './js/notes-view.js',
   './js/knowledge-view.js',
+  './js/knowledge-data.js',
+  './js/knowledge-calc.js',
   './js/weather-calc.js',
-  './js/bot-calc.js',
-  './js/bot-sync.js',
-  './js/bot-view.js',
-  './bot/classify.js',
+  './js/weather-fetch.js',
+  './js/weather-sync.js',
   './js/search-calc.js',
   './js/search-view.js',
   './js/weekly-view.js',
@@ -89,7 +88,6 @@ const SHELL = [
   './js/data/crypto.js',
   './js/data/skills-data.js',
   './js/data/quotes.js',
-  './js/cat.js',
   './js/data/vault.js',
   './js/data/db.js',
   './js/data/github.js',

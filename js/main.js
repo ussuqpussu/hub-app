@@ -10,12 +10,11 @@ import { applyAppearance, applyGlass, showSplash, playSound, motionAllowed } fro
 import { enterView, leaveView, themeWipe } from './motion-kit.js';
 import { initIsland, toast } from './island.js';
 import { initFx } from './fx.js';
-import { initCat } from './cat.js';
 import { initPerf } from './perf.js';
 import { sceneHero, initHero, setHeroTheme, setHeroProjects } from './hero.js';
 import { initSky } from './sky.js';
 import { initMotionUi } from './motion-ui.js';
-import { importInbox, refreshPulse, refreshWeather, sendBotConfig, reportHubErrors } from './bot-sync.js';
+import { refreshWeather } from './weather-sync.js';
 import { onProjects, getProjectsState } from './projects-data.js';
 import { mergedProjects } from './projects-view.js';
 
@@ -25,7 +24,6 @@ applyAppearance();
 window.addEventListener('storage', (e) => { if (e.key === 'hub.themeOvr') { applyTheme(currentTheme()); setHeroTheme(currentTheme(), currentRoute()); } });
 initFx();
 initHero();
-initCat();
 initPerf();
 initSky();
 
@@ -221,15 +219,14 @@ document.addEventListener('click', (e) => {
   if (e.target.closest && e.target.closest('[data-sync]')) { manualSync = true; store.syncNow(); }
 });
 
-// Входящие бота: разбираем при входе и при возврате в приложение (не чаще раза в минуту).
-async function inboxTick() {
-  const r = await importInbox({ store });
-  if (r && r.imported) store.syncNow();
-  refreshPulse();
+// Погода: при входе и при возврате в приложение (сама не спрашивает чаще раза в 30 минут).
+async function weatherTick() {
+  const before = JSON.stringify(load('hub.weather', null));
   await refreshWeather();
-  if (location.hash === '#/today' && !main.contains(document.activeElement)) route();
+  const changed = JSON.stringify(load('hub.weather', null)) !== before;
+  if (changed && location.hash === '#/today' && !main.contains(document.activeElement)) route();
 }
-// Список проектов и ошибка загрузки проектов уходят боту, когда меняются.
+// Список проектов для сцены темы.
 const HERO_ST = { active: 'в работе', done: 'готов' };
 const HERO_PR = { active: 55, done: 100, paused: 25 };
 function pushHeroProjects() {
@@ -240,9 +237,6 @@ function pushHeroProjects() {
 store.on(() => pushHeroProjects());
 onProjects((st) => {
   pushHeroProjects();
-  if (!getSession().dataKey || st.busy) return;
-  if (st.error) reportHubErrors([{ id: 'projects', text: 'не получилось обновить карточки проектов из hub-projects' }]);
-  else if (st.loaded && st.fetchedAt) { reportHubErrors([]); sendBotConfig(mergedProjects(store)); }
 });
 
 const lock = createLock(document.getElementById('lock'), {
@@ -255,7 +249,7 @@ const lock = createLock(document.getElementById('lock'), {
     // Не перерисовываем экран, если человек уже что-то печатает в нём.
     if (!main.childElementCount || !main.contains(document.activeElement)) route();
     store.syncNow();
-    inboxTick();
+    weatherTick();
   },
   onLock() {
     store.init(); // ключа нет: статус «заблокировано», память очищается
@@ -273,7 +267,7 @@ document.addEventListener('visibilitychange', () => {
     if (store.getStatus().pending > 0) store.syncNow();
   } else {
     store.syncNow();
-    inboxTick();
+    weatherTick();
   }
 });
 

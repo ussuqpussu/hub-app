@@ -43,7 +43,7 @@ async function collectPaths(gh) {
   for (const it of root) {
     if (it.name.startsWith('.')) continue;
     if (it.type === 'file' && /\.md$/i.test(it.name) && !/^readme\.md$/i.test(it.name)) paths.push(it.path);
-    else if (it.type === 'dir' && !['node_modules', 'data', 'rupor', 'assets'].includes(it.name)) {
+    else if (it.type === 'dir' && !['node_modules', 'data', 'rupor', 'assets', 'knowledge', 'scripts'].includes(it.name)) {
       const sub = (await gh.listDir(it.path)) || [];
       sub.filter((x) => x.type === 'file' && /\.md$/i.test(x.name)).forEach((x) => paths.push(x.path));
     }

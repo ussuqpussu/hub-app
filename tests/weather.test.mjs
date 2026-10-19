@@ -1,7 +1,6 @@
 import assert from 'node:assert/strict';
-import { wmo, normalize, buildWeather, CITIES } from '../bot/weather.js';
+import { wmo, normalize, buildWeather, CITIES } from '../js/weather-fetch.js';
 import { weatherState, cityLine, dayLine, signed } from '../js/weather-calc.js';
-import { runWeather } from '../bot/worker.js';
 
 let n = 0;
 const sample = { current: { temperature_2m: -3.4, apparent_temperature: -8.1, weather_code: 71, wind_speed_10m: 4.2 }, daily: { temperature_2m_min: [-6.2], temperature_2m_max: [-1.1], precipitation_probability_max: [60] } };
@@ -19,17 +18,4 @@ const prev = { fetchedAt: '2026-10-11T00:00:00.000Z', cities: [{ name: 'Домо
 const f = async (u) => (String(u).includes('latitude=55.7558') ? new Response(JSON.stringify(sample)) : new Response('', { status: 500 }));
 const out = await buildWeather(prev, f, Date.parse('2026-10-11T12:00:00Z'));
 assert.equal(out.fresh, 1); assert.deepEqual(out.data.cities.map((c) => c.name), ['Москва', 'Домодедово']); assert.equal(out.data.cities[1].temp, 1); n += 3;
-// ничего не ответило: файл не перезаписывается
-const files = new Map([['weather.json', { sha: 's0', text: JSON.stringify(prev) }]]);
-const puts = [];
-const f2 = async (u, init = {}) => {
-  const s = String(u);
-  if (s.includes('open-meteo')) return new Response('', { status: 503 });
-  if ((init.method || 'GET') === 'GET') { const x = files.get(decodeURIComponent(s.split('/contents/')[1])); return x ? new Response(JSON.stringify({ sha: x.sha, content: Buffer.from(x.text).toString('base64') })) : new Response('{}', { status: 404 }); }
-  puts.push(s); return new Response('{"content":{}}');
-};
-const env = { GH_TOKEN: 'x', DATA_REPO: 'a/b' };
-assert.equal((await runWeather(env, f2)).fresh, 0); assert.equal(puts.length, 0); n += 2;
-const f3 = async (u, init) => (String(u).includes('open-meteo') ? new Response(JSON.stringify(sample)) : f2(u, init));
-assert.equal((await runWeather(env, f3)).fresh, 2); assert.equal(puts.length, 1); n += 2;
 console.log(`${n} passed`);

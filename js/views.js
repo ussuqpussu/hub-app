@@ -12,13 +12,12 @@ import { projectPage } from './project-page.js';
 import { weeklyView } from './weekly-view.js';
 import { notesView } from './notes-view.js';
 import { knowledgeView } from './knowledge-view.js';
-import { botSettings } from './bot-view.js';
 import { getScheduleState, loadSchedule, onSchedule } from './schedule-data.js';
 import { todayView } from './today-view.js';
 
 export { ICONS, fmtTime };
 
-export const VERSION = '0.37.0 (тема «Макет» по макетам: плавающая рейка, сетка, кольца, светлый фокус; экономный режим: пауза в фоне и при игре, ограничение кадров сцен; слова в расписании не рвутся; темы «Мифы · Стекло» и «Бенто», лёгкое стекло без лагов, расписание без наезда плиток и ворон на сегодняшнем дне, Макиавелли, таймер на плитке «Фокус»)';
+export const VERSION = '0.38.0 («Знания» по-настоящему: хроника по проектам, скиллы и промпты из hub-projects/knowledge, поиск по ним; питомец со страниц и остатки Telegram-бота убраны, погода напрямую из Open-Meteo)';
 
 // Вкладки. group: main (в нижней панели телефона), more (внутри «Ещё»).
 export const TABS = [
@@ -166,7 +165,6 @@ function settingsView({ onLockNow, store, subscribe }) {
     if (kvEl) kvEl.replaceChildren(...kvRows());
   });
   root.append(dataBox);
-  root.append(botSettings({ store }));
 
   // Безопасность
   const sel = el('select', { class: 'field', id: 'autolock', 'aria-label': 'Автоблокировка' });
