@@ -72,29 +72,49 @@ o.e.setAttribute('d',path(v,sc[i],.85-i*.1));o.e.setAttribute('stroke',hsl(c,.7,
 o.g.setAttribute('transform',`rotate(${(tm/1000*(i%2?-5:5)+i*21).toFixed(1)}) scale(${1+Math.sin(tm/1600+i)*.025})`)});
 hl.setAttribute('d',path(v,56,.9));}}}
 
-// ---------- E: A + B + D вместе ----------
-function EE(){const id='E'+U++;const svg=E('svg',{viewBox:'-110 -110 220 220'});
-svg.innerHTML=`<defs><filter id="${id}b" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="2.4"/></filter><filter id="${id}w" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="10"/></filter>
-<radialGradient id="${id}c"><stop class="c0" offset="0"/><stop class="c1" offset="1"/></radialGradient>
-<radialGradient id="${id}h" cx=".35" cy=".3" r=".8"><stop offset="0" stop-color="#fff" stop-opacity=".75"/><stop offset=".45" stop-color="#fff" stop-opacity=".08"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient></defs>`;
+// ---------- E: A + B + D вместе, улучшенный ----------
+const shift=(c,dh,dl=0,ds=0)=>[(c[0]+dh+360)%360,Math.max(0,Math.min(100,c[1]+ds)),c[2]+dl];
+function EE(){const id='E'+U++;const svg=E('svg',{viewBox:'-112 -112 224 224'});
+const LAY=3;
+let defs=`<filter id="${id}w" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="12"/></filter>
+<filter id="${id}b" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="1.6"/></filter>
+<filter id="${id}r" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="5"/></filter>
+<filter id="${id}d" x="-30%" y="-30%" width="160%" height="170%"><feDropShadow dx="0" dy="3" stdDeviation="3.5" flood-color="#000" flood-opacity=".38"/></filter>
+<linearGradient id="${id}e" gradientUnits="userSpaceOnUse" x1="-80" y1="-90" x2="80" y2="90"><stop class="e0" offset="0"/><stop class="e1" offset=".55"/><stop class="e2" offset="1"/></linearGradient>
+<radialGradient id="${id}c"><stop class="c0" offset="0"/><stop class="c1" offset=".55"/><stop class="c2" offset="1"/></radialGradient>
+<radialGradient id="${id}h" cx=".33" cy=".28" r=".75"><stop offset="0" stop-color="#fff" stop-opacity=".8"/><stop offset=".4" stop-color="#fff" stop-opacity=".1"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>`;
+for(let i=0;i<LAY;i++) defs+=`<radialGradient id="${id}f${i}"><stop class="f${i}a" offset=".15"/><stop class="f${i}b" offset="1"/></radialGradient><clipPath id="${id}k${i}"><path class="kp${i}"/></clipPath>`;
+svg.innerHTML=`<defs>${defs}</defs>`;
+const q=c=>svg.querySelector(c);
 const halo=E('path',{filter:`url(#${id}w)`});svg.append(halo);
-const soft=[0,1,2].map(()=>({g:E('g'),p:E('path',{filter:`url(#${id}b)`}),e:E('path',{fill:'none'}),e2:E('path',{fill:'none'})}));
-soft.forEach(o=>{o.g.append(o.p,o.e,o.e2);svg.append(o.g)});
-const lines=[];const lg=E('g');for(let i=0;i<7;i++){const p=E('path',{fill:'none','stroke-linejoin':'round'});lg.append(p);lines.push(p)}svg.append(lg);
-const core=E('circle',{r:20,fill:`url(#${id}c)`});const hl=E('path',{fill:`url(#${id}h)`,style:'mix-blend-mode:overlay'});svg.append(core,hl);
-const c0=svg.querySelector('.c0'),c1=svg.querySelector('.c1');
-return{el:svg,draw(v,tm){const c=col(v);const br=1+Math.sin(tm/1700)*.02;
-halo.setAttribute('d',path(v,78,.8));halo.setAttribute('fill',hsl(c,.38,-8));
-const sc=[98,76,54],ro=[.9,.82,.72];
-soft.forEach((o,i)=>{const d=path(v,sc[i],ro[i]);o.p.setAttribute('d',d);o.p.setAttribute('fill',hsl(c,.22+i*.2,-20+i*8));
-o.e.setAttribute('d',d);o.e.setAttribute('stroke',hsl(c,.9-i*.1,20-i*2));o.e.setAttribute('stroke-width',1.1);
-o.e2.setAttribute('d',path(v,sc[i]*.95,ro[i]));o.e2.setAttribute('stroke',hsl(c,.4,28));o.e2.setAttribute('stroke-width',.5);
-o.g.setAttribute('transform',`rotate(${(tm/1000*(i%2?-5:4)+i*19).toFixed(1)}) scale(${(1+(br-1)*(i+1)*.6).toFixed(4)})`)});
-lines.forEach((p,i)=>{const k=i/6,s0=64-k*44;p.setAttribute('d',path(v,s0,.9-k*.3,(tm/3800)*(i%2?-1:1)*(.5+k)+i*.17));p.setAttribute('stroke',hsl(c,.35+k*.55,12+k*14));p.setAttribute('stroke-width',(.6+k*.7).toFixed(2))});
+const L=[];for(let i=0;i<LAY;i++){const g=E('g',{filter:`url(#${id}d)`});const fill=E('path',{fill:`url(#${id}f${i})`});
+const inner=E('g',{'clip-path':`url(#${id}k${i})`});const glow=E('path',{fill:'none',filter:`url(#${id}r)`});inner.append(glow);
+const edge=E('path',{fill:'none','stroke-linejoin':'round',stroke:`url(#${id}e)`});const edge2=E('path',{fill:'none','stroke-linejoin':'round'});
+g.append(fill,inner,edge2,edge);svg.append(g);L.push({g,fill,glow,edge,edge2,kp:q('.kp'+i)})}
+const lg=E('g');const lines=[];for(let i=0;i<6;i++){const p=E('path',{fill:'none','stroke-linejoin':'round'});lg.append(p);lines.push(p)}svg.append(lg);
+const core=E('circle',{r:17,fill:`url(#${id}c)`,filter:`url(#${id}b)`});const hl=E('path',{fill:`url(#${id}h)`,style:'mix-blend-mode:overlay'});
+const spec=E('path',{fill:'none','stroke-linecap':'round'});const dot=E('circle',{r:1.6});
+svg.append(core,hl,spec,dot);
+return{el:svg,draw(v,tm){const c=col(v),br=1+Math.sin(tm/1700)*.02;
+const cE=shift(c,-14,2,10),cM=c,cI=shift(c,14,-4);
+halo.setAttribute('d',path(v,80,.8));halo.setAttribute('fill',hsl(c,.4,-8));
+q('.e0').setAttribute('stop-color',hsl(c,1,34));q('.e1').setAttribute('stop-color',hsl(c,.7,12));q('.e2').setAttribute('stop-color',hsl(shift(c,18,-12),.9,-2));
+const sc=[100,78,56],ro=[.92,.84,.74],cols=[cE,cM,cI];
+L.forEach((o,i)=>{const d=path(v,sc[i],ro[i]),cc=cols[i];
+q('.f'+i+'a').setAttribute('stop-color',hsl(cc,.03+i*.05,-18));q('.f'+i+'b').setAttribute('stop-color',hsl(cc,.4+i*.2,-8+i*2));
+o.fill.setAttribute('d',d);o.kp.setAttribute('d',d);
+o.glow.setAttribute('d',d);o.glow.setAttribute('stroke',hsl(cc,.55,26));o.glow.setAttribute('stroke-width',9);
+o.edge.setAttribute('d',d);o.edge.setAttribute('stroke-width',(1.3-i*.2).toFixed(2));
+o.edge2.setAttribute('d',path(v,sc[i]*.955,ro[i]));o.edge2.setAttribute('stroke',hsl(cc,.32,30));o.edge2.setAttribute('stroke-width',.45);
+o.g.setAttribute('transform',`rotate(${(tm/1000*(i%2?-4:3.2)+i*21).toFixed(1)}) scale(${(1+(br-1)*(i+1)*.7).toFixed(4)})`)});
+lines.forEach((p,i)=>{const k=i/5,s0=62-k*40;p.setAttribute('d',path(v,s0,.92-k*.3,(tm/4200)*(i%2?-1:1)*(.5+k)+i*.2));
+p.setAttribute('stroke',hsl(shift(c,(k-.5)*20),.28+k*.5,14+k*14));p.setAttribute('stroke-width',(.45+k*.55).toFixed(2))});
 lg.setAttribute('transform',`scale(${br.toFixed(4)})`);
-c0.setAttribute('stop-color',hsl(c,1,24));c1.setAttribute('stop-color',hsl(c,.0,0));
-hl.setAttribute('d',path(v,60,.85))}}}
-
+q('.c0').setAttribute('stop-color',hsl(c,1,40));q('.c1').setAttribute('stop-color',hsl(c,.85,18));q('.c2').setAttribute('stop-color',hsl(c,0,0));
+hl.setAttribute('d',path(v,62,.85));
+const sa=-2.3,r0=88;spec.setAttribute('d',`M${Math.cos(sa-.35)*r0} ${Math.sin(sa-.35)*r0}A${r0} ${r0} 0 0 1 ${Math.cos(sa+.35)*r0} ${Math.sin(sa+.35)*r0}`);
+spec.setAttribute('stroke','none');
+dot.setAttribute('fill','rgba(255,255,255,.95)')}}}
 const V=[['E. Всё вместе (A + B + D)','мягкое свечение, стеклянные края, тонкие линии внутри',EE],['A. Стеклянные слои','свет складывается, как у стекла',A],['B. Тонкие контуры','девять линий, без заливки: лёгкий, дорогой',B],['C. Кристалл','огранённая середина и два тонких кольца',C],['D. Жидкое стекло','мягкие пятна, блик, без жёстких границ',D]];
 const grid=document.getElementById('grid'),cards=V.map(([t,s,F])=>{const c=document.createElement('div');c.className='card';c.innerHTML=`<h2>${t}</h2><small>${s}</small><div class="fig"></div><div class="lbl"></div><div class="row"></div>`;grid.append(c);
 const live=F();c.querySelector('.fig').append(live.el);const row=c.querySelector('.row');const minis=[-3,-2,-1,0,1,2,3].map(m=>{const x=F();row.append(x.el);return[x,m]});return{c,live,minis,lbl:c.querySelector('.lbl')}});
