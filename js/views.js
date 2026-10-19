@@ -20,7 +20,7 @@ import { todayView } from './today-view.js';
 
 export { ICONS, fmtTime };
 
-export const VERSION = '0.42.0 (вкладка «Дневник»: записи, статистика, наблюдения, поддержка без ИИ)';
+export const VERSION = '0.43.0 (кнопка быстрой записи в дневник над «+» на всех страницах)';
 
 // Вкладки. group: main (в нижней панели телефона), more (внутри «Ещё»).
 export const TABS = [

@@ -16,6 +16,7 @@ import { initSky } from './sky.js';
 import { initMotionUi } from './motion-ui.js';
 import { refreshWeather } from './weather-sync.js';
 import { initMonoNav } from './mono-nav.js';
+import { initDiaryQuick } from './diary-quick.js';
 import { monoTools } from './mono-view.js';
 import { onProjects, getProjectsState } from './projects-data.js';
 import { mergedProjects } from './projects-view.js';
@@ -161,7 +162,7 @@ function route() {
 }
 
 buildNav();
-initMonoNav({ nav });
+initMonoNav({ nav, store });
 { const edge = document.createElement('div'); edge.className = 'mono-edge'; edge.setAttribute('aria-hidden', 'true'); nav.before(edge); }
 document.getElementById('app').append(monoTools());
 initMotionUi({ nav });
@@ -207,6 +208,7 @@ document.getElementById('search-btn').innerHTML = ICONS.search;
 document.getElementById('fab').innerHTML = `${ICONS.plus}<span class="sr-only">Добавить запись</span>`;
 document.getElementById('plus-close').innerHTML = `${ICONS.close}<span class="sr-only">Закрыть</span>`;
 initPlus({ button: document.getElementById('fab'), dialog: document.getElementById('plus'), store });
+initDiaryQuick({ button: document.getElementById('fab-diary'), store });
 initSearch({ store, button: document.getElementById('search-btn'), extraButtons: [document.getElementById('search-side')] });
 
 store.on(renderStatus);

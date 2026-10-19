@@ -3,6 +3,7 @@
 //  «menu»  — меню по нажатию на «Х»; на телефоне капсула листается вбок;
 //  «icons» — маленькие значки внизу панели; на телефоне шестая кнопка «Ещё».
 import { el, ICONS } from './ui.js';
+import { openDiaryQuick } from './diary-quick.js';
 
 const ico = (d) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
 // свои простые значки в духе макета
@@ -21,7 +22,7 @@ export const MONO_ICONS = {
 
 const isMono = () => document.documentElement.dataset.theme === 'mythmono';
 
-export function initMonoNav({ nav }) {
+export function initMonoNav({ nav, store }) {
   // «Х» — первым элементом панели
   const logo = el('button', { type: 'button', class: 'nav__logo', 'aria-label': 'Меню: остальные разделы', 'aria-expanded': 'false', 'aria-haspopup': 'true' }, [el('span', { text: 'X' })]);
   nav.prepend(logo);
@@ -35,6 +36,7 @@ export function initMonoNav({ nav }) {
   const go = (h) => () => { location.hash = h; };
   menu.append(
     item('Подписки', MONO_ICONS.subscriptions, go('#/subscriptions')),
+    item('Записать в дневник', ICONS.mood, () => openDiaryQuick(store)),
     item('Дневник', MONO_ICONS.notes, go('#/diary')),
     item('Знания', MONO_ICONS.knowledge, go('#/knowledge')),
     item('Поиск', ICONS.search, () => { const b = document.getElementById('search-btn'); if (b) b.click(); }),

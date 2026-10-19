@@ -42,7 +42,7 @@
 
 .main {
   padding: var(--sp-5) var(--sp-4);
-  padding-bottom: calc(var(--nav-h) + var(--fab) + var(--sp-6) + env(safe-area-inset-bottom));
+  padding-bottom: calc(var(--nav-h) + var(--fab) * 2 + var(--sp-6) + env(safe-area-inset-bottom));
   width: 100%;
   max-width: var(--content-max);
   margin: 0 auto;
@@ -83,11 +83,13 @@
 .nav__sep { display: none; }
 .nav__gear-side { display: none; }
 
-/* Кнопка «+» */
+/* Кнопка «+» и над ней кнопка быстрой записи в дневник */
+:root { --fab-bottom: calc(var(--nav-h) + var(--sp-4) + env(safe-area-inset-bottom)); }
+
 .fab {
   position: fixed;
   right: var(--sp-4);
-  bottom: calc(var(--nav-h) + var(--sp-4) + env(safe-area-inset-bottom));
+  bottom: var(--fab-bottom);
   z-index: 11;
   width: var(--fab);
   height: var(--fab);
@@ -100,6 +102,7 @@
 }
 
 .fab svg { width: var(--icon); height: var(--icon); }
+.fab--diary { bottom: calc(var(--fab-bottom) + var(--fab) + var(--sp-3)); background: var(--c-fill); color: var(--c-text); border-color: var(--c-line); }
 
 .link-list { display: grid; gap: var(--sp-2); }
 
@@ -329,7 +332,8 @@
   .sync-chip--side { display: block; }
 
   .main { padding: var(--sp-6) var(--sp-6); padding-bottom: var(--sp-7); }
-  .fab { right: var(--sp-6); bottom: var(--sp-6); }
+  :root { --fab-bottom: var(--sp-6); }
+  .fab { right: var(--sp-6); }
   .sheet { margin: auto; border-radius: var(--radius-m); }
   .themes { grid-template-columns: repeat(2, minmax(0, var(--theme-card-w))); }
 }
