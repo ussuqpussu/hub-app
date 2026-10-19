@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Цветок настроения: 4 варианта</title>
+<style>
+body{margin:0;background:#0c0c0e;color:#eee;font:15px/1.4 system-ui,sans-serif;padding:20px}
+h1{font-size:20px;margin:0 0 4px}p{margin:0 0 16px;color:#aaa}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}
+.card{border-radius:28px;padding:16px 16px 18px;text-align:center;background:var(--bg,#2a2a30);transition:background .3s}
+.card h2{font-size:15px;margin:0 0 2px}.card small{color:#ffffffa0;display:block;margin-bottom:6px}
+.fig{width:200px;margin:6px auto}.fig svg{width:100%;overflow:visible}
+.lbl{font-weight:700;font-size:18px;min-height:26px}
+.row{display:flex;gap:4px;justify-content:center;margin-top:10px}.row svg{width:36px}
+input[type=range]{width:100%;max-width:560px;margin:14px 0 0;display:block}
+</style></head><body>
+<h1>Цветок настроения: 4 варианта</h1>
+<p>Двигай общий ползунок: форма и цвет перетекают. Внизу каждой карточки семь уровней от −3 до +3.</p>
+<input id="rng" type="range" min="-3" max="3" step="0.01" value="0">
+<div class="grid" id="grid" style="margin-top:16px"></div>
+<script>
+const NS='http://www.w3.org/2000/svg',N=120;
+const SH=[{n:8,a:.38,p:2.9},{n:8,a:.22,p:1.3},{n:8,a:.1,p:1},{n:1,a:0,p:1},{n:5,a:.08,p:1},{n:5,a:.2,p:1.7},{n:5,a:.3,p:.9}];
+const COL=[[268,78,64],[236,84,68],[212,88,70],[194,70,74],[130,60,62],[58,88,62],[24,94,66]];
+const NAMES=['Очень неприятно','Неприятно','Слегка неприятно','Нейтрально','Слегка приятно','Приятно','Очень приятно'];
+const BG=[[268,28,22],[236,28,22],[212,26,22],[194,22,22],[130,22,20],[58,26,20],[24,30,22]];
+const R=SH.map(s=>{const raw=[];let sum=0;for(let i=0;i<N;i++){const t=i/N*6.2832,w=((1+Math.cos(s.n*t))/2)**s.p;raw.push(w);sum+=w}const m=sum/N,r=raw.map(w=>1+s.a*(w-m)),mx=Math.max(...r);return r.map(x=>x/mx)});
+const lerp=(a,b,t)=>a+(b-a)*t,cl=v=>Math.max(-3,Math.min(3,v));
+function idx(v){const x=cl(v)+3,i=Math.min(5,Math.floor(x));return[i,x-i]}
+function col(v,T=COL){const[i,t]=idx(v);return[0,1,2].map(k=>lerp(T[i][k],T[i+1][k],t))}
+const hsl=(c,a=1,dl=0)=>`hsl(${c[0].toFixed(1)} ${c[1].toFixed(1)}% ${Math.min(97,c[2]+dl).toFixed(1)}% / ${a})`;
+function path(v,s,round=1,rot=0){const[i,t]=idx(v),A=R[i],B=R[i+1];let d='';for(let k=0;k<N;k++){let r=lerp(A[k],B[k],t);r=1+(r-1)*round;const th=k/N*6.2832+rot;d+=(k?'L':'M')+(Math.cos(th)*r*s).toFixed(2)+' '+(Math.sin(th)*r*s).toFixed(2)}return d+'Z'}
+function rad(v,k){const[i,t]=idx(v);return lerp(R[i][k%N],R[i+1][k%N],t)}
+const E=(n,at={})=>{const e=document.createElementNS(NS,n);for(const k in at)e.setAttribute(k,at[k]);return e};
+let U=0;
+// ---------- A: стеклянные слои, свет складывается ----------
+function A(){const id='A'+U++;const svg=E('svg',{viewBox:'-110 -110 220 220'});
+svg.innerHTML=`<defs><radialGradient id="${id}g"><stop class="s0" offset=".3"/><stop class="s1" offset="1"/></radialGradient><filter id="${id}b"><feGaussianBlur stdDeviation="9"/></filter></defs>`;
+const glow=E('path',{filter:`url(#${id}b)`});const L=[0,1,2,3].map(()=>({g:E('g'),p:E('path'),e:E('path',{fill:'none'})}));
+svg.append(glow);L.forEach(o=>{o.g.append(o.p,o.e);svg.append(o.g)});
+return{el:svg,draw(v,tm){const c=col(v);glow.setAttribute('d',path(v,72,.8));glow.setAttribute('fill',hsl(c,.28,-10));
+const sc=[98,82,66,50],ro=[.9,.8,.7,.6];
+L.forEach((o,i)=>{o.p.setAttribute('d',path(v,sc[i],ro[i]));
+o.p.setAttribute('fill',hsl(c,.10+i*.06,-14+i*2));o.p.setAttribute('stroke','none');
+o.e.setAttribute('d',path(v,sc[i],ro[i]));o.e.setAttribute('stroke',hsl(c,.85,18));o.e.setAttribute('stroke-width',1.1);
+o.g.setAttribute('transform',`rotate(${(tm/1000*(i%2?-5:4)+i*19).toFixed(2)})`)})}}}
+// ---------- B: тонкие контуры, как свёрнутые линии ----------
+function B(){const svg=E('svg',{viewBox:'-110 -110 220 220'});const id='B'+U++;
+svg.innerHTML=`<defs><radialGradient id="${id}"><stop class="s0" offset="0"/><stop class="s1" offset="1"/></radialGradient></defs>`;
+const dot=E('circle',{r:26,fill:`url(#${id})`});svg.append(dot);const P=[];for(let i=0;i<9;i++){const p=E('path',{fill:'none','stroke-linejoin':'round'});svg.append(p);P.push(p)}
+return{el:svg,draw(v,tm){const c=col(v);const s0=svg.querySelector('.s0'),s1=svg.querySelector('.s1');
+s0.setAttribute('stop-color',hsl(c,.95,18));s1.setAttribute('stop-color',hsl(c,0,0));
+P.forEach((p,i)=>{const k=i/8,sc=100-k*78;p.setAttribute('d',path(v,sc,1-k*.5,(tm/4000)*(i%2?-1:1)*(.4+k)+i*.14));
+p.setAttribute('stroke',hsl(c,.6+k*.4,6+k*14));p.setAttribute('stroke-width',(.9+k*.9).toFixed(2))})}}}
+// ---------- C: кристалл с гранями ----------
+function C(){const svg=E('svg',{viewBox:'-110 -110 220 220'});const F=[];const K=48;
+const ring=E('path',{fill:'none'}),ring2=E('path',{fill:'none'});svg.append(ring,ring2);
+const core=E('g');for(let k=0;k<K;k++){const f=E('path');core.append(f);F.push(f)}
+const hi=E('path',{fill:'none'});svg.append(core,hi);
+return{el:svg,draw(v,tm){const c=col(v);ring.setAttribute('d',path(v,100,1));ring.setAttribute('stroke',hsl(c,.55,18));ring.setAttribute('stroke-width',.8);
+ring2.setAttribute('d',path(v,88,.9));ring2.setAttribute('stroke',hsl(c,.3,22));ring2.setAttribute('stroke-width',.6);
+const rt=tm/9000;for(let k=0;k<K;k++){const i0=Math.round(k*N/K),i1=Math.round((k+1)*N/K),t0=i0/N*6.2832,t1=i1/N*6.2832,r0=rad(v,i0)*72,r1=rad(v,i1)*72,mid=(t0+t1)/2+rt;
+const lit=Math.cos(mid+2.2),rm=(r0+r1)/2/72,l=c[2]-34+lit*24+(rm-.85)*90;
+F[k].setAttribute('d',`M0 0L${Math.cos(t0)*r0} ${Math.sin(t0)*r0}L${Math.cos(t1)*r1} ${Math.sin(t1)*r1}Z`);
+const cc=`hsl(${c[0]} ${Math.min(100,c[1]+14)}% ${Math.max(10,Math.min(80,l))}%)`;F[k].setAttribute('fill',cc);F[k].setAttribute('stroke',cc);F[k].setAttribute('stroke-width',.3)}
+core.setAttribute('transform',`rotate(${(rt*57.3).toFixed(1)})`);hi.setAttribute('d',path(v,72,1,0));hi.setAttribute('stroke',hsl(c,.9,30));hi.setAttribute('stroke-width',1);hi.setAttribute('transform',core.getAttribute('transform'))}}}
+// ---------- D: жидкое стекло, мягкие пятна ----------
+function D(){const id='D'+U++;const svg=E('svg',{viewBox:'-110 -110 220 220'});
+svg.innerHTML=`<defs><filter id="${id}" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="2.2"/></filter><radialGradient id="${id}g" cx=".35" cy=".3" r=".8"><stop offset="0" stop-color="#fff" stop-opacity=".9"/><stop offset=".4" stop-color="#fff" stop-opacity=".12"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient></defs>`;
+const L=[0,1,2].map(()=>({g:E('g'),p:E('path',{filter:`url(#${id})`}),e:E('path',{fill:'none'})}));
+L.forEach(o=>{o.g.append(o.p,o.e);svg.append(o.g)});const hl=E('path',{fill:`url(#${id}g)`,style:'mix-blend-mode:overlay'});svg.append(hl);
+return{el:svg,draw(v,tm){const c=col(v);const sc=[96,70,46];L.forEach((o,i)=>{o.p.setAttribute('d',path(v,sc[i],.85-i*.1));o.p.setAttribute('fill',hsl(c,.3+i*.22,-18+i*8));
+o.e.setAttribute('d',path(v,sc[i],.85-i*.1));o.e.setAttribute('stroke',hsl(c,.7,26));o.e.setAttribute('stroke-width',.8);o.e.setAttribute('stroke-opacity',.7);
+o.g.setAttribute('transform',`rotate(${(tm/1000*(i%2?-5:5)+i*21).toFixed(1)}) scale(${1+Math.sin(tm/1600+i)*.025})`)});
+hl.setAttribute('d',path(v,56,.9));}}}
+const V=[['A. Стеклянные слои','свет складывается, как у стекла',A],['B. Тонкие контуры','девять линий, без заливки: лёгкий, дорогой',B],['C. Кристалл','огранённая середина и два тонких кольца',C],['D. Жидкое стекло','мягкие пятна, блик, без жёстких границ',D]];
+const grid=document.getElementById('grid'),cards=V.map(([t,s,F])=>{const c=document.createElement('div');c.className='card';c.innerHTML=`<h2>${t}</h2><small>${s}</small><div class="fig"></div><div class="lbl"></div><div class="row"></div>`;grid.append(c);
+const live=F();c.querySelector('.fig').append(live.el);const row=c.querySelector('.row');const minis=[-3,-2,-1,0,1,2,3].map(m=>{const x=F();row.append(x.el);return[x,m]});return{c,live,minis,lbl:c.querySelector('.lbl')}});
+const rng=document.getElementById('rng');
+function frame(tm){const v=+rng.value,bg=col(v,BG);cards.forEach(o=>{o.c.style.setProperty('--bg',`hsl(${bg[0]} ${bg[1]}% ${bg[2]}%)`);o.live.draw(v,tm);o.lbl.textContent=NAMES[Math.round(v)+3];o.minis.forEach(([x,m])=>x.draw(m,tm))});requestAnimationFrame(frame)}
+requestAnimationFrame(frame);
+</script></body></html>
