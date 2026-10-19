@@ -20,7 +20,7 @@ import { todayView } from './today-view.js';
 
 export { ICONS, fmtTime };
 
-export const VERSION = '0.46.0 (дневник: стеклянный цветок, вариант G)';
+export const VERSION = '0.46.1 (дневник: цветок G в записи, лёгкий A в списке и в экономном режиме)';
 
 // Вкладки. group: main (в нижней панели телефона), more (внутри «Ещё»).
 export const TABS = [

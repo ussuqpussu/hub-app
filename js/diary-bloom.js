@@ -82,10 +82,17 @@ const LAY = [
 ];
 const LINES = 8;
 
-// живая фигура: set(v, ms) плавно переводит к уровню v; destroy() останавливает анимацию
-export function createBloom({ live = true } = {}) {
-  const uid = `bl${Math.random().toString(36).slice(2, 8)}`;
-  const svg = mk('svg', { viewBox: '-112 -112 224 224', class: 'bloom', 'aria-hidden': 'true' });
+
+const GLASS_THEMES = ['mythmono', 'mythbento', 'myth', 'creation'];
+// Стеклянный вид тяжелее: включаем его только на подходящих темах и не в экономном режиме. Иначе лёгкий вид.
+export function bloomStyle() {
+  const root = document.documentElement;
+  if (root.dataset.lite === '1' || root.dataset.idle === '1') return 'light';
+  return GLASS_THEMES.includes(root.dataset.theme) ? 'glass' : 'light';
+}
+
+// ----- стеклянный вид (вариант G): три прозрачных слоя, тонкие контуры внутри -----
+function buildGlass(svg, uid) {
   let defs = `<filter id="${uid}w" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="14"/></filter>
 <filter id="${uid}r" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="4.5"/></filter>
 <filter id="${uid}t" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="1"/></filter>
@@ -125,10 +132,6 @@ export function createBloom({ live = true } = {}) {
   const dot = mk('circle', { r: 2.4, filter: `url(#${uid}t)`, fill: 'rgba(255,255,255,.9)' });
   svg.append(dot);
 
-  let cur = 0; let from = 0; let to = 0; let t0 = 0; let dur = 0; let raf = 0; let alive = true; let lastV = null;
-  const ph = Math.random() * 6;
-  const listeners = new Set();
-
   // форма и цвет: пересчитываем только когда уровень изменился
   function shape(v, c) {
     const cols = [shift(c, -12, 2), c, shift(c, 12, -2)];
@@ -159,11 +162,8 @@ export function createBloom({ live = true } = {}) {
     svg.style.setProperty('--bloom-glow', hsl(c, 0.5));
   }
 
-  function paint(v, time) {
-    const c = colorAt(v);
-    if (v !== lastV) { shape(v, c); lastV = v; }
-    const breathe = 1 + Math.sin(time / 1700 + ph) * 0.02;
-    const t = live ? time / 1000 : 0;
+
+  function tick(t, breathe) {
     layers.forEach((o, i) => {
       o.g.setAttribute('transform', `rotate(${(t * o.L.rot + o.L.ph).toFixed(2)}) scale(${(1 + (breathe - 1) * (i + 1) * 0.7).toFixed(4)})`);
     });
@@ -171,6 +171,57 @@ export function createBloom({ live = true } = {}) {
       o.g.setAttribute('transform', `rotate(${(t * 4.2 * o.dir * (0.5 + o.k) * 3.2 + o.ph).toFixed(2)})`);
     });
     lineBox.setAttribute('transform', `scale(${breathe.toFixed(4)})`);
+  }
+  return { shape, tick };
+}
+
+// ----- лёгкий вид (вариант A): четыре стеклянных контура со свечением, без внутренних линий и обрезки -----
+function buildLight(svg, uid) {
+  svg.innerHTML = `<defs><filter id="${uid}w" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="9"/></filter></defs>`;
+  const halo = mk('path', { filter: `url(#${uid}w)` });
+  svg.append(halo);
+  const SC = [98, 82, 66, 50];
+  const RO = [0.9, 0.8, 0.7, 0.6];
+  const layers = SC.map((s, i) => {
+    const g = mk('g');
+    const p = mk('path');
+    const e = mk('path', { fill: 'none', 'stroke-linejoin': 'round' });
+    g.append(p, e); svg.append(g);
+    return { g, p, e, s, round: RO[i], rot: i % 2 ? -5 : 4, ph: i * 19 };
+  });
+  function shape(v, c) {
+    halo.setAttribute('d', pathAt(v, 72, 0.8));
+    halo.setAttribute('fill', hsl(c, 0.28, -10));
+    layers.forEach((o, i) => {
+      const d = pathAt(v, o.s, o.round);
+      o.p.setAttribute('d', d); o.e.setAttribute('d', d);
+      o.p.setAttribute('fill', hsl(c, 0.1 + i * 0.06, -14 + i * 2));
+      o.e.setAttribute('stroke', hsl(c, 0.85, 18)); o.e.setAttribute('stroke-width', '1.1');
+    });
+    svg.style.setProperty('--bloom-glow', hsl(c, 0.5));
+  }
+  function tick(t, breathe) {
+    layers.forEach((o, i) => o.g.setAttribute('transform', `rotate(${(t * o.rot + o.ph).toFixed(2)}) scale(${(1 + (breathe - 1) * (i < 2 ? 0.6 : 1)).toFixed(4)})`));
+  }
+  return { shape, tick };
+}
+
+// живая фигура: set(v, ms) плавно переводит к уровню v; destroy() останавливает анимацию
+// style: 'glass' | 'light' | 'auto' (по теме и экономному режиму)
+export function createBloom({ live = true, style = 'auto' } = {}) {
+  const uid = `bl${Math.random().toString(36).slice(2, 8)}`;
+  const svg = mk('svg', { viewBox: '-112 -112 224 224', class: 'bloom', 'aria-hidden': 'true' });
+  const kind = style === 'auto' ? bloomStyle() : style;
+  const view = kind === 'glass' ? buildGlass(svg, uid) : buildLight(svg, uid);
+  let cur = 0; let from = 0; let to = 0; let t0 = 0; let dur = 0; let raf = 0; let alive = true; let lastV = null;
+  const ph = Math.random() * 6;
+  const listeners = new Set();
+
+  function paint(v, time) {
+    const c = colorAt(v);
+    if (v !== lastV) { view.shape(v, c); lastV = v; }
+    const breathe = 1 + Math.sin(time / 1700 + ph) * 0.02;
+    view.tick(live ? time / 1000 : 0, breathe);
     cur = v;
     listeners.forEach((fn) => fn(v, c));
   }
@@ -210,7 +261,7 @@ export function createBloom({ live = true } = {}) {
 
 // неподвижная маленькая фигура для карточек списка
 export function staticBloom(v) {
-  const b = createBloom({ live: false });
+  const b = createBloom({ live: false, style: 'light' });
   b.set(v, 0);
   b.destroy();
   return b.el;
