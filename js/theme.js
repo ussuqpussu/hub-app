@@ -76,6 +76,7 @@ export function applyTheme(id) {
   const bg = getComputedStyle(root).getPropertyValue('--c-bg').trim();
   const meta = document.querySelector('meta[name="theme-color"]');
   if (meta && bg) meta.setAttribute('content', bg);
+  if (bg) { save('hub.bootBg', bg); root.style.removeProperty('background'); }
   return theme;
 }
 

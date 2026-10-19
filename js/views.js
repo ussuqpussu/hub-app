@@ -19,7 +19,7 @@ import { todayView } from './today-view.js';
 
 export { ICONS, fmtTime };
 
-export const VERSION = '0.39.0 (темы: Сотворение, Мифы, Бенто и новая «Монолит» по четырём макетам; ворон и коты убраны из сцен; анимации облегчены)';
+export const VERSION = '0.40.0 (экран PIN сразу в своей теме, без белой вспышки; заставка своя у каждой темы)';
 
 // Вкладки. group: main (в нижней панели телефона), more (внутри «Ещё»).
 export const TABS = [

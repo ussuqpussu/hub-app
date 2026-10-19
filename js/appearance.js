@@ -125,19 +125,42 @@ function sessionStorageGet(k) { try { return sessionStorage.getItem(k); } catch 
 // Заставка темы «Мифы»: видео (звезда загорается, фон темнеет, открывается хаб). Показывается один раз за сеанс, по касанию пропускается.
 export function showSplash(name = 'Хаб') {
   if (!getAppearance().splash || reducedMotion()) return Promise.resolve();
+  // У каждой темы своя заставка: Сотворение — буквы из ASCII-шума, Мифы — руны превращаются в имя и вспыхивает искра,
+  // Бенто — свечение и капсула, Монолит — «Х» с искрой, как на карточке с руками.
+  const th = document.documentElement.dataset.theme || 'creation';
   return new Promise((resolve) => {
     const d = document.createElement('div');
-    d.className = 'splash';
+    d.className = `splash splash--${th}`;
     d.setAttribute('aria-hidden', 'true');
+    const spark = document.createElement('div');
+    spark.className = 'splash__spark';
     const t = document.createElement('div');
     t.className = 'splash__name';
-    t.textContent = name;
     const line = document.createElement('div');
     line.className = 'splash__line';
-    d.append(t, line);
+    const sub = document.createElement('div');
+    sub.className = 'splash__sub';
+    const WD = ['воскресенье', 'понедельник', 'вторник', 'среда', 'четверг', 'пятница', 'суббота'];
+    const MON = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
+    const now = new Date();
+    sub.textContent = `${WD[now.getDay()]} · ${now.getDate()} ${MON[now.getMonth()]}`;
+    const word = th === 'mythmono' ? 'X' : name;
+    d.append(spark, t, line, sub);
     document.body.append(d);
-    setTimeout(() => d.classList.add('splash--out'), 1150);
-    setTimeout(() => { d.remove(); resolve(); }, 1750);
+    // буквы проявляются из шума (символы своей темы)
+    const pool = th === 'myth' ? 'ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗᛚᛜᛞᛟ' : th === 'creation' ? '@#%&*+=-:.' : '';
+    if (pool) {
+      const start = performance.now();
+      const step = () => {
+        const k = Math.min(1, (performance.now() - start) / 650);
+        const fixed = Math.floor(k * word.length);
+        t.textContent = word.split('').map((c, i) => (i < fixed ? c : pool[Math.floor(Math.random() * pool.length)])).join('');
+        if (k < 1) setTimeout(step, 45);
+      };
+      step();
+    } else t.textContent = word;
+    setTimeout(() => d.classList.add('splash--out'), 1250);
+    setTimeout(() => { d.remove(); resolve(); }, 1850);
   });
 }
 
