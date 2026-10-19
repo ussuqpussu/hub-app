@@ -3,7 +3,8 @@
 //  - сцена вне экрана: не рисуется;
 //  - окно просто без фокуса (рядом открыта другая программа) больше НЕ тормозит анимации: раньше сцена падала до 6 кадров/с,
 //    и это выглядело как лаги;
-//  - «Экономный режим» (авто на слабых устройствах, можно включить вручную): без размытия стекла и тяжёлых теней, сцены 30 кадров/с.
+//  - «Экономный режим» (авто на слабых устройствах, можно включить вручную): без размытия стекла и тяжёлых теней, сцены 20 кадров/с.
+//  - сцена всегда рисуется не чаще 30 кадров/с: руки двигаются медленно, а на большом экране (4K) каждый кадр дорогой.
 import { getAppearance, onAppearance } from './appearance.js';
 
 const state = { idle: false, lite: false };
@@ -22,7 +23,7 @@ export const isLite = () => state.lite;
 function fpsFor(frame) {
   if (document.hidden) return 0;
   if (seen.get(frame) === false) return 0;
-  return state.idle ? 0 : state.lite ? 30 : 60;
+  return state.idle ? 0 : state.lite ? 20 : 30;
 }
 function broadcast() {
   document.querySelectorAll('iframe').forEach((f) => {

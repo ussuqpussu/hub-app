@@ -21,6 +21,9 @@ import { roomText } from './schedule-view.js';
 import { getAppearance, onAppearance } from './appearance.js';
 import { currentQuote, nextQuote } from './hero.js';
 import { boardView } from './tasks-board.js';
+import { mergedProjects } from './projects-view.js';
+import { buildFeed } from './feed-calc.js';
+import { noteTitle } from './notes-calc.js';
 
 const WD = ['воскресенье', 'понедельник', 'вторник', 'среда', 'четверг', 'пятница', 'суббота'];
 const MON = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
@@ -231,6 +234,38 @@ function heroTile(d, today, { short = false } = {}) {
   ], { 'data-t': 'hero' });
 }
 
+
+// ---------- нижний ряд «Сегодня»: цитата, проекты, лента, заметки и ссылки ----------
+function quoteBigTile() {
+  const [text, who] = currentQuote(document.documentElement.dataset.theme);
+  const btn = el('button', { type: 'button', class: 'mt-qbtn', 'aria-label': 'Другая цитата', title: 'Другая цитата', text: '↻' });
+  btn.addEventListener('click', () => nextQuote());
+  return tile('mt-q2', [el('div', { class: 'mt-head' }, [kicker('Цитата'), btn]), el('p', { class: 'mt-q2__t', text: `«${text}»` }), el('span', { class: 'mt-sub', text: who })], { 'data-t': 'quote' });
+}
+function projectsTile(store) {
+  const list = mergedProjects(store).filter((p) => p.status !== 'archive');
+  const kids = [kicker('Проекты'), el('p', { class: 'mt-num mt-num--m', text: String(list.length) }), el('span', { class: 'mt-sub', text: list.length ? plural(list.length, ['проект в работе', 'проекта в работе', 'проектов в работе']) : 'проектов пока нет' })];
+  if (list.length) kids.push(el('p', { class: 'mt-line1', text: list.slice(0, 3).map((p) => p.name).join(' · ') }));
+  kids.push(el('a', { class: 'mt-link', href: '#/projects', 'aria-label': 'Проекты: открыть' }));
+  return tile('mt-proj', kids, { 'data-t': 'projects' });
+}
+function feedTile(store) {
+  const items = buildFeed(mergedProjects(store)).slice(0, 3);
+  const kids = [kicker('Лента проектов')];
+  if (!items.length) kids.push(el('p', { class: 'mt-empty', text: 'Событий пока нет.' }));
+  else kids.push(el('ul', { class: 'mt-feed' }, items.map((e) => el('li', {}, [el('b', { text: e.project }), ` ${e.text}`]))));
+  kids.push(el('a', { class: 'mt-link', href: '#/projects', 'aria-label': 'Лента проектов: открыть' }));
+  return tile('mt-feedt', kids, { 'data-t': 'feed' });
+}
+function notesTile(store) {
+  const all = store.list('notes').slice().sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
+  const links = all.filter((n) => n.kind === 'link').length;
+  const kids = [kicker('Заметки и ссылки'), el('p', { class: 'mt-num mt-num--m', text: String(all.length) }), el('span', { class: 'mt-sub', text: all.length ? `${plural(all.length - links, ['заметка', 'заметки', 'заметок'])} и ${links} ${plural(links, ['ссылка', 'ссылки', 'ссылок'])}` : 'пока пусто' })];
+  if (all.length) kids.push(el('p', { class: 'mt-line1', text: noteTitle(all[0]) }));
+  kids.push(el('a', { class: 'mt-link', href: '#/notes', 'aria-label': 'Заметки и ссылки: открыть' }));
+  return tile('mt-notest', kids, { 'data-t': 'notes' });
+}
+
 // ---------- «Сегодня» ----------
 
 export function monoToday({ store, subscribe }) {
@@ -281,15 +316,18 @@ export function monoToday({ store, subscribe }) {
         todoTile(store, today, { add: false, withDone: false, limit: 6 }),
       ]));
     } else {
-      root.replaceChildren(el('div', { class: 'mt-grid mt-grid--home' }, [
-        heroTile(d, today),
-        closedTile(store, today, 'grid'),
-        focusTile(),
-        subsTile(store),
-        todoTile(store, today),
-        schedTile(today),
-        weekTile(store, today, 'grid'),
-      ]));
+      root.replaceChildren(
+        el('div', { class: 'mt-grid mt-grid--home' }, [
+          heroTile(d, today),
+          closedTile(store, today, 'grid'),
+          focusTile(),
+          subsTile(store),
+          todoTile(store, today),
+          schedTile(today),
+          weekTile(store, today, 'grid'),
+        ]),
+        el('div', { class: 'mt-grid mt-grid--more' }, [quoteBigTile(), projectsTile(store), feedTile(store), notesTile(store)]),
+      );
     }
     requestAnimationFrame(syncHero);
     if (ro) ro.disconnect();
@@ -298,10 +336,12 @@ export function monoToday({ store, subscribe }) {
   }
 
   let sig = '';
-  const signature = () => ['tasks', 'goals', 'subs'].map((m) => store.list(m).map((it) => `${it.id}:${it.updatedAt}`).join(',')).join('|');
+  const signature = () => ['tasks', 'goals', 'subs', 'notes', 'projects'].map((m) => store.list(m).map((it) => `${it.id}:${it.updatedAt}`).join(',')).join('|');
   const alive = () => root.isConnected;
   subscribe(() => { const s = signature(); if (s !== sig) { sig = s; render(); } });
   const offS = onSchedule(() => { if (alive()) render(); else offS(); });
+  loadProjects({ refresh: false });
+  const offP = onProjects(() => { if (alive()) render(); else offP(); });
   const offA = onAppearance(() => { if (alive()) render(); else offA(); });
   const mq = window.matchMedia ? window.matchMedia('(min-width: 48rem)') : null;
   const onMq = () => { if (alive()) render(); else if (mq) mq.removeEventListener('change', onMq); };

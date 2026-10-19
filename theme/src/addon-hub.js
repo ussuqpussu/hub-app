@@ -5,10 +5,12 @@
   var MODE = /(^|[#&])stage/.test(H) ? 'stage' : /(^|[#&])editor/.test(H) ? 'editor' : '';
   if (!MODE) return;
   var KEY = 'hub.themeOvr';
+  // Холсты сцены рисуются в масштабе 1:1 (не 1.5–2): на 4K-мониторе это в 2–4 раза меньше пикселей на каждый кадр
+  if (MODE === 'stage') { try { Object.defineProperty(window, 'devicePixelRatio', { get: function () { return 1; }, configurable: true }); } catch (e) { /* оставляем как есть */ } }
   // Ограничение кадров: хаб сообщает, сколько кадров в секунду можно (0 = сцена скрыта или окно спрятано)
   (function () {
     // fps 60 и выше: каждый кадр экрана без обёртки. Меньше: ровно каждый N-й кадр (без рывков на 75/120/144 Гц).
-    var raf = window.requestAnimationFrame.bind(window), fps = 60, curT = -1, run = true, lastRun = 0;
+    var raf = window.requestAnimationFrame.bind(window), fps = 30, curT = -1, run = true, lastRun = 0;
     window.addEventListener('message', function (e) { var d = e.data; if (d && d.type === 'hub-perf' && typeof d.fps === 'number') fps = d.fps; });
     window.requestAnimationFrame = function (cb) {
       return raf(function w(t) {

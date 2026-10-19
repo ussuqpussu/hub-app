@@ -125,9 +125,16 @@ html[data-theme="mythmono"] .mt-grid--home {
   grid-template-columns: 330fr 128fr 96fr;
   grid-template-rows: 112fr 52fr 174fr;
   grid-template-areas: "hero closed focus" "hero closed subs" "row2 row2 row2";
-  height: calc(100dvh - var(--mono-top) - var(--mono-bottom));
-  min-height: 34rem;
+  height: calc(100dvh - var(--mono-top) - var(--mono-bottom) - 11.5rem);
+  min-height: 32rem;
 }
+html[data-theme="mythmono"] .mt-grid--more { display: grid; gap: var(--mono-gap); grid-template-columns: repeat(4, minmax(0, 1fr)); height: 10.5rem; margin-top: var(--mono-gap); }
+html[data-theme="mythmono"] .mt-q2__t { margin: .7rem 0 .3rem; font-family: var(--mono-serif); font-style: italic; font-size: .9rem; line-height: 1.35; color: var(--mono-text); display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+html[data-theme="mythmono"] .mt-proj .mt-num, html[data-theme="mythmono"] .mt-notest .mt-num { margin-top: .6rem; }
+html[data-theme="mythmono"] .mt-line1 { margin: auto 0 0; font-size: .74rem; color: var(--mono-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+html[data-theme="mythmono"] .mt-feed { list-style: none; margin: .8rem 0 0; padding: 0; display: grid; gap: .55rem; font-size: .76rem; color: var(--mono-text); }
+html[data-theme="mythmono"] .mt-feed li { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+html[data-theme="mythmono"] .mt-feed b { font-weight: 600; color: #fff; }
 html[data-theme="mythmono"] .mt-grid--home > .mt-hero { grid-area: hero; }
 html[data-theme="mythmono"] .mt-grid--home > .mt-closed { grid-area: closed; }
 html[data-theme="mythmono"] .mt-grid--home > .mt-focus { grid-area: focus; }
@@ -193,9 +200,8 @@ html[data-theme="mythmono"] .main[data-page="today"]:not(:has(.mt-hero)) > .hero
     position: fixed; z-index: 20; left: var(--mono-rail-x); top: 1.75rem; bottom: 1.75rem; height: auto; width: var(--mono-rail-w);
     margin: 0; padding: .9rem 0; gap: .55rem; align-items: center; overflow: visible;
     border: 1px solid var(--mono-line); border-radius: 1.75rem;
-    background: linear-gradient(170deg, rgb(255 255 255 / .085), rgb(255 255 255 / .025));
+    background: linear-gradient(170deg, rgb(30 30 33 / .94), rgb(14 14 16 / .96));
     box-shadow: inset 0 1px 0 var(--mono-hi), 0 24px 40px -24px #000;
-    -webkit-backdrop-filter: blur(var(--glass-blur)); backdrop-filter: blur(var(--glass-blur));
   }
   html[data-theme="mythmono"] .nav__logo { display: grid; place-items: center; width: 2.4rem; height: 2.4rem; margin-bottom: .5rem; padding: 0; border: 0; background: none; color: #f2f2f3; font: 400 1.35rem/1 var(--mono-serif); cursor: pointer; border-radius: 50%; }
   html[data-theme="mythmono"] .nav__logo:hover { background: rgb(255 255 255 / .08); }
@@ -214,13 +220,14 @@ html[data-theme="mythmono"] .main[data-page="today"]:not(:has(.mt-hero)) > .hero
   html[data-theme="mythmono"] .nav > [data-route="notes"] { order: 6; }
   html[data-theme="mythmono"] .nav > .nav__logo { order: 0; }
   html[data-theme="mythmono"] .nav > .nav__sep { order: 7; display: block; flex: 1; }
-  html[data-theme="mythmono"] .nav > [data-route="subscriptions"], html[data-theme="mythmono"] .nav > [data-route="knowledge"],
-  html[data-theme="mythmono"] .nav > .themebtn, html[data-theme="mythmono"] .nav > #search-side, html[data-theme="mythmono"] .nav > [data-route="settings"] { order: 8; display: none; }
-  /* навигация «значки»: остальное маленькими значками внизу */
-  html[data-theme="mythmono"][data-mono-nav="icons"] .nav > [data-route="subscriptions"], html[data-theme="mythmono"][data-mono-nav="icons"] .nav > [data-route="knowledge"],
-  html[data-theme="mythmono"][data-mono-nav="icons"] .nav > .themebtn, html[data-theme="mythmono"][data-mono-nav="icons"] .nav > #search-side, html[data-theme="mythmono"][data-mono-nav="icons"] .nav > [data-route="settings"] { display: flex; width: 1.9rem; height: 1.9rem; min-height: 1.9rem; color: #7d7e85; }
-  html[data-theme="mythmono"][data-mono-nav="icons"] .nav > :is([data-route="subscriptions"], [data-route="knowledge"], .themebtn, #search-side, [data-route="settings"]) svg { width: .9rem; height: .9rem; }
-  html[data-theme="mythmono"] .main { grid-column: 2; grid-row: 1; max-width: none; margin: 0; padding: var(--mono-top) var(--mono-side) var(--mono-bottom) 0; }
+  /* внизу панели, как у остальных тем: Знания (хроника, скиллы, промпты), Подписки, Поиск, светлая/тёмная, Настройки */
+  html[data-theme="mythmono"] .nav > :is([data-route="diary"], [data-route="knowledge"], [data-route="subscriptions"], #search-side, .themebtn, [data-route="settings"]) { order: 8; display: flex; width: 1.9rem; height: 1.9rem; min-height: 1.9rem; color: #7d7e85; }
+  html[data-theme="mythmono"] .nav > :is([data-route="diary"], [data-route="knowledge"], [data-route="subscriptions"], #search-side, .themebtn, [data-route="settings"]) svg { width: .9rem; height: .9rem; }
+  html[data-theme="mythmono"] .nav > [data-route="diary"] { order: 8; } html[data-theme="mythmono"] .nav > [data-route="knowledge"] { order: 9; } html[data-theme="mythmono"] .nav > [data-route="subscriptions"] { order: 9; }
+  html[data-theme="mythmono"] .nav > #search-side { order: 10; } html[data-theme="mythmono"] .nav > .themebtn { order: 11; } html[data-theme="mythmono"] .nav > [data-route="settings"] { order: 12; }
+  html[data-theme="mythmono"] .main, html[data-theme="mythmono"][data-hero-pos] .main[data-page] { grid-column: 2; grid-row: 1; max-width: none; margin: 0; padding: var(--mono-top) var(--mono-side) var(--mono-bottom) 0; }
+  /* на больших мониторах содержимое стоит по центру, а не прижато влево */
+  html[data-theme="mythmono"][data-hero-pos] .main > :not(.hero), html[data-theme="mythmono"] .main > :not(.hero) { max-width: 118rem; margin-inline: auto; width: 100%; grid-column: auto; }
   html[data-theme="mythmono"] .fab, html[data-theme="mythmono"] .fab--diary { display: none; }
 }
 .nav__logo { display: none; }
@@ -228,13 +235,6 @@ html[data-theme="mythmono"] .main[data-page="today"]:not(:has(.mt-hero)) > .hero
 @media (min-width: 48rem) {
   html[data-theme="mythmono"][data-mono-home="stage"] .app:has(.main[data-page="today"]) .mono-edge { display: block; position: fixed; z-index: 19; left: 0; top: 0; bottom: 0; width: 1.25rem; }
 }
-
-/* меню по «Х» */
-.mono-menu { position: fixed; z-index: 70; min-width: 12.5rem; padding: .45rem; border-radius: 1.1rem; background: rgb(18 18 20 / .96); border: 1px solid rgb(255 255 255 / .1); box-shadow: 0 24px 50px -12px rgb(0 0 0 / .8), inset 0 1px 0 rgb(255 255 255 / .1); display: grid; gap: .1rem; font-family: "Segoe UI Variable", "Segoe UI", system-ui, sans-serif; }
-.mono-menu[hidden] { display: none; }
-.mono-menu__i { display: flex; align-items: center; gap: .7rem; min-height: 2.5rem; padding: 0 .8rem; border: 0; border-radius: .7rem; background: none; color: #e6e6ea; font: 400 .85rem/1 inherit; text-align: left; cursor: pointer; }
-.mono-menu__i:hover, .mono-menu__i:focus-visible { background: rgb(255 255 255 / .08); outline: 0; }
-.mono-menu__i svg { width: 1rem; height: 1rem; color: #a9aab1; }
 
 /* ---------- шапка страниц без сцены (макет 2) ---------- */
 .mono-tools { display: none; }
@@ -356,11 +356,9 @@ html[data-theme="mythmono"] .mw-board .kan__col[data-col="done"] .kc:nth-child(n
   html[data-theme="mythmono"] .nav > [data-route="weekly"] { order: 5; display: grid; }
   html[data-theme="mythmono"] .nav > [data-route="more"] { order: 6; }
   html[data-theme="mythmono"] .nav > .sync-chip, html[data-theme="mythmono"] .nav > .nav__sep { display: none !important; }
-  /* «меню»: капсула листается, за пятью значками — остальные разделы; «Ещё» не нужна */
-  html[data-theme="mythmono"]:not([data-mono-nav="icons"]) .nav > [data-route="more"] { display: none; }
-  html[data-theme="mythmono"]:not([data-mono-nav="icons"]) .nav > :is([data-route="notes"], [data-route="subscriptions"], [data-route="knowledge"], #search-side, [data-route="settings"]) { display: grid; order: 7; }
-  html[data-theme="mythmono"][data-mono-nav="icons"] .nav > :is([data-route="notes"], [data-route="subscriptions"], [data-route="knowledge"], #search-side, [data-route="settings"]) { display: none; }
-  html[data-theme="mythmono"][data-mono-nav="icons"] .nav__item { flex-basis: calc((100vw - 2.2rem - 1.1rem) / 6); }
+  /* капсула листается: за пятью значками — остальные разделы; «Ещё» не нужна */
+  html[data-theme="mythmono"] .nav > [data-route="more"] { display: none; }
+  html[data-theme="mythmono"] .nav > :is([data-route="notes"], [data-route="subscriptions"], [data-route="knowledge"], [data-route="diary"], #search-side, [data-route="settings"]) { display: grid; order: 7; }
   html[data-theme="mythmono"] .nav > .themebtn { display: none; }
   html[data-theme="mythmono"] .mono-tools { top: calc(.9rem + env(safe-area-inset-top)); right: 1.1rem; }
   html[data-theme="mythmono"] .mono-search { width: 2.4rem; height: 2.4rem; padding: 0; justify-content: center; }

@@ -5,7 +5,7 @@ import { dbGet, dbSet, dbDelete } from './data/db.js';
 import { effectiveColors } from './theme.js';
 
 const KEY = 'hub.appearance';
-const DEFAULTS = { effects: true, live: 'auto', splash: true, hero: true, heroPos: 'side', sky: true, sounds: false, volume: 30, wpOn: true, wpDim: 40, glass: 'auto', wpGrad: -1, lite: 'auto', monoHome: 'grid', monoNav: 'menu', splashStyle: 'auto' };
+const DEFAULTS = { effects: true, live: 'auto', splash: true, hero: true, heroPos: 'side', sky: true, sounds: false, volume: 30, wpOn: true, wpDim: 40, glass: 'auto', wpGrad: -1, lite: 'auto', monoHome: 'grid', splashStyle: 'auto' };
 export const LIVE_OPTIONS = [
   { id: 'auto', name: 'Как у темы' },
   { id: 'stars', name: 'Звёзды' },
@@ -37,7 +37,6 @@ export function getAppearance() {
     lite: ['auto', 'on', 'off'].includes(s.lite) ? s.lite : DEFAULTS.lite,
     // «Монолит»: вид главной (сетка плиток или руки на весь экран) и навигация (меню по «Х» или значки внизу панели)
     monoHome: ['grid', 'stage'].includes(s.monoHome) ? s.monoHome : DEFAULTS.monoHome,
-    monoNav: ['menu', 'icons'].includes(s.monoNav) ? s.monoNav : DEFAULTS.monoNav,
     splashStyle: SPLASHES.some((x) => x[0] === s.splashStyle) ? s.splashStyle : DEFAULTS.splashStyle,
     wpGrad: Number.isInteger(s.wpGrad) && s.wpGrad >= -1 && s.wpGrad < GLASS_WALLS.length ? s.wpGrad : DEFAULTS.wpGrad,
   };
@@ -105,7 +104,6 @@ export async function applyAppearance() {
   root.dataset.effects = motionAllowed() ? 'on' : 'off';
   root.dataset.heroPos = a.heroPos;
   root.dataset.monoHome = a.monoHome;
-  root.dataset.monoNav = a.monoNav;
   applyGlass();
   let blob = null;
   try { blob = a.wpOn ? await dbGet('files', 'wallpaper') : null; } catch (_) { blob = null; }

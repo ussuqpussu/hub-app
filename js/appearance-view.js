@@ -115,20 +115,15 @@ export function appearanceBlock() {
   const vol = el('input', { type: 'range', class: 'field', min: '0', max: '100', step: '5', value: String(a.volume), 'aria-label': 'Громкость звуков' });
   vol.addEventListener('change', () => { setAppearance({ volume: Number(vol.value) }); playSound('done'); });
 
-  // «Монолит»: два вида главной и два вида навигации — выбрать, какой оставить
+  // «Монолит»: два вида главной — выбрать, какой оставить
   const monoHome = el('select', { class: 'field', 'aria-label': 'Вид главной в «Монолите»' });
   [['grid', 'Сетка плиток (макет 1)'], ['stage', 'Руки на весь экран (макет 3)']].forEach(([v, t]) => monoHome.append(el('option', { value: v, text: t })));
   monoHome.value = a.monoHome;
   monoHome.addEventListener('change', () => setAppearance({ monoHome: monoHome.value }));
-  const monoNav = el('select', { class: 'field', 'aria-label': 'Навигация в «Монолите»' });
-  [['menu', 'Меню по «Х», капсула телефона листается'], ['icons', 'Значки внизу панели, на телефоне «Ещё»']].forEach(([v, t]) => monoNav.append(el('option', { value: v, text: t })));
-  monoNav.value = a.monoNav;
-  monoNav.addEventListener('change', () => setAppearance({ monoNav: monoNav.value }));
   {
     root.append(
       el('h3', { text: 'Тема «Монолит»' }),
       el('label', { class: 'field-label', text: 'Вид главной' }), monoHome,
-      el('label', { class: 'field-label', text: 'Навигация: где Подписки, Знания, Поиск и Настройки' }), monoNav,
     );
   }
 
