@@ -1,18 +1,18 @@
 <!doctype html>
 <html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Цветок настроения: 4 варианта</title>
+<title>Цветок настроения: вариант E и исходные</title>
 <style>
 body{margin:0;background:#0c0c0e;color:#eee;font:15px/1.4 system-ui,sans-serif;padding:20px}
 h1{font-size:20px;margin:0 0 4px}p{margin:0 0 16px;color:#aaa}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}
-.card{border-radius:28px;padding:16px 16px 18px;text-align:center;background:var(--bg,#2a2a30);transition:background .3s}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:16px}
+.card:first-child{box-shadow:0 0 0 2px #ffffff55}.card{border-radius:28px;padding:16px 16px 18px;text-align:center;background:var(--bg,#2a2a30);transition:background .3s}
 .card h2{font-size:15px;margin:0 0 2px}.card small{color:#ffffffa0;display:block;margin-bottom:6px}
 .fig{width:200px;margin:6px auto}.fig svg{width:100%;overflow:visible}
 .lbl{font-weight:700;font-size:18px;min-height:26px}
 .row{display:flex;gap:4px;justify-content:center;margin-top:10px}.row svg{width:36px}
 input[type=range]{width:100%;max-width:560px;margin:14px 0 0;display:block}
 </style></head><body>
-<h1>Цветок настроения: 4 варианта</h1>
+<h1>Цветок настроения: объединённый вариант E</h1>
 <p>Двигай общий ползунок: форма и цвет перетекают. Внизу каждой карточки семь уровней от −3 до +3.</p>
 <input id="rng" type="range" min="-3" max="3" step="0.01" value="0">
 <div class="grid" id="grid" style="margin-top:16px"></div>
@@ -71,7 +71,31 @@ return{el:svg,draw(v,tm){const c=col(v);const sc=[96,70,46];L.forEach((o,i)=>{o.
 o.e.setAttribute('d',path(v,sc[i],.85-i*.1));o.e.setAttribute('stroke',hsl(c,.7,26));o.e.setAttribute('stroke-width',.8);o.e.setAttribute('stroke-opacity',.7);
 o.g.setAttribute('transform',`rotate(${(tm/1000*(i%2?-5:5)+i*21).toFixed(1)}) scale(${1+Math.sin(tm/1600+i)*.025})`)});
 hl.setAttribute('d',path(v,56,.9));}}}
-const V=[['A. Стеклянные слои','свет складывается, как у стекла',A],['B. Тонкие контуры','девять линий, без заливки: лёгкий, дорогой',B],['C. Кристалл','огранённая середина и два тонких кольца',C],['D. Жидкое стекло','мягкие пятна, блик, без жёстких границ',D]];
+
+// ---------- E: A + B + D вместе ----------
+function EE(){const id='E'+U++;const svg=E('svg',{viewBox:'-110 -110 220 220'});
+svg.innerHTML=`<defs><filter id="${id}b" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="2.4"/></filter><filter id="${id}w" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="10"/></filter>
+<radialGradient id="${id}c"><stop class="c0" offset="0"/><stop class="c1" offset="1"/></radialGradient>
+<radialGradient id="${id}h" cx=".35" cy=".3" r=".8"><stop offset="0" stop-color="#fff" stop-opacity=".75"/><stop offset=".45" stop-color="#fff" stop-opacity=".08"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient></defs>`;
+const halo=E('path',{filter:`url(#${id}w)`});svg.append(halo);
+const soft=[0,1,2].map(()=>({g:E('g'),p:E('path',{filter:`url(#${id}b)`}),e:E('path',{fill:'none'}),e2:E('path',{fill:'none'})}));
+soft.forEach(o=>{o.g.append(o.p,o.e,o.e2);svg.append(o.g)});
+const lines=[];const lg=E('g');for(let i=0;i<7;i++){const p=E('path',{fill:'none','stroke-linejoin':'round'});lg.append(p);lines.push(p)}svg.append(lg);
+const core=E('circle',{r:20,fill:`url(#${id}c)`});const hl=E('path',{fill:`url(#${id}h)`,style:'mix-blend-mode:overlay'});svg.append(core,hl);
+const c0=svg.querySelector('.c0'),c1=svg.querySelector('.c1');
+return{el:svg,draw(v,tm){const c=col(v);const br=1+Math.sin(tm/1700)*.02;
+halo.setAttribute('d',path(v,78,.8));halo.setAttribute('fill',hsl(c,.38,-8));
+const sc=[98,76,54],ro=[.9,.82,.72];
+soft.forEach((o,i)=>{const d=path(v,sc[i],ro[i]);o.p.setAttribute('d',d);o.p.setAttribute('fill',hsl(c,.22+i*.2,-20+i*8));
+o.e.setAttribute('d',d);o.e.setAttribute('stroke',hsl(c,.9-i*.1,20-i*2));o.e.setAttribute('stroke-width',1.1);
+o.e2.setAttribute('d',path(v,sc[i]*.95,ro[i]));o.e2.setAttribute('stroke',hsl(c,.4,28));o.e2.setAttribute('stroke-width',.5);
+o.g.setAttribute('transform',`rotate(${(tm/1000*(i%2?-5:4)+i*19).toFixed(1)}) scale(${(1+(br-1)*(i+1)*.6).toFixed(4)})`)});
+lines.forEach((p,i)=>{const k=i/6,s0=64-k*44;p.setAttribute('d',path(v,s0,.9-k*.3,(tm/3800)*(i%2?-1:1)*(.5+k)+i*.17));p.setAttribute('stroke',hsl(c,.35+k*.55,12+k*14));p.setAttribute('stroke-width',(.6+k*.7).toFixed(2))});
+lg.setAttribute('transform',`scale(${br.toFixed(4)})`);
+c0.setAttribute('stop-color',hsl(c,1,24));c1.setAttribute('stop-color',hsl(c,.0,0));
+hl.setAttribute('d',path(v,60,.85))}}}
+
+const V=[['E. Всё вместе (A + B + D)','мягкое свечение, стеклянные края, тонкие линии внутри',EE],['A. Стеклянные слои','свет складывается, как у стекла',A],['B. Тонкие контуры','девять линий, без заливки: лёгкий, дорогой',B],['C. Кристалл','огранённая середина и два тонких кольца',C],['D. Жидкое стекло','мягкие пятна, блик, без жёстких границ',D]];
 const grid=document.getElementById('grid'),cards=V.map(([t,s,F])=>{const c=document.createElement('div');c.className='card';c.innerHTML=`<h2>${t}</h2><small>${s}</small><div class="fig"></div><div class="lbl"></div><div class="row"></div>`;grid.append(c);
 const live=F();c.querySelector('.fig').append(live.el);const row=c.querySelector('.row');const minis=[-3,-2,-1,0,1,2,3].map(m=>{const x=F();row.append(x.el);return[x,m]});return{c,live,minis,lbl:c.querySelector('.lbl')}});
 const rng=document.getElementById('rng');
