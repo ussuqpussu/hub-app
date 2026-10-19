@@ -98,12 +98,12 @@ function currentRoute() {
 }
 
 // Смена темы: рамку со сценой не пересоздаём, ей отправляется новое имя темы.
-let wasMono = document.documentElement.dataset.theme === 'mythmono';
+let wasMono = ['mythmono', 'fusion'].includes(document.documentElement.dataset.theme);
 new MutationObserver(() => {
   applyGlass();
   const full = currentRoute();
   // «Монолит» рисует «Сегодня» и «Итоги» по-своему: при входе в тему и выходе из неё страница строится заново
-  const isMono = document.documentElement.dataset.theme === 'mythmono';
+  const isMono = ['mythmono', 'fusion'].includes(document.documentElement.dataset.theme);
   if (isMono !== wasMono) { wasMono = isMono; if (!document.getElementById('app').hidden && ['today', 'weekly'].includes(full)) { route(); return; } }
   if (full.includes('/')) return;
   const th = document.documentElement.dataset.theme;

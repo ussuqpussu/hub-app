@@ -61,7 +61,7 @@ export function applyGlass() {
   const root = document.documentElement;
   const a = getAppearance();
   const theme = root.dataset.theme;
-  const mode = a.glass === 'auto' ? (theme === 'mythbento' || theme === 'mythmono' ? 'tinted' : '') : a.glass === 'off' ? '' : a.glass;
+  const mode = a.glass === 'auto' ? (theme === 'mythbento' || theme === 'mythmono' || theme === 'fusion' ? 'tinted' : '') : a.glass === 'off' ? '' : a.glass;
   if (mode) { if (root.dataset.glass !== mode) root.dataset.glass = mode; } else if (root.dataset.glass) delete root.dataset.glass;
   const idx = a.wpGrad >= 0 ? a.wpGrad : -1;
   let dk = true;
@@ -146,11 +146,11 @@ export function showSplash(name = 'Хаб', force) {
     const MON = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
     const now = new Date();
     sub.textContent = `${WD[now.getDay()]} · ${now.getDate()} ${MON[now.getMonth()]}`;
-    const word = th === 'mythmono' ? 'X' : name;
+    const word = th === 'mythmono' || th === 'fusion' ? 'X' : name;
     d.append(spark, t, line, sub);
     document.body.append(d);
     // буквы проявляются из шума (символы своей темы)
-    const pool = th === 'myth' ? 'ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗᛚᛜᛞᛟ' : th === 'creation' ? '@#%&*+=-:.' : '';
+    const pool = th === 'myth' || th === 'fusion' ? 'ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗᛚᛜᛞᛟ' : th === 'creation' ? '@#%&*+=-:.' : '';
     if (pool) {
       const start = performance.now();
       const step = () => {

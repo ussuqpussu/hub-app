@@ -25,7 +25,7 @@
 [data-mood="1"] { --c-mood: var(--dm-p1); }
 [data-mood="2"] { --c-mood: var(--dm-p2); }
 [data-mood="3"] { --c-mood: var(--dm-p3); }
-html[data-theme="mythmono"] { --dflow-accent: #f2f2f3; --dflow-on-accent: #08080a; }
+html:is([data-theme="mythmono"],[data-theme="fusion"]) { --dflow-accent: #f2f2f3; --dflow-on-accent: #08080a; }
 
 /* ---------- фигура ---------- */
 .bloom { display: block; width: 100%; height: auto; overflow: visible; filter: drop-shadow(0 0 0.7rem var(--bloom-glow, transparent)); }
@@ -80,7 +80,7 @@ html.dflow-open { overflow: hidden; }
 .dflow.is-in .dflow__shade { background: rgb(0 0 0 / 0.62); }
 .dflow__main { position: relative; width: 100%; height: 100dvh; display: flex; flex-direction: column; overflow: hidden; background: #1c1a24; opacity: 0; transform: translateY(16px); transition: transform 0.42s var(--dflow-ease), opacity 0.3s; }
 .dflow.is-in .dflow__main { opacity: 1; transform: none; }
-html[data-theme="mythmono"] .dflow__main { background: #0e0e10; }
+html:is([data-theme="mythmono"],[data-theme="fusion"]) .dflow__main { background: #0e0e10; }
 @media (min-width: 48rem) {
   .dflow { place-items: center; }
   .dflow__main { width: min(34rem, 94vw); height: min(54rem, 92dvh); border-radius: 2rem; box-shadow: 0 40px 90px -20px #000, inset 0 0 0 1px rgb(255 255 255 / 0.08); }

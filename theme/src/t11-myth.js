@@ -595,3 +595,12 @@ MYART[3]=["Мьёльнир","mjolnir","ᛗᛃᛟᛚᚾᛁᚱ","Молот То�
     if (e.key === 'mythPal' && e.newValue && MYPALS[e.newValue] && e.newValue !== MYPAL) { MYPAL = e.newValue; lastPal = MYPAL; renderBig(); }
   });
 })();
+
+/* ---- «Слияние»: оболочка «Монолита», сцены (9 ASCII-страниц, котик) от «Сотворения» ---- */
+(function(){
+ var cr=T.filter(function(x){return x.n==="Сотворение"})[0],fu=T.filter(function(x){return x.n==="Слияние"})[0];
+ if(!cr||!fu)return;
+ var keep={n:1,g:1,b:1,s:1,t:1,a:1,ba:1,dim:1,k:1};
+ for(var k in cr){if(!keep[k])fu[k]=cr[k]}
+ fu.k="fusion";fu.g="Тёмные";delete fu.ts;fu.L=cr.L;
+})();

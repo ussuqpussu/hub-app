@@ -19,7 +19,7 @@ export const MONO_ICONS = {
   more: ico('<circle cx="6" cy="12" r="1.2"/><circle cx="12" cy="12" r="1.2"/><circle cx="18" cy="12" r="1.2"/>'),
 };
 
-const isMono = () => document.documentElement.dataset.theme === 'mythmono';
+const isMono = () => ['mythmono', 'fusion'].includes(document.documentElement.dataset.theme);
 
 export function initMonoNav({ nav, store }) {
   // «Х» — первым элементом панели

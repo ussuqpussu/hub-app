@@ -83,7 +83,7 @@ const LAY = [
 const LINES = 8;
 
 
-const GLASS_THEMES = ['mythmono', 'mythbento', 'myth', 'creation'];
+const GLASS_THEMES = ['mythmono', 'fusion', 'mythbento', 'myth', 'creation'];
 // Стеклянный вид тяжелее: включаем его только на подходящих темах и не в экономном режиме. Иначе лёгкий вид.
 export function bloomStyle() {
   const root = document.documentElement;

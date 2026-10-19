@@ -94,7 +94,7 @@ export function todayView({ store, subscribe }) {
 
     // День пройден: доля суток от 00:00 до 24:00, обновляется раз в минуту
     {
-      const myth = /^myth/.test(document.documentElement.dataset.theme || '');
+      const myth = /^(myth|fusion)/.test(document.documentElement.dataset.theme || '');
       const NS = 'http://www.w3.org/2000/svg';
       const svg = document.createElementNS(NS, 'svg');
       svg.setAttribute('class', 'daypath'); svg.setAttribute('viewBox', '0 0 120 70'); svg.setAttribute('role', 'img');

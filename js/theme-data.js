@@ -70,5 +70,28 @@ export const THEME_DEFS = [
    "#2a2b30",
    "#d8d8dc"
   ]
+ },
+ {
+  "id": "fusion",
+  "name": "Слияние",
+  "group": "Тёмные",
+  "note": "Тёмная: оболочка «Монолита» (рейка, плитки, страницы) и все девять ASCII-сцен «Сотворения»: руки фрески, планета, гора-цель, созвездие, котик",
+  "dark": true,
+  "bg": "#040405",
+  "surface": "#101012",
+  "text": "#d8d8dc",
+  "accent": "#f2f2f2",
+  "onAccent": "#050505",
+  "dim": "#8d8e96",
+  "font": "Georgia,'Times New Roman',serif",
+  "card": "1.75em",
+  "btn": "99px",
+  "layout": "float",
+  "pal": [
+   "#f2f2f2",
+   "#9097a6",
+   "#2a2b30",
+   "#d8d8dc"
+  ]
  }
 ];

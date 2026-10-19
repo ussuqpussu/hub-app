@@ -1,6 +1,6 @@
 import { appearanceBlock } from './appearance-view.js';
 import { monoToday, monoWeekly } from './mono-view.js';
-const mono = () => document.documentElement.dataset.theme === 'mythmono';
+const mono = () => ['mythmono', 'fusion'].includes(document.documentElement.dataset.theme);
 import { AUTOLOCK_OPTIONS, getAutolock, setAutolock } from './pin.js';
 import { hasTrust, enableTrust, disableTrust, verifyPin, changePin, getRecoveryCode, setToken, clearToken, getSession } from './data/vault.js';
 import { createGithub } from './data/github.js';
@@ -20,7 +20,7 @@ import { todayView } from './today-view.js';
 
 export { ICONS, fmtTime };
 
-export const VERSION = '0.46.1 (дневник: цветок G в записи, лёгкий A в списке и в экономном режиме)';
+export const VERSION = '0.47.0 (новая тема «Слияние»: Монолит, Сотворение, Мифы)';
 
 // Вкладки. group: main (в нижней панели телефона), more (внутри «Ещё»).
 export const TABS = [
