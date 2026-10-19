@@ -19,7 +19,7 @@ import { todayView } from './today-view.js';
 
 export { ICONS, fmtTime };
 
-export const VERSION = '0.40.0 (экран PIN сразу в своей теме, без белой вспышки; заставка своя у каждой темы)';
+export const VERSION = '0.41.0 (заставка выбирается в настройках для любой темы; новые: печатная машинка, волна, затмение, орбита)';
 
 // Вкладки. group: main (в нижней панели телефона), more (внутри «Ещё»).
 export const TABS = [

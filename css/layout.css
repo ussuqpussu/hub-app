@@ -925,3 +925,25 @@ html[data-hero-pos="bg"] .hero__qn { display: none; }
 .splash--mythmono .splash__name { font-family: "Times New Roman", Times, serif; font-weight: 400; font-size: clamp(4rem, 12vw, 8rem); color: #f1f1f3; letter-spacing: 0; }
 .splash--mythmono .splash__spark { width: 14rem; height: 14rem; animation: splash-spark 1.2s var(--ease-out) .35s both; }
 .splash--mythmono .splash__line { width: 2.5rem; background: rgb(255 255 255 / .5); }
+/* Печатная машинка: моноширинный шрифт и мигающий курсор */
+.splash--type::before { display: none; }
+.splash--type .splash__name { font-family: var(--font-mono); animation: none; }
+.splash--type .splash__name::after { content: ""; display: inline-block; width: .08em; height: .9em; margin-left: .08em; vertical-align: -.08em; background: currentColor; animation: splash-caret .5s steps(1) infinite; }
+.splash--type .splash__line { display: none; }
+@keyframes splash-caret { 50% { opacity: 0; } }
+/* Волна: буквы поднимаются по очереди */
+.splash--wave .splash__name { animation: none; }
+.splash--wave .splash__name span { display: inline-block; animation: splash-wave .9s var(--ease-out) var(--d) both; }
+@keyframes splash-wave { 0% { opacity: 0; transform: translateY(1.2rem) scale(.8); } 60% { opacity: 1; transform: translateY(-.3rem); } 100% { transform: none; } }
+/* Затмение: тёмный диск проходит по светлому кругу, после него проступает имя */
+.splash--eclipse::before { animation: none; opacity: 1; width: 14rem; height: 14rem; background: radial-gradient(circle, #f4f4f5 0 58%, rgb(255 255 255 / .25) 60%, transparent 72%); }
+.splash--eclipse::after { content: ""; position: absolute; inset: 0; margin: auto; width: 14rem; height: 14rem; border-radius: 50%; background: var(--c-bg); animation: splash-eclipse 1.2s var(--ease-out) both; }
+.splash--eclipse .splash__name { z-index: 1; color: #f4f4f5; mix-blend-mode: difference; animation-delay: .5s; }
+.splash--eclipse .splash__line { display: none; }
+@keyframes splash-eclipse { from { transform: translateX(-130%); } to { transform: translateX(14%); } }
+/* Орбита: три точки кружат вокруг имени */
+.splash__orb { position: absolute; inset: 0; margin: auto; width: 12rem; height: 12rem; border-radius: 50%; animation: splash-orbit 1.4s linear var(--d) infinite; }
+.splash__orb::before { content: ""; position: absolute; left: 50%; top: -3px; width: 6px; height: 6px; margin-left: -3px; border-radius: 50%; background: var(--c-accent); box-shadow: 0 0 12px var(--c-accent); }
+.splash--orbit::before { opacity: .6; }
+@keyframes splash-orbit { to { transform: rotate(360deg); } }
+.splash--eclipse .splash__sub { z-index: 1; }

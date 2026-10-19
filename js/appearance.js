@@ -5,7 +5,7 @@ import { dbGet, dbSet, dbDelete } from './data/db.js';
 import { effectiveColors } from './theme.js';
 
 const KEY = 'hub.appearance';
-const DEFAULTS = { effects: true, live: 'auto', splash: true, hero: true, heroPos: 'side', sky: true, sounds: false, volume: 30, wpOn: true, wpDim: 40, glass: 'auto', wpGrad: -1, lite: 'auto', monoHome: 'grid', monoNav: 'menu' };
+const DEFAULTS = { effects: true, live: 'auto', splash: true, hero: true, heroPos: 'side', sky: true, sounds: false, volume: 30, wpOn: true, wpDim: 40, glass: 'auto', wpGrad: -1, lite: 'auto', monoHome: 'grid', monoNav: 'menu', splashStyle: 'auto' };
 export const LIVE_OPTIONS = [
   { id: 'auto', name: 'Как у темы' },
   { id: 'stars', name: 'Звёзды' },
@@ -38,6 +38,7 @@ export function getAppearance() {
     // «Монолит»: вид главной (сетка плиток или руки на весь экран) и навигация (меню по «Х» или значки внизу панели)
     monoHome: ['grid', 'stage'].includes(s.monoHome) ? s.monoHome : DEFAULTS.monoHome,
     monoNav: ['menu', 'icons'].includes(s.monoNav) ? s.monoNav : DEFAULTS.monoNav,
+    splashStyle: SPLASHES.some((x) => x[0] === s.splashStyle) ? s.splashStyle : DEFAULTS.splashStyle,
     wpGrad: Number.isInteger(s.wpGrad) && s.wpGrad >= -1 && s.wpGrad < GLASS_WALLS.length ? s.wpGrad : DEFAULTS.wpGrad,
   };
 }
@@ -123,11 +124,14 @@ export async function applyAppearance() {
 function sessionStorageGet(k) { try { return sessionStorage.getItem(k); } catch (e) { return null; } }
 
 // Заставка темы «Мифы»: видео (звезда загорается, фон темнеет, открывается хаб). Показывается один раз за сеанс, по касанию пропускается.
-export function showSplash(name = 'Хаб') {
-  if (!getAppearance().splash || reducedMotion()) return Promise.resolve();
+// Заставки: выбираются в настройках независимо от темы; «auto» — своя у текущей темы.
+export const SPLASHES = [['auto', 'Как у темы'], ['creation', 'Шум (Сотворение)'], ['myth', 'Руны и искра (Мифы)'], ['mythbento', 'Стеклянная капсула (Бенто)'], ['mythmono', 'Буква «X» с искрой (Монолит)'], ['type', 'Печатная машинка'], ['wave', 'Волна'], ['eclipse', 'Затмение'], ['orbit', 'Орбита']];
+export function showSplash(name = 'Хаб', force) {
+  if (!force && (!getAppearance().splash || reducedMotion())) return Promise.resolve();
   // У каждой темы своя заставка: Сотворение — буквы из ASCII-шума, Мифы — руны превращаются в имя и вспыхивает искра,
   // Бенто — свечение и капсула, Монолит — «Х» с искрой, как на карточке с руками.
-  const th = document.documentElement.dataset.theme || 'creation';
+  const pick = force || getAppearance().splashStyle;
+  const th = pick && pick !== 'auto' ? pick : (document.documentElement.dataset.theme || 'creation');
   return new Promise((resolve) => {
     const d = document.createElement('div');
     d.className = `splash splash--${th}`;
@@ -158,7 +162,14 @@ export function showSplash(name = 'Хаб') {
         if (k < 1) setTimeout(step, 45);
       };
       step();
+    } else if (th === 'type') {
+      let i = 0;
+      const tick = () => { t.textContent = word.slice(0, i); if (i++ < word.length) setTimeout(tick, 140); };
+      tick();
+    } else if (th === 'wave') {
+      word.split('').forEach((c, i) => { const sp = document.createElement('span'); sp.textContent = c; sp.style.setProperty('--d', `${i * 90}ms`); t.append(sp); });
     } else t.textContent = word;
+    if (th === 'orbit') for (let i = 0; i < 3; i++) { const o = document.createElement('i'); o.className = 'splash__orb'; o.style.setProperty('--d', `${i * -0.45}s`); d.append(o); }
     setTimeout(() => d.classList.add('splash--out'), 1250);
     setTimeout(() => { d.remove(); resolve(); }, 1850);
   });

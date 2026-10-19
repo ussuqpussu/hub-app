@@ -2,7 +2,7 @@
 import { el } from './ui.js';
 import { THEMES, currentTheme, setTheme, invertTheme, resetThemeOvr, setAccent, effectiveColors } from './theme.js';
 import { themeWipe } from './motion-kit.js';
-import { getAppearance, setAppearance, GLASS_WALLS, GLASS_ACCENTS, LIVE_OPTIONS, saveWallpaperFile, removeWallpaper, hasWallpaper, playSound, reducedMotion } from './appearance.js';
+import { SPLASHES, showSplash, getAppearance, setAppearance, GLASS_WALLS, GLASS_ACCENTS, LIVE_OPTIONS, saveWallpaperFile, removeWallpaper, hasWallpaper, playSound, reducedMotion } from './appearance.js';
 
 const ENGINE = new URL('../theme/engine.html', import.meta.url).href;
 
@@ -141,6 +141,15 @@ export function appearanceBlock() {
     el('label', { class: 'field-label', text: 'Экономный режим (без размытия стекла, меньше кадров; при игре и в фоне сцены замирают сами)' }), lite,
     toggle('Небо и погода в плитке «Погода»', 'sky'),
     toggle('Заставка при входе', 'splash'),
+    el('label', { class: 'field-label', text: 'Какая заставка' }), (() => {
+      const sel = el('select', { class: 'field', 'aria-label': 'Какая заставка' });
+      SPLASHES.forEach(([v, t]) => sel.append(el('option', { value: v, text: t })));
+      sel.value = getAppearance().splashStyle;
+      sel.addEventListener('change', () => { setAppearance({ splashStyle: sel.value }); showSplash('Хаб', sel.value); });
+      const b = el('button', { type: 'button', class: 'btn btn--s', text: 'Показать' });
+      b.addEventListener('click', () => showSplash('Хаб', sel.value));
+      return el('div', { class: 'row' }, [sel, b]);
+    })(),
     el('h3', { text: 'Звуки' }),
     toggle('Тихие звуки (вход, добавление, готово)', 'sounds', (on) => { if (on) playSound('unlock'); }),
     el('label', { class: 'field-label', text: 'Громкость' }), vol,
