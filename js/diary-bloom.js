@@ -8,7 +8,7 @@ const N = 120; // точек на контур
 
 // n лепестков, a размах, p острота лучей (больше — уже и острее)
 const SHAPES = [
-  { n: 8, a: 0.36, p: 2.4 },
+  { n: 8, a: 0.38, p: 2.9 },
   { n: 8, a: 0.22, p: 1.3 },
   { n: 8, a: 0.1, p: 1 },
   { n: 1, a: 0, p: 1 },
@@ -85,11 +85,19 @@ export function createBloom({ live = true } = {}) {
   svg.setAttribute('viewBox', '-110 -110 220 220');
   svg.setAttribute('class', 'bloom');
   svg.setAttribute('aria-hidden', 'true');
+  const uid = `bg${Math.random().toString(36).slice(2, 8)}`;
+  const defs = document.createElementNS(NS, 'defs');
+  defs.innerHTML = `<radialGradient id="${uid}a"><stop class="a0" offset="0.25"/><stop class="a1" offset="1"/></radialGradient>
+<radialGradient id="${uid}b"><stop class="b0" offset="0.2"/><stop class="b1" offset="1"/></radialGradient>
+<radialGradient id="${uid}c"><stop offset="0" stop-color="#fff" stop-opacity="0.38"/><stop offset="0.55" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity="0.32"/></radialGradient>
+<filter id="${uid}s" x="-30%" y="-30%" width="160%" height="160%"><feDropShadow dx="0" dy="2.5" stdDeviation="3" flood-color="#000" flood-opacity="0.35"/></filter>`;
+  svg.append(defs);
+  const q = (c) => defs.querySelector(c);
   const groups = LAYERS.map((L) => {
     const g = document.createElementNS(NS, 'g');
     const p = document.createElementNS(NS, 'path');
     p.setAttribute('stroke-linejoin', 'round');
-    g.append(p); svg.append(g);
+    g.append(p); g.setAttribute('filter', `url(#${uid}s)`); svg.append(g);
     return { g, p, L };
   });
   // второй, тонкий контур у кромки: двоит край, как стекло
@@ -109,7 +117,9 @@ export function createBloom({ live = true } = {}) {
   const sheen = document.createElementNS(NS, 'ellipse');
   sheen.setAttribute('rx', '15'); sheen.setAttribute('ry', '8'); sheen.setAttribute('cx', '-6'); sheen.setAttribute('cy', '-12');
   sheen.setAttribute('transform', 'rotate(-28 -6 -12)');
-  core.append(rim);
+  const shade = document.createElementNS(NS, 'path');
+  shade.setAttribute('fill', `url(#${uid}c)`);
+  core.append(shade, rim);
   svg.append(core);
   const dot = document.createElementNS(NS, 'circle');
   dot.setAttribute('r', '2');
@@ -120,10 +130,12 @@ export function createBloom({ live = true } = {}) {
 
   let lastV = null;
   function shape(v, c) {
-    groups.forEach(({ p, p2, L }) => {
+    q('.a0').setAttribute('stop-color', hsl(c, 0.02, 4)); q('.a1').setAttribute('stop-color', hsl(c, 0.3, 8));
+    q('.b0').setAttribute('stop-color', hsl(c, 0.05, 2)); q('.b1').setAttribute('stop-color', hsl(c, 0.46, 6));
+    groups.forEach(({ p, p2, L }, gi) => {
       p.setAttribute('d', pathAt(v, L.s, L.round));
       p2.setAttribute('d', pathAt(v, L.s * 0.955, L.round));
-      p.setAttribute('fill', hsl(c, L.fill)); p.setAttribute('stroke', hsl(c, 0.85, 22)); p.setAttribute('stroke-width', String(L.w));
+      p.setAttribute('fill', `url(#${uid}${gi ? 'b' : 'a'})`); p.setAttribute('stroke', hsl(c, 0.95, 26)); p.setAttribute('stroke-width', String(L.w));
       p2.setAttribute('stroke', hsl(c, 0.5, 30)); p2.setAttribute('stroke-width', '0.6');
     });
     // грани середины: свет слева сверху, выступающие части светлее
@@ -145,6 +157,7 @@ export function createBloom({ live = true } = {}) {
       f.setAttribute('fill', col); f.setAttribute('stroke', col); f.setAttribute('stroke-width', '0.35');
     }
     rim.setAttribute('d', pathAt(v, CORE.s, CORE.round));
+    shade.setAttribute('d', pathAt(v, CORE.s, CORE.round));
     rim.setAttribute('stroke', hsl(c, 0.9, 26)); rim.setAttribute('stroke-width', '0.9');
     sheen.setAttribute('fill', 'rgb(255 255 255 / 0.26)');
     dot.setAttribute('fill', hsl([c[0], c[1], 30], 0.85));
