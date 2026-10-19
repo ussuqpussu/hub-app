@@ -13,13 +13,14 @@ import { projectsView } from './projects-view.js';
 import { projectPage } from './project-page.js';
 import { weeklyView } from './weekly-view.js';
 import { notesView } from './notes-view.js';
+import { diaryView } from './diary-view.js';
 import { knowledgeView } from './knowledge-view.js';
 import { getScheduleState, loadSchedule, onSchedule } from './schedule-data.js';
 import { todayView } from './today-view.js';
 
 export { ICONS, fmtTime };
 
-export const VERSION = '0.41.0 (заставка выбирается в настройках для любой темы; новые: печатная машинка, волна, затмение, орбита)';
+export const VERSION = '0.42.0 (вкладка «Дневник»: записи, статистика, наблюдения, поддержка без ИИ)';
 
 // Вкладки. group: main (в нижней панели телефона), more (внутри «Ещё»).
 export const TABS = [
@@ -30,6 +31,7 @@ export const TABS = [
   // «Умный дом» пока скрыт: модуль не сделан, вернуть строку, когда начнём этап.
   { id: 'subscriptions', name: 'Подписки', icon: 'subs', group: 'more' },
   { id: 'weekly', name: 'Итоги недели', icon: 'calendar', group: 'more' },
+  { id: 'diary', name: 'Дневник', icon: 'notes', group: 'more' },
   { id: 'notes', name: 'Заметки и ссылки', icon: 'notes', group: 'more' },
   { id: 'knowledge', name: 'Знания', icon: 'knowledge', group: 'more' },
 ];
@@ -306,6 +308,7 @@ export function renderRoute(route, ctx) {
   if (route === 'schedule') return scheduleView(ctx);
   if (route === 'weekly') return mono() ? monoWeekly(ctx) : weeklyView(ctx);
   if (route === 'notes') return notesView(ctx);
+  if (route === 'diary') return diaryView(ctx);
   if (route === 'subscriptions') return subsView(ctx);
   if (route === 'projects') return ctx.param ? projectPage(ctx, ctx.param) : projectsView(ctx);
   if (route === 'today') return mono() ? monoToday(ctx) : todayView(ctx);

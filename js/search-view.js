@@ -7,13 +7,14 @@ import { allQuestions } from './questions-view.js';
 import { buildFeed } from './feed-calc.js';
 import { ruporPosts } from './rupor-view.js';
 import { noteTitle } from './notes-calc.js';
+import { searchDoc, validEntry, dayTitle, ymd } from './diary-calc.js';
 import { STATUS_LABEL } from './projects-calc.js';
 import { buildIndex, search, matchCompanies } from './search-calc.js';
 import { getKnowledgeState, loadKnowledge } from './knowledge-data.js';
 import { chronicleText } from './knowledge-calc.js';
 
-const KIND = { project: 'Проекты', task: 'Задачи', note: 'Заметки и ссылки', question: 'Открытые вопросы', event: 'События', post: 'Рупор', inbox: 'Входящие', sub: 'Подписки', goal: 'Цели', chronicle: 'Хроника', skill: 'Скиллы и промпты' };
-const ORDER = ['project', 'task', 'question', 'note', 'chronicle', 'event', 'post', 'skill', 'goal', 'sub', 'inbox'];
+const KIND = { project: 'Проекты', task: 'Задачи', note: 'Заметки и ссылки', question: 'Открытые вопросы', event: 'События', post: 'Рупор', inbox: 'Входящие', sub: 'Подписки', goal: 'Цели', diary: 'Дневник', chronicle: 'Хроника', skill: 'Скиллы и промпты' };
+const ORDER = ['project', 'task', 'question', 'note', 'chronicle', 'event', 'post', 'skill', 'diary', 'goal', 'sub', 'inbox'];
 const PER_KIND = 5;
 
 export function buildDocs(store) {
@@ -24,6 +25,7 @@ export function buildDocs(store) {
   store.list('goals').forEach((g) => docs.push({ id: `g:${g.id}`, kind: 'goal', title: g.title, text: g.area || '', tags: [], hash: '#/tasks', meta: `${g.progress}%` }));
   store.list('inbox').filter((i) => !i.resolved).forEach((i) => docs.push({ id: `i:${i.id}`, kind: 'inbox', title: i.text, text: '', tags: [], hash: '#/tasks', meta: i.type }));
   store.list('notes').forEach((n) => docs.push({ id: `n:${n.id}`, kind: 'note', title: noteTitle(n), text: `${n.text || ''} ${n.url || ''}`, tags: n.tags || [], hash: '#/notes', meta: n.kind === 'link' ? 'Ссылка' : 'Заметка' }));
+  store.list('diary').filter(validEntry).forEach((e) => docs.push({ id: `d:${e.id}`, kind: 'diary', hash: '#/diary', meta: dayTitle(e.date, ymd(new Date())), ...searchDoc(e) }));
   store.list('subs').forEach((s) => docs.push({ id: `s:${s.id}`, kind: 'sub', title: s.name, text: s.category || '', tags: [], hash: '#/subscriptions', meta: s.status === 'active' ? 'активна' : '' }));
   allQuestions(store, projects).forEach((q, i) => docs.push({ id: `q:${i}:${q.text}`, kind: 'question', title: q.text, text: q.project || '', tags: [], hash: '#/tasks', meta: q.project || '' }));
   buildFeed(projects).slice(0, 400).forEach((e, i) => docs.push({ id: `e:${i}`, kind: 'event', title: e.text, text: e.project, tags: [], hash: `#/projects/${encodeURIComponent(e.projectId)}`, meta: `${e.project} · ${e.date}` }));

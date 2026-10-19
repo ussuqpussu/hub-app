@@ -35,6 +35,7 @@ export function initMonoNav({ nav }) {
   const go = (h) => () => { location.hash = h; };
   menu.append(
     item('Подписки', MONO_ICONS.subscriptions, go('#/subscriptions')),
+    item('Дневник', MONO_ICONS.notes, go('#/diary')),
     item('Знания', MONO_ICONS.knowledge, go('#/knowledge')),
     item('Поиск', ICONS.search, () => { const b = document.getElementById('search-btn'); if (b) b.click(); }),
     item('Светлая / тёмная', ico('<path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>'), () => { const b = nav.querySelector('.themebtn'); if (b) b.click(); }),

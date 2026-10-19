@@ -1,0 +1,67 @@
+/* «Дневник»: временный простой вид. Оформление и анимацию шкалы подключит сессия дизайна.
+   Хуки для дизайна: [data-mood="-3..3"] на форме, карточках и полосе дней; .diary-scale — шкала; .diary-face — место под фигуру настроения. */
+:root {
+  --c-mood-n3: color-mix(in srgb, var(--c-danger) 90%, var(--c-text));
+  --c-mood-n2: var(--c-danger);
+  --c-mood-n1: color-mix(in srgb, var(--c-danger) 45%, var(--c-warn));
+  --c-mood-0: var(--c-dim);
+  --c-mood-p1: color-mix(in srgb, var(--c-ok) 45%, var(--c-warn));
+  --c-mood-p2: var(--c-ok);
+  --c-mood-p3: color-mix(in srgb, var(--c-ok) 85%, var(--c-accent));
+  --diary-bar-h: 0.6rem;
+  --diary-cell: 1.4rem;
+  --diary-face: 4.5rem;
+}
+[data-mood="-3"] { --c-mood: var(--c-mood-n3); }
+[data-mood="-2"] { --c-mood: var(--c-mood-n2); }
+[data-mood="-1"] { --c-mood: var(--c-mood-n1); }
+[data-mood="0"] { --c-mood: var(--c-mood-0); }
+[data-mood="1"] { --c-mood: var(--c-mood-p1); }
+[data-mood="2"] { --c-mood: var(--c-mood-p2); }
+[data-mood="3"] { --c-mood: var(--c-mood-p3); }
+
+.diary-top { display: grid; gap: var(--sp-3); }
+.diary-actions { display: flex; flex-wrap: wrap; gap: var(--sp-2); }
+.diary-face { width: var(--diary-face); height: var(--diary-face); border-radius: 50%; background: var(--c-mood, var(--c-dim)); justify-self: center; transition: background-color 0.3s; }
+.diary-scale { display: grid; gap: var(--sp-2); text-align: center; }
+.diary-scale__label { font-size: var(--fs-l); font-weight: 600; }
+.diary-scale input[type="range"] { width: 100%; accent-color: var(--c-mood, var(--c-accent)); }
+.diary-scale__ends { display: flex; justify-content: space-between; font-size: var(--fs-s); color: var(--c-dim); }
+.diary-group { display: grid; gap: var(--sp-2); }
+.diary-group h3 { font-size: var(--fs-s); color: var(--c-dim); font-weight: 600; margin: 0; }
+.diary-group .chips { margin-bottom: 0; }
+
+.diary-day { display: grid; gap: var(--sp-2); }
+.diary-day__head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--sp-3); }
+.diary-day__head h2 { font-size: var(--fs-l); margin: 0; }
+.diary-entry { display: grid; gap: var(--sp-2); border-left: calc(var(--border) * 4) solid var(--c-mood, var(--c-line)); }
+.diary-entry__head { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-2); }
+.diary-entry__mood { font-weight: 600; }
+.diary-entry__text { white-space: pre-wrap; margin: 0; }
+.diary-list { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--sp-5); }
+
+.diary-strip { display: grid; grid-template-columns: repeat(30, minmax(0, 1fr)); gap: 2px; }
+.diary-strip span { height: var(--diary-cell); border-radius: var(--radius-s); background: var(--c-mood, var(--c-fill)); }
+.diary-strip span[data-empty] { background: var(--c-fill); opacity: 0.6; }
+.diary-bars { display: grid; gap: var(--sp-2); }
+.diary-bar { display: grid; grid-template-columns: minmax(4.5rem, 7rem) minmax(0, 1fr) auto; align-items: center; gap: var(--sp-2); font-size: var(--fs-s); }
+.diary-bar__track { height: var(--diary-bar-h); background: var(--c-fill); border-radius: var(--radius-pill); overflow: hidden; }
+.diary-bar__fill { height: 100%; width: var(--w, 0%); background: var(--c-mood, var(--c-accent)); border-radius: inherit; }
+.diary-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(8.5rem, 1fr)); gap: var(--sp-3); }
+.diary-kpi { display: grid; gap: var(--sp-1); }
+.diary-kpi b { font-size: var(--fs-xl); line-height: 1.1; }
+.diary-kpi span { font-size: var(--fs-s); color: var(--c-dim); }
+.diary-obs { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--sp-2); }
+.diary-obs li { display: grid; gap: var(--sp-1); }
+.diary-obs li[data-kind="care"] { border-left: calc(var(--border) * 4) solid var(--c-warn); }
+.diary-obs li[data-kind="praise"] { border-left: calc(var(--border) * 4) solid var(--c-ok); }
+.diary-tablewrap { overflow-x: auto; max-width: 100%; }
+.diary-table { width: 100%; border-collapse: collapse; font-size: var(--fs-s); }
+.diary-table th, .diary-table td { text-align: left; padding: var(--sp-1) var(--sp-2); border-bottom: var(--border) solid var(--c-line); }
+.diary-table td.num, .diary-table th.num { text-align: right; font-variant-numeric: tabular-nums; }
+.diary-reply { display: grid; gap: var(--sp-3); }
+.diary-reply p { margin: 0; }
+.diary-help { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--sp-2); }
+.diary-help a { font-weight: 600; font-size: var(--fs-l); }
+.diary-filters { display: grid; gap: var(--sp-2); }
+@media (prefers-reduced-motion: reduce) { .diary-face { transition: none; } }
