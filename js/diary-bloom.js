@@ -1,7 +1,7 @@
-// Фигура настроения «цветок»: три вложенных контура и светящаяся середина.
+// Фигура настроения «стеклянный цветок» (вариант G): три прозрачных стеклянных слоя снаружи, тонкие контуры внутри.
 // Форма и цвет зависят от уровня −3…+3 и плавно перетекают при дробных значениях (во время движения ползунка).
-// Фигуры рисуются по формуле (полярная кривая с лепестками), без чужих картинок.
-//  −3 острая восьмиконечная звезда, −2 волнистая, −1 мягкий волнистый восьмиугольник, 0 круг с кольцами,
+// Всё рисуется по формуле (полярная кривая с лепестками), без чужих картинок.
+//  −3 острая восьмиконечная звезда, −2 волнистая, −1 мягкий восьмиугольник, 0 круг с кольцами,
 //  +1 скруглённый пятиугольник, +2 пятиконечная звезда с мягкими лучами, +3 пятилепестковый цветок.
 const NS = 'http://www.w3.org/2000/svg';
 const N = 120; // точек на контур
@@ -18,13 +18,13 @@ const SHAPES = [
 ];
 // цвет уровня: тон, насыщенность, светлота (в процентах)
 const COLORS = [
-  [268, 78, 60],
-  [236, 84, 64],
-  [212, 88, 68],
-  [194, 82, 78],
-  [122, 72, 62],
-  [58, 92, 60],
-  [24, 96, 66],
+  [268, 78, 64],
+  [236, 84, 68],
+  [212, 88, 70],
+  [194, 70, 74],
+  [130, 60, 62],
+  [58, 88, 62],
+  [24, 94, 66],
 ];
 
 const radii = SHAPES.map((s) => {
@@ -50,7 +50,8 @@ export function colorAt(v) {
   const t = x - i;
   return [lerp(COLORS[i][0], COLORS[i + 1][0], t), lerp(COLORS[i][1], COLORS[i + 1][1], t), lerp(COLORS[i][2], COLORS[i + 1][2], t)];
 }
-export const hsl = (c, a = 1, dl = 0) => `hsl(${c[0].toFixed(1)} ${c[1].toFixed(1)}% ${Math.min(96, c[2] + dl).toFixed(1)}% / ${a})`;
+export const hsl = (c, a = 1, dl = 0) => `hsl(${c[0].toFixed(1)} ${c[1].toFixed(1)}% ${Math.max(0, Math.min(97, c[2] + dl)).toFixed(1)}% / ${a})`;
+const shift = (c, dh, dl = 0) => [(c[0] + dh + 360) % 360, c[1], c[2] + dl];
 
 function pathAt(v, scale, round) {
   const x = clamp(v) + 3;
@@ -62,117 +63,114 @@ function pathAt(v, scale, round) {
     let r = lerp(A[k], B[k], t);
     r = 1 + (r - 1) * round; // у внутренних контуров лепестки мягче
     const th = (k / N) * Math.PI * 2;
-    const px = Math.cos(th) * r * scale;
-    const py = Math.sin(th) * r * scale;
-    d += `${k ? 'L' : 'M'}${px.toFixed(2)} ${py.toFixed(2)}`;
+    d += `${k ? 'L' : 'M'}${(Math.cos(th) * r * scale).toFixed(2)} ${(Math.sin(th) * r * scale).toFixed(2)}`;
   }
   return `${d}Z`;
 }
 
 const reduced = () => !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+const mk = (name, attrs = {}) => {
+  const e = document.createElementNS(NS, name);
+  Object.keys(attrs).forEach((k) => { if (attrs[k] != null) e.setAttribute(k, attrs[k]); });
+  return e;
+};
 
-const LAYERS = [
-  { s: 100, round: 1, rot: 4, fill: 0.2, w: 1.2 },
-  { s: 80, round: 0.88, rot: -6, fill: 0.36, w: 1.2 },
+const LAY = [
+  { s: 100, round: 0.92, rot: 3.2, ph: 0 },
+  { s: 79, round: 0.84, rot: -4, ph: 21 },
+  { s: 58, round: 0.74, rot: 3.2, ph: 42 },
 ];
-const CORE = { s: 56, round: 0.92, rot: 5 };
-const K = 60; // граней у середины
-const lightA = -Math.PI * 0.72; // откуда падает свет
+const LINES = 8;
 
 // живая фигура: set(v, ms) плавно переводит к уровню v; destroy() останавливает анимацию
 export function createBloom({ live = true } = {}) {
-  const svg = document.createElementNS(NS, 'svg');
-  svg.setAttribute('viewBox', '-110 -110 220 220');
-  svg.setAttribute('class', 'bloom');
-  svg.setAttribute('aria-hidden', 'true');
-  const uid = `bg${Math.random().toString(36).slice(2, 8)}`;
-  const defs = document.createElementNS(NS, 'defs');
-  defs.innerHTML = `<radialGradient id="${uid}a"><stop class="a0" offset="0.25"/><stop class="a1" offset="1"/></radialGradient>
-<radialGradient id="${uid}b"><stop class="b0" offset="0.2"/><stop class="b1" offset="1"/></radialGradient>
-<radialGradient id="${uid}c"><stop offset="0" stop-color="#fff" stop-opacity="0.38"/><stop offset="0.55" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity="0.32"/></radialGradient>
-<filter id="${uid}s" x="-30%" y="-30%" width="160%" height="160%"><feDropShadow dx="0" dy="2.5" stdDeviation="3" flood-color="#000" flood-opacity="0.35"/></filter>`;
-  svg.append(defs);
-  const q = (c) => defs.querySelector(c);
-  const groups = LAYERS.map((L) => {
-    const g = document.createElementNS(NS, 'g');
-    const p = document.createElementNS(NS, 'path');
-    p.setAttribute('stroke-linejoin', 'round');
-    g.append(p); g.setAttribute('filter', `url(#${uid}s)`); svg.append(g);
-    return { g, p, L };
+  const uid = `bl${Math.random().toString(36).slice(2, 8)}`;
+  const svg = mk('svg', { viewBox: '-112 -112 224 224', class: 'bloom', 'aria-hidden': 'true' });
+  let defs = `<filter id="${uid}w" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="14"/></filter>
+<filter id="${uid}r" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="4.5"/></filter>
+<filter id="${uid}t" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="1"/></filter>
+<filter id="${uid}d" x="-30%" y="-30%" width="160%" height="170%"><feDropShadow dx="0" dy="3" stdDeviation="3" flood-color="#000" flood-opacity=".3"/></filter>
+<linearGradient id="${uid}e" gradientUnits="userSpaceOnUse" x1="-80" y1="-90" x2="80" y2="90"><stop offset="0" stop-color="#fff" stop-opacity=".95"/><stop class="e1" offset=".5"/><stop class="e2" offset="1"/></linearGradient>
+<linearGradient id="${uid}i" gradientUnits="userSpaceOnUse" x1="-90" y1="-90" x2="90" y2="90"><stop offset="0" stop-color="#fff" stop-opacity=".9"/><stop class="i1" offset=".55"/><stop class="i2" offset="1"/></linearGradient>`;
+  LAY.forEach((_, i) => {
+    defs += `<linearGradient id="${uid}f${i}" gradientUnits="userSpaceOnUse" x1="-60" y1="-80" x2="70" y2="90"><stop class="f${i}a" offset="0"/><stop class="f${i}b" offset="1"/></linearGradient><clipPath id="${uid}k${i}"><path class="kp${i}"/></clipPath>`;
   });
-  // второй, тонкий контур у кромки: двоит край, как стекло
-  groups.forEach((o) => {
-    const p2 = document.createElementNS(NS, 'path');
-    p2.setAttribute('fill', 'none'); p2.setAttribute('stroke-linejoin', 'round');
-    o.g.append(p2); o.p2 = p2;
-  });
-  const core = document.createElementNS(NS, 'g');
-  const facets = [];
-  for (let k = 0; k < K; k += 1) {
-    const f = document.createElementNS(NS, 'path');
-    core.append(f); facets.push(f);
-  }
-  const rim = document.createElementNS(NS, 'path');
-  rim.setAttribute('fill', 'none'); rim.setAttribute('stroke-linejoin', 'round');
-  const sheen = document.createElementNS(NS, 'ellipse');
-  sheen.setAttribute('rx', '15'); sheen.setAttribute('ry', '8'); sheen.setAttribute('cx', '-6'); sheen.setAttribute('cy', '-12');
-  sheen.setAttribute('transform', 'rotate(-28 -6 -12)');
-  const shade = document.createElementNS(NS, 'path');
-  shade.setAttribute('fill', `url(#${uid}c)`);
-  core.append(shade, rim);
-  svg.append(core);
-  const dot = document.createElementNS(NS, 'circle');
-  dot.setAttribute('r', '2');
-  svg.append(sheen, dot);
+  svg.innerHTML = `<defs>${defs}</defs>`;
+  const q = (c) => svg.querySelector(c);
 
-  let cur = 0; let from = 0; let to = 0; let t0 = 0; let dur = 0; let raf = 0; let alive = true; let ph = Math.random() * 6;
+  const halo = mk('path', { filter: `url(#${uid}w)` });
+  svg.append(halo);
+  const layers = LAY.map((L, i) => {
+    const g = mk('g', { filter: `url(#${uid}d)` });
+    const fill = mk('path', { fill: `url(#${uid}f${i})` });
+    const inner = mk('g', { 'clip-path': `url(#${uid}k${i})` });
+    const glow = mk('path', { fill: 'none', filter: `url(#${uid}r)`, stroke: `url(#${uid}i)` });
+    const thick = mk('path', { fill: 'none', filter: `url(#${uid}t)` });
+    inner.append(glow, thick);
+    const edge = mk('path', { fill: 'none', 'stroke-linejoin': 'round', stroke: `url(#${uid}e)` });
+    const edge2 = mk('path', { fill: 'none', 'stroke-linejoin': 'round' });
+    g.append(fill, inner, edge2, edge);
+    svg.append(g);
+    return { g, fill, glow, thick, edge, edge2, kp: q(`.kp${i}`), L };
+  });
+  const lineBox = mk('g');
+  const lines = [];
+  for (let i = 0; i < LINES; i += 1) {
+    const g = mk('g');
+    const p = mk('path', { fill: 'none', 'stroke-linejoin': 'round' });
+    g.append(p); lineBox.append(g);
+    lines.push({ g, p, k: i / (LINES - 1), dir: i % 2 ? -1 : 1, ph: i * 11 });
+  }
+  svg.append(lineBox);
+  const dot = mk('circle', { r: 2.4, filter: `url(#${uid}t)`, fill: 'rgba(255,255,255,.9)' });
+  svg.append(dot);
+
+  let cur = 0; let from = 0; let to = 0; let t0 = 0; let dur = 0; let raf = 0; let alive = true; let lastV = null;
+  const ph = Math.random() * 6;
   const listeners = new Set();
 
-  let lastV = null;
+  // форма и цвет: пересчитываем только когда уровень изменился
   function shape(v, c) {
-    q('.a0').setAttribute('stop-color', hsl(c, 0.02, 4)); q('.a1').setAttribute('stop-color', hsl(c, 0.3, 8));
-    q('.b0').setAttribute('stop-color', hsl(c, 0.05, 2)); q('.b1').setAttribute('stop-color', hsl(c, 0.46, 6));
-    groups.forEach(({ p, p2, L }, gi) => {
-      p.setAttribute('d', pathAt(v, L.s, L.round));
-      p2.setAttribute('d', pathAt(v, L.s * 0.955, L.round));
-      p.setAttribute('fill', `url(#${uid}${gi ? 'b' : 'a'})`); p.setAttribute('stroke', hsl(c, 0.95, 26)); p.setAttribute('stroke-width', String(L.w));
-      p2.setAttribute('stroke', hsl(c, 0.5, 30)); p2.setAttribute('stroke-width', '0.6');
+    const cols = [shift(c, -12, 2), c, shift(c, 12, -2)];
+    halo.setAttribute('d', pathAt(v, 82, 0.8));
+    halo.setAttribute('fill', hsl(c, 0.35, -14));
+    q('.e1').setAttribute('stop-color', hsl(c, 0.55, 20));
+    q('.e2').setAttribute('stop-color', hsl(shift(c, 16, -6), 0.85, 4));
+    q('.i1').setAttribute('stop-color', hsl(c, 0.22, 20));
+    q('.i2').setAttribute('stop-color', hsl(c, 0.5, 10));
+    layers.forEach((o, i) => {
+      const { L } = o; const cc = cols[i];
+      const d = pathAt(v, L.s, L.round);
+      q(`.f${i}a`).setAttribute('stop-color', hsl(cc, 0.16 - i * 0.02, 14));
+      q(`.f${i}b`).setAttribute('stop-color', hsl(cc, 0.05, 0));
+      o.fill.setAttribute('d', d); o.kp.setAttribute('d', d); o.glow.setAttribute('d', d);
+      o.glow.setAttribute('stroke-width', String(11 - i * 2)); o.glow.setAttribute('stroke-opacity', '0.5');
+      o.thick.setAttribute('d', d); o.thick.setAttribute('stroke', hsl(cc, 0.6, 26));
+      o.thick.setAttribute('stroke-width', '2.6'); o.thick.setAttribute('stroke-opacity', '0.6');
+      o.edge.setAttribute('d', d); o.edge.setAttribute('stroke-width', (1.2 - i * 0.15).toFixed(2));
+      o.edge2.setAttribute('d', pathAt(v, L.s * 0.94, L.round));
+      o.edge2.setAttribute('stroke', hsl(cc, 0.4, 34)); o.edge2.setAttribute('stroke-width', '0.45');
     });
-    // грани середины: свет слева сверху, выступающие части светлее
-    const x = clamp(v) + 3; const i = Math.min(5, Math.floor(x)); const t = x - i;
-    const A = radii[i]; const B = radii[i + 1];
-    const rad = (k) => { const r = lerp(A[k % N], B[k % N], t); return 1 + (r - 1) * CORE.round; };
-    const step = N / K;
-    for (let k = 0; k < K; k += 1) {
-      const i0 = Math.round(k * step); const i1 = Math.round((k + 1) * step);
-      const th0 = (i0 / N) * Math.PI * 2; const th1 = (i1 / N) * Math.PI * 2;
-      const r0 = rad(i0); const r1 = rad(i1);
-      const mid = (th0 + th1) / 2; const rm = (r0 + r1) / 2;
-      const lit = Math.cos(mid - lightA);
-      const l = c[2] - 12 + lit * 9 + (rm - 0.85) * 55;
-      const d = `M0 0L${(Math.cos(th0) * r0 * CORE.s).toFixed(2)} ${(Math.sin(th0) * r0 * CORE.s).toFixed(2)}L${(Math.cos(th1) * r1 * CORE.s).toFixed(2)} ${(Math.sin(th1) * r1 * CORE.s).toFixed(2)}Z`;
-      const f = facets[k];
-      f.setAttribute('d', d);
-      const col = `hsl(${c[0].toFixed(1)} ${Math.min(100, c[1] + 6).toFixed(1)}% ${Math.max(18, Math.min(92, l)).toFixed(1)}%)`;
-      f.setAttribute('fill', col); f.setAttribute('stroke', col); f.setAttribute('stroke-width', '0.35');
-    }
-    rim.setAttribute('d', pathAt(v, CORE.s, CORE.round));
-    shade.setAttribute('d', pathAt(v, CORE.s, CORE.round));
-    rim.setAttribute('stroke', hsl(c, 0.9, 26)); rim.setAttribute('stroke-width', '0.9');
-    sheen.setAttribute('fill', 'rgb(255 255 255 / 0.26)');
-    dot.setAttribute('fill', hsl([c[0], c[1], 30], 0.85));
-    svg.style.setProperty('--bloom-glow', hsl(c, 0.6));
+    lines.forEach(({ p, k }) => {
+      p.setAttribute('d', pathAt(v, 74 - k * 58, 0.94 - k * 0.3));
+      p.setAttribute('stroke', hsl(shift(c, (k - 0.5) * 18), 0.45 + k * 0.4, 22 + k * 12));
+      p.setAttribute('stroke-width', (0.5 + k * 0.35).toFixed(2));
+    });
+    svg.style.setProperty('--bloom-glow', hsl(c, 0.5));
   }
 
   function paint(v, time) {
     const c = colorAt(v);
     if (v !== lastV) { shape(v, c); lastV = v; }
-    const breathe = 1 + Math.sin(time / 1900 + ph) * 0.022;
-    const rot = (time / 1000) * (live ? 1 : 0);
-    groups.forEach(({ g, L }, i) => {
-      g.setAttribute('transform', `rotate(${(rot * L.rot + i * 17).toFixed(2)}) scale(${(1 + (breathe - 1) * 0.6).toFixed(4)})`);
+    const breathe = 1 + Math.sin(time / 1700 + ph) * 0.02;
+    const t = live ? time / 1000 : 0;
+    layers.forEach((o, i) => {
+      o.g.setAttribute('transform', `rotate(${(t * o.L.rot + o.L.ph).toFixed(2)}) scale(${(1 + (breathe - 1) * (i + 1) * 0.7).toFixed(4)})`);
     });
-    core.setAttribute('transform', `rotate(${(rot * CORE.rot + 31).toFixed(2)}) scale(${breathe.toFixed(4)})`);
+    lines.forEach((o) => {
+      o.g.setAttribute('transform', `rotate(${(t * 4.2 * o.dir * (0.5 + o.k) * 3.2 + o.ph).toFixed(2)})`);
+    });
+    lineBox.setAttribute('transform', `scale(${breathe.toFixed(4)})`);
     cur = v;
     listeners.forEach((fn) => fn(v, c));
   }
