@@ -17,8 +17,10 @@ import { weatherState, cityLine, dayLine } from './weather-calc.js';
 import { getAppearance, motionAllowed } from './appearance.js';
 import { rings } from './mk-widgets.js';
 import { startFocus, focusActive, focusText } from './island.js';
+import { bars } from './mk-widgets.js';
 import { groupTasks, openTasksTab, INBOX_OLD_DAYS, MAIN_LIMIT } from './tasks-view.js';
 
+const TILE_KEYS = { 'Сегодня': 'rings', 'Фокус': 'focus', 'Погода': 'weather', 'Расписание': 'sched', 'Главные задачи': 'mains', 'Цели': 'goals', 'Рупор': 'rupor', 'Ближайшие платежи': 'subs', 'Ближайшие задачи': 'upcoming' };
 const WEEKDAYS_FULL = ['воскресенье', 'понедельник', 'вторник', 'среда', 'четверг', 'пятница', 'суббота'];
 const MONTHS_GEN = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
 
@@ -34,7 +36,10 @@ export function todayView({ store, subscribe }) {
   function tile(title, children, link, size = '') {
     const head = el('div', { class: 'tile__head' }, [el('h2', { text: title })]);
     if (link) head.append(link);
-    return el('section', { class: `card tile${size ? ` ${size.split(' ').map((x) => `tile--${x}`).join(' ')}` : ''}` }, [head, ...[].concat(children)]);
+    const key = TILE_KEYS[title] || (/^На сегодня/.test(title) ? 'todo' : /^Итоги недели/.test(title) ? 'weekly' : '');
+    const node = el('section', { class: `card tile${size ? ` ${size.split(' ').map((x) => `tile--${x}`).join(' ')}` : ''}` }, [head, ...[].concat(children)]);
+    if (key) node.dataset.t = key;
+    return node;
   }
 
   // Главная задача отдельной плиткой: крупное название, проект и срок, кнопка «Готово».
@@ -44,7 +49,7 @@ export function todayView({ store, subscribe }) {
     if (t.project) meta.push(t.project);
     const done = el('button', { type: 'button', class: 'btn btn--s', text: 'Готово', 'aria-label': `Выполнено: ${t.title}` });
     done.addEventListener('click', () => store.update('tasks', t.id, { done: true, doneAt: Date.now(), main: false }));
-    return el('section', { class: 'card tile tile--main', 'data-n': String(i + 1) }, [
+    return el('section', { class: 'card tile tile--main', 'data-t': 'mains', 'data-n': String(i + 1) }, [
       el('span', { class: 'tile__kicker', text: `Главная ${i + 1}` }),
       el('p', { class: 'tile__big', text: t.title }),
       el('p', { class: 'muted tile__meta', text: meta.length ? meta.join(' · ') : 'Без срока' }),
@@ -80,8 +85,8 @@ export function todayView({ store, subscribe }) {
     const g = groupTasks(tasks, today);
     root.replaceChildren(
       el('div', { class: 'view__head' }, [
-        el('h1', { text: `${WEEKDAYS_FULL[d.getDay()][0].toUpperCase()}${WEEKDAYS_FULL[d.getDay()].slice(1)}, ${d.getDate()} ${MONTHS_GEN[d.getMonth()]}` }),
-        el('p', { class: 'muted', text: `${weekType(today)[0].toUpperCase()}${weekType(today).slice(1)} неделя` }),
+        el('h1', {}, [el('span', { class: 'vh__wd', text: `${WEEKDAYS_FULL[d.getDay()][0].toUpperCase()}${WEEKDAYS_FULL[d.getDay()].slice(1)}, ` }), `${d.getDate()} ${MONTHS_GEN[d.getMonth()]}`]),
+        el('p', { class: 'muted', 'data-wd': WEEKDAYS_FULL[d.getDay()], text: `${weekType(today)[0].toUpperCase()}${weekType(today).slice(1)} неделя` }),
       ]),
     );
     const grid = el('div', { class: 'bento' });
@@ -112,7 +117,7 @@ export function todayView({ store, subscribe }) {
       upd();
       { const to = fg.getAttribute('stroke-dashoffset'); if (motionAllowed()) { fg.setAttribute('stroke-dashoffset', '100'); dot.style.opacity = '0'; setTimeout(() => { fg.setAttribute('stroke-dashoffset', to); dot.style.transition = 'opacity .4s'; dot.style.opacity = '1'; }, 450); } }
       const iv = setInterval(() => { if (root.isConnected) upd(); else clearInterval(iv); }, 60000);
-      grid.append(el('section', { class: 'card tile tile--day tile--w2' }, [el('span', { class: 'tile__kicker', text: myth ? 'Путь Гелиоса' : 'День' }), svg, pct, note]));
+      grid.append(el('section', { class: 'card tile tile--day tile--w2', 'data-t': 'day' }, [el('span', { class: 'tile__kicker', text: myth ? 'Путь Гелиоса' : 'День' }), svg, pct, note]));
     }
 
     // Кольца дня: сколько задач закрыто из того, что было на сегодня, и средний прогресс целей
@@ -219,7 +224,7 @@ export function todayView({ store, subscribe }) {
     const old = inbox.length && days >= INBOX_OLD_DAYS;
     const toInbox = el('a', { class: 'btn btn--s', href: '#/tasks', text: 'Разобрать' });
     toInbox.addEventListener('click', () => openTasksTab('inbox'));
-    grid.append(el('section', { class: `card tile tile--inbox${old ? ' tile--warn' : ''}` }, [
+    grid.append(el('section', { class: `card tile tile--inbox${old ? ' tile--warn' : ''}`, 'data-t': 'inbox' }, [
       el('span', { class: 'tile__kicker', text: 'Входящие' }),
       el('p', { class: 'tile__num', text: String(inbox.length), 'data-count': '900' }),
       el('p', { class: old ? 'today-warn tile__meta' : 'muted tile__meta', text: !inbox.length ? 'Всё разобрано' : old ? `Старой записи ${days} дн.` : 'Есть неразобранные' }),
@@ -297,7 +302,7 @@ export function todayView({ store, subscribe }) {
     try { ensureSnapshot(store); } catch (_) { /* итог сохранится при следующем открытии */ }
     const ws = liveSummary(store, today);
     const sunEve = new Date().getDay() === 0 && new Date().getHours() >= 18;
-    grid.append(tile(sunEve ? 'Итоги недели готовы' : 'Итоги недели', el('p', { class: ws.hasData ? '' : 'muted', text: ws.hasData ? `Закрыто задач: ${ws.tasks.closed.length}. Опубликовано в «Рупоре»: ${ws.rupor.total}. Событий проектов: ${ws.events.length}.` : 'За эту неделю пока нет данных.' }), el('a', { class: 'tile__link', href: '#/weekly', text: 'Открыть' }), 'w2'));
+    grid.append(tile(sunEve ? 'Итоги недели готовы' : 'Итоги недели', [el('p', { class: ws.hasData ? '' : 'muted', text: ws.hasData ? `Закрыто задач: ${ws.tasks.closed.length}. Опубликовано в «Рупоре»: ${ws.rupor.total}. Событий проектов: ${ws.events.length}.` : 'За эту неделю пока нет данных.' }), ...(ws.hasData && ws.tasks.byDay ? [el('div', { class: 'tile__bars' }, [bars(ws.tasks.byDay, ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'], { label: 'Закрыто задач по дням' })])] : [])], el('a', { class: 'tile__link', href: '#/weekly', text: 'Открыть' }), 'w2'));
 
 
     // Смена суток: в полночь экран обновляется сам

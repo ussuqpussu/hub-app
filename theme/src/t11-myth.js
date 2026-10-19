@@ -547,7 +547,7 @@ MYART[3]=["Мьёльнир","mjolnir","ᛗᛃᛟᛚᚾᛁᚱ","Молот То�
   var o={n:"Мифы",g:"Тёмные",L:"adam",k:"myth",b:"#050505",s:"#101010",t:"#d4d4d4",a:"#f2f2f2",ba:"#050505",fx:"adam8",d:"Тема по мотивам God of War, греческой и скандинавской мифологии: 7 страниц, у каждой своя анимация из символов. «Сегодня»: руки и искра. «Проекты»: гончарный круг, комок глины становится амфорой. «Задачи»: созвездие Стрелец собирается из звёзд. «Итоги недели»: монеты падают в ящик. «Заметки»: свиток. «Подписки»: песочные часы, которые переворачиваются. «Настройки»: шестерёнки. Кнопка «заставка» на странице показывает вход в хаб: звезда загорается, тускнеет, фон темнеет, открывается хаб."};
  for(var k in o)th[k]=o[k];
  th.L="adam";th.x10=0;delete th.ts;
- [["Мифы · Стекло","mythglass"],["Бенто","mythbento"]].forEach(function(v){var t2=T.filter(function(x){return x.n===v[0]})[0];if(!t2)return;var oc=Object.assign({},o,{n:v[0],k:v[1]});for(var k2 in oc)t2[k2]=oc[k2];t2.L="adam";t2.x10=0;delete t2.ts})
+ [["Бенто","mythbento"],["Макет","mythmock"]].forEach(function(v){var t2=T.filter(function(x){return x.n===v[0]})[0];if(!t2)return;var oc=Object.assign({},o,{n:v[0],k:v[1]});for(var k2 in oc)t2[k2]=oc[k2];t2.L="adam";t2.x10=0;delete t2.ts})
  var HMODE=/(^|[#&])stage/.test(location.hash||"");
  /* страницы хаба (9) -> сцены Мифов (7) */
  var MAP=[0,"b",2,1,"b",5,4,"b",6,3];
@@ -589,7 +589,7 @@ function mythPetSvg() {
     rb();
     try {
       var th = getT(cur), inf = document.querySelector('#big .info');
-      if (EDITOR && th && /^(Мифы|Бенто)/.test(th.n) && inf && !inf.querySelector('.myth-pal2')) {
+      if (EDITOR && th && /^(Мифы|Бенто|Макет)/.test(th.n) && inf && !inf.querySelector('.myth-pal2')) {
         var h = '<div class="myth-pal2" style="margin:0 0 1em;display:flex;flex-wrap:wrap;gap:.5em;align-items:center"><span class="myth-pal">';
         for (var k in MYPALS) h += '<button type="button" data-mypal="' + k + '"' + (k === MYPAL ? ' class="on"' : '') + '>' + MYPALS[k].n + '</button>';
         h += '</span><button class="myth-sp" type="button" data-mysp="1">▶ заставка</button></div>';

@@ -3798,8 +3798,8 @@ hubAddTheme({"n":"Бумажный театр","g":"Светлые","ts":"paperc
 hubAddTheme({"n":"Угли","g":"Тёмные","ts":"embers","lo":"air","b":"#120c09","s":"#1d130e","t":"#f5e6da","a":"#ff8a3d","ba":"#120c09","dim":"#bda391","dk":true,"pal":["#ff8a3d","#ffd08a","#3a2418","#f5e6da"],"tf":"'Segoe UI Variable','SF Pro Text','Segoe UI',system-ui,sans-serif","cr":".8em","brr":"99px","d":"Огонь и тепло. Анимации: искры над углями, пламя камина, свечи, лавовая лампа"});
 hubAddTheme({"n":"Типограф","g":"Светлые","ts":"letterpress","lo":"side","b":"#f3eddc","s":"#fbf7ea","t":"#181512","a":"#c0261d","ba":"#ffffff","dim":"#5b5448","dk":false,"pal":["#c0261d","#181512","#e1d8bd","#6a5f45"],"tf":"Georgia,'Times New Roman',serif","cr":"0","brr":"0","d":"Книжная печать. Анимации: литеры встают в строку, оттиск штампа, растр печатной краски, листы с типографским набором"});
 hubAddTheme({"n":"Мифы","g":"Тёмные","ts":"myth","lo":"side","b":"#050505","s":"#101010","t":"#d4d4d4","a":"#f2f2f2","ba":"#050505","dim":"#a0a0a0","dk":true,"pal":["#f2f2f2","#9097a6","#4a4d55","#d4d4d4"],"tf":"Georgia,'Times New Roman',serif","cr":".3em","brr":".3em","d":"Греческая и скандинавская мифология. Анимации из символов: гончарный круг, где комок глины становится амфорой; созвездие Стрелец; песочные часы; свиток"});
-hubAddTheme({"n":"Мифы · Стекло","g":"Тёмные","ts":"mythglass","lo":"side","b":"#040405","s":"#101012","t":"#d8d8dc","a":"#f2f2f2","ba":"#050505","dim":"#9a9aa2","dk":true,"pal":["#f2f2f2","#9097a6","#4a4d55","#d8d8dc"],"tf":"Georgia,'Times New Roman',serif","cr":"1.75em","brr":"99px","d":"Мифы и Сотворение целиком, но плитки как стеклянное бенто: крупные скругления, зерно, светлая карточка фокуса, свечение за стеклом, капсула-остров. Все анимации из кита"});
 hubAddTheme({"n":"Бенто","g":"Тёмные","ts":"mythbento","lo":"float","b":"#040405","s":"#101012","t":"#d8d8dc","a":"#f2f2f2","ba":"#050505","dim":"#8d8e96","dk":true,"pal":["#f2f2f2","#9097a6","#2a2b30","#d8d8dc"],"tf":"Georgia,'Times New Roman',serif","cr":"1.75em","brr":"99px","d":"Макеты «Сотворения»: чёрный фон со светящимися пятнами, плавающая панель с иконками, крупные стеклянные плитки разного размера, светлая карточка фокуса, серифные заголовки. Сцены Мифов и ворон сохранены"});
+hubAddTheme({"n":"Макет","g":"Тёмные","ts":"mythmock","lo":"float","b":"#040405","s":"#101012","t":"#d8d8dc","a":"#f2f2f2","ba":"#050505","dim":"#8d8e96","dk":true,"pal":["#f2f2f2","#9097a6","#2a2b30","#d8d8dc"],"tf":"Georgia,'Times New Roman',serif","cr":"1.75em","brr":"99px","d":"Копия «Бенто», доведённая до макетов: сетка из 12 колонок, карточка с руками и датой внутри, кольца, светлая карточка фокуса, расписание с точками, столбики недели, плавающая панель с буквой Х, нижняя капсула на телефоне. Сans-текст и серифные заголовки"});
 hubAddTheme({"n":"Стекло","g":"Тёмные","ts":"glass","lo":"float","b":"#0a0b10","s":"#14161f","t":"#f1f2f6","a":"#3b82f6","ba":"#0a0b10","dim":"#a3a9bb","dk":true,"pal":["#3b82f6","#8b5cf6","#232842","#f1f2f6"],"tf":"Manrope,'Segoe UI Variable','Segoe UI',system-ui,sans-serif","cr":"1.5em","brr":"99px","d":"Матовое стекло из рилсов. Анимации: кольца активности, бублик с легендой, линия с заливкой, капсула-остров, меняющая форму"});
 
 /* ---- t01-lighthouse.js ---- */
@@ -5710,7 +5710,7 @@ MYART[3]=["Мьёльнир","mjolnir","ᛗᛃᛟᛚᚾᛁᚱ","Молот То�
   var o={n:"Мифы",g:"Тёмные",L:"adam",k:"myth",b:"#050505",s:"#101010",t:"#d4d4d4",a:"#f2f2f2",ba:"#050505",fx:"adam8",d:"Тема по мотивам God of War, греческой и скандинавской мифологии: 7 страниц, у каждой своя анимация из символов. «Сегодня»: руки и искра. «Проекты»: гончарный круг, комок глины становится амфорой. «Задачи»: созвездие Стрелец собирается из звёзд. «Итоги недели»: монеты падают в ящик. «Заметки»: свиток. «Подписки»: песочные часы, которые переворачиваются. «Настройки»: шестерёнки. Кнопка «заставка» на странице показывает вход в хаб: звезда загорается, тускнеет, фон темнеет, открывается хаб."};
  for(var k in o)th[k]=o[k];
  th.L="adam";th.x10=0;delete th.ts;
- [["Мифы · Стекло","mythglass"],["Бенто","mythbento"]].forEach(function(v){var t2=T.filter(function(x){return x.n===v[0]})[0];if(!t2)return;var oc=Object.assign({},o,{n:v[0],k:v[1]});for(var k2 in oc)t2[k2]=oc[k2];t2.L="adam";t2.x10=0;delete t2.ts})
+ [["Бенто","mythbento"],["Макет","mythmock"]].forEach(function(v){var t2=T.filter(function(x){return x.n===v[0]})[0];if(!t2)return;var oc=Object.assign({},o,{n:v[0],k:v[1]});for(var k2 in oc)t2[k2]=oc[k2];t2.L="adam";t2.x10=0;delete t2.ts})
  var HMODE=/(^|[#&])stage/.test(location.hash||"");
  /* страницы хаба (9) -> сцены Мифов (7) */
  var MAP=[0,"b",2,1,"b",5,4,"b",6,3];
@@ -5752,7 +5752,7 @@ function mythPetSvg() {
     rb();
     try {
       var th = getT(cur), inf = document.querySelector('#big .info');
-      if (EDITOR && th && /^(Мифы|Бенто)/.test(th.n) && inf && !inf.querySelector('.myth-pal2')) {
+      if (EDITOR && th && /^(Мифы|Бенто|Макет)/.test(th.n) && inf && !inf.querySelector('.myth-pal2')) {
         var h = '<div class="myth-pal2" style="margin:0 0 1em;display:flex;flex-wrap:wrap;gap:.5em;align-items:center"><span class="myth-pal">';
         for (var k in MYPALS) h += '<button type="button" data-mypal="' + k + '"' + (k === MYPAL ? ' class="on"' : '') + '>' + MYPALS[k].n + '</button>';
         h += '</span><button class="myth-sp" type="button" data-mysp="1">▶ заставка</button></div>';

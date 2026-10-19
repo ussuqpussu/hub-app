@@ -374,14 +374,14 @@
   --border-style: solid;
 }
 
-[data-theme="mythglass"] {
+[data-theme="mythbento"] {
   color-scheme: dark;
   --c-bg: #040405;
   --c-surface: #101012;
   --c-text: #d8d8dc;
   --c-accent: #f2f2f2;
   --c-on-accent: #050505;
-  --c-dim: #9a9aa2;
+  --c-dim: #8d8e96;
   --c-line: color-mix(in srgb, var(--c-text) 16%, var(--c-bg));
   --c-fill: color-mix(in srgb, var(--c-text) 8%, var(--c-bg));
   --c-danger: #ff8a80;
@@ -408,7 +408,7 @@
   --border-style: solid;
 }
 
-[data-theme="mythbento"] {
+[data-theme="mythmock"] {
   color-scheme: dark;
   --c-bg: #040405;
   --c-surface: #101012;

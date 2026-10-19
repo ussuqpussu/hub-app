@@ -8,7 +8,7 @@ import { QUOTES_GOW, QUOTES_MACH } from './data/quotes-gow.js';
 
 export const PAGE_INDEX = { today: 0, schedule: 1, tasks: 2, projects: 3, 'smart-home': 4, subscriptions: 5, notes: 6, knowledge: 7, settings: 8 };
 // у «Итогов недели» сцена есть только в «Мифах» (индекс 9 в их карте страниц)
-const pgOf = (route, name) => (route === 'weekly' ? (/^(Мифы|Бенто)/.test(name) ? 9 : null) : PAGE_INDEX[route]);
+const pgOf = (route, name) => (route === 'weekly' ? (/^(Мифы|Бенто|Макет)/.test(name) ? 9 : null) : PAGE_INDEX[route]);
 const ENGINE = new URL('../theme/engine.html', import.meta.url).href;
 
 let box = null; // { el, frame, ready, pending, theme }
@@ -18,7 +18,7 @@ let sent = ''; // что уже отправлено рамке, чтобы не
 
 // Цитата дня лежит на фоне под анимацией: только текст и автор, без плитки и кнопок. Меняется раз в сутки.
 function dayQuote(name) {
-  const list = name === 'Мифы' ? QUOTES_GOW : /^(Мифы · Стекло|Бенто)$/.test(name) ? [...QUOTES_GOW, ...QUOTES_MACH] : QUOTES;
+  const list = name === 'Мифы' ? QUOTES_GOW : /^(Бенто|Макет)$/.test(name) ? [...QUOTES_GOW, ...QUOTES_MACH] : QUOTES;
   const n = Math.floor(Date.now() / QUOTE_MS) + qShift;
   return list[((n % list.length) + list.length) % list.length];
 }
