@@ -108,9 +108,6 @@ function ringsNode(st) {
 function closedTile(store, today, mode) {
   const st = dayStats(store, today);
   const r = ringsNode(st);
-  if (mode === 'stage') {
-    return tile('mt-closed mt-closed--stage', [kicker('Сегодня'), el('div', { class: 'mt-rings' }, [r]), el('p', { class: 'mt-num mt-num--m', text: `${st.doneToday} из ${st.plan}` })], { 'data-t': 'rings' });
-  }
   if (mode === 'phone') {
     return tile('mt-closed mt-closed--phone', [el('div', { class: 'mt-rings' }, [r]), el('div', {}, [kicker('Закрыто'), el('p', { class: 'mt-num', text: `${st.doneToday} из ${st.plan}` })])], { 'data-t': 'rings' });
   }
@@ -209,9 +206,6 @@ function weekBars(byDay, today) {
 }
 function weekTile(store, today, mode) {
   const w = weekNumbers(store, today);
-  if (mode === 'stage') {
-    return tile('mt-week mt-week--stage', [kicker('Неделя'), weekBars(w.cur.tasks.byDay, today), el('p', { class: 'mt-num mt-num--m', text: String(w.n) })], { 'data-t': 'weekly' });
-  }
   const head = el('div', { class: 'mt-head' }, [kicker('Неделя')]);
   if (w.delta != null) head.append(el('span', { class: 'mt-chip mt-chip--d', text: `${w.delta >= 0 ? '+' : '−'}${Math.abs(w.delta)}%`, title: 'К прошлой неделе' }));
   return tile('mt-week', [
@@ -268,8 +262,8 @@ function notesTile(store) {
 
 // ---------- «Сегодня» ----------
 
-export function monoToday({ store, subscribe }) {
-  const root = el('section', { class: 'view monov monov--today' });
+export function homeToday({ store, subscribe }) {
+  const root = el('section', { class: 'view hb-view hb-view--today' });
   let ro = null;
 
   // карточка с руками: сама сцена лежит в .main (её нельзя переносить, иначе рамка перезагрузится),
@@ -291,23 +285,9 @@ export function monoToday({ store, subscribe }) {
     const today = todayYmd();
     const d = fromYmd(today);
     const wide = isWide();
-    const mode = wide ? getAppearance().monoHome : 'phone';
+    const mode = wide ? 'grid' : 'phone';
     root.dataset.mode = mode;
-    if (mode === 'stage') {
-      root.replaceChildren(
-        el('header', { class: 'mt-stagehead' }, [
-          kicker(`${WD[d.getDay()]} · ${weekType(today)} неделя`),
-          el('h1', { class: 'mt-date mt-date--xl', text: `${d.getDate()} ${MON[d.getMonth()]}` }),
-          quoteNode('mt-stagehead__q'),
-        ]),
-        el('div', { class: 'mt-grid mt-grid--stage' }, [
-          todoTile(store, today, { add: false, withDone: false, limit: 3 }),
-          closedTile(store, today, 'stage'),
-          weekTile(store, today, 'stage'),
-          focusTile(),
-        ]),
-      );
-    } else if (mode === 'phone') {
+    if (mode === 'phone') {
       root.replaceChildren(el('div', { class: 'mt-grid mt-grid--phone' }, [
         heroTile(d, today, { short: true }),
         dayTile(),
@@ -365,18 +345,17 @@ export function monoToday({ store, subscribe }) {
 }
 
 // ---------- шапка страниц без сцены (как на макете «Итогов») ----------
-export function monoTools() {
-  const search = el('button', { type: 'button', class: 'mono-search', 'aria-label': 'Поиск по хабу' }, [el('span', { html: ICONS.search }), el('span', { class: 'mono-search__t', text: 'Поиск по хабу' })]);
+export function hubTools() {
+  const search = el('button', { type: 'button', class: 'hb-search', 'aria-label': 'Поиск по хабу' }, [el('span', { html: ICONS.search }), el('span', { class: 'hb-search__t', text: 'Поиск по хабу' })]);
   search.addEventListener('click', () => { const b = document.getElementById('search-btn'); if (b) b.click(); });
-  const me = el('a', { class: 'mono-me', href: '#/settings', 'aria-label': 'Настройки', title: 'Настройки' });
-  return el('div', { class: 'mono-tools' }, [search, me]);
+  return el('div', { class: 'hb-tools' }, [search]);
 }
 
 // ---------- «Итоги недели» ----------
 
-export function monoWeekly({ store, subscribe }) {
-  const root = el('section', { class: 'view monov monov--weekly' });
-  const st = { span: load('hub.monoSpan', 'week') === 'month' ? 'month' : 'week', list: load('hub.monoBoard', 'board') === 'list' ? 'list' : 'board' };
+export function homeWeekly({ store, subscribe }) {
+  const root = el('section', { class: 'view hb-view hb-view--weekly' });
+  const st = { span: load('hub.homeSpan', 'week') === 'month' ? 'month' : 'week', list: load('hub.homeBoard', 'board') === 'list' ? 'list' : 'board' };
 
   function cumulative(today) {
     const tasks = store.list('tasks').filter((t) => t.done && t.doneAt);
@@ -403,7 +382,7 @@ export function monoWeekly({ store, subscribe }) {
     // нарастающий итог
     const cu = cumulative(today);
     const spanBtn = el('button', { type: 'button', class: 'mt-pill', 'aria-label': 'Период: неделя или месяц', text: st.span === 'month' ? 'Месяц ▾' : 'Неделя ▾' });
-    spanBtn.addEventListener('click', () => { st.span = st.span === 'week' ? 'month' : 'week'; save('hub.monoSpan', st.span); render(); });
+    spanBtn.addEventListener('click', () => { st.span = st.span === 'week' ? 'month' : 'week'; save('hub.homeSpan', st.span); render(); });
     const cum = tile('mw-cum', [
       el('div', { class: 'mt-head' }, [kicker('Нарастающим итогом'), spanBtn]),
       el('p', { class: 'mt-num mt-num--xl' }, [el('span', { text: String(cu.total), 'data-count': '900' }), el('small', { text: plural(cu.total, ['задача', 'задачи', 'задач']) })]),
@@ -451,7 +430,7 @@ export function monoWeekly({ store, subscribe }) {
 
     // доска
     const lb = el('button', { type: 'button', class: 'mt-add', text: st.list === 'list' ? 'Доска' : 'Список' });
-    lb.addEventListener('click', () => { st.list = st.list === 'list' ? 'board' : 'list'; save('hub.monoBoard', st.list); render(); });
+    lb.addEventListener('click', () => { st.list = st.list === 'list' ? 'board' : 'list'; save('hub.homeBoard', st.list); render(); });
     const tasks = store.list('tasks');
     let boardBody;
     if (st.list === 'list') {

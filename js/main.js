@@ -1,4 +1,4 @@
-import { applyTheme, currentTheme, invertTheme, effectiveColors } from './theme.js';
+import { applyTheme, currentTheme, invertTheme, effectiveColors, onLook } from './theme.js';
 import { createLock } from './pin.js';
 import { TABS, ICONS, renderRoute, statusText } from './views.js';
 import { initPlus } from './plus.js';
@@ -6,7 +6,7 @@ import { initSearch } from './search-view.js';
 import { load } from './storage.js';
 import { createStore } from './data/store.js';
 import { getSession } from './data/vault.js';
-import { applyAppearance, applyGlass, showSplash, playSound, motionAllowed } from './appearance.js';
+import { applyAppearance, showSplash, playSound, motionAllowed } from './appearance.js';
 import { enterView, leaveView, themeWipe } from './motion-kit.js';
 import { initIsland, toast } from './island.js';
 import { initFx } from './fx.js';
@@ -15,15 +15,16 @@ import { sceneHero, initHero, setHeroTheme, setHeroProjects } from './hero.js';
 import { initSky } from './sky.js';
 import { initMotionUi } from './motion-ui.js';
 import { refreshWeather } from './weather-sync.js';
-import { initMonoNav } from './mono-nav.js';
-import { monoTools } from './mono-view.js';
+import { initRail } from './rail.js';
+import { hubTools } from './home-view.js';
 import { onProjects, getProjectsState } from './projects-data.js';
 import { mergedProjects } from './projects-view.js';
 
-applyTheme(currentTheme());
+applyTheme();
 applyAppearance();
 // правки каталога тем сохраняются в соседней рамке: цвета хаба и сцена обновляются на лету
-window.addEventListener('storage', (e) => { if (e.key === 'hub.themeOvr') { applyTheme(currentTheme()); setHeroTheme(currentTheme(), currentRoute()); } });
+window.addEventListener('storage', (e) => { if (e.key === 'hub.look') { applyTheme(); setHeroTheme(currentTheme(), currentRoute()); } });
+onLook(() => setHeroTheme(currentTheme(), currentRoute()));
 initFx();
 initHero();
 initPerf();
@@ -96,14 +97,9 @@ function currentRoute() {
   return r || 'today';
 }
 
-// Смена темы: рамку со сценой не пересоздаём, ей отправляется новое имя темы.
-let wasMono = ['mythmono', 'fusion'].includes(document.documentElement.dataset.theme);
+// Смена темы или режима: рамку со сценой не пересоздаём, ей отправляется новое имя темы.
 new MutationObserver(() => {
-  applyGlass();
   const full = currentRoute();
-  // «Монолит» рисует «Сегодня» и «Итоги» по-своему: при входе в тему и выходе из неё страница строится заново
-  const isMono = ['mythmono', 'fusion'].includes(document.documentElement.dataset.theme);
-  if (isMono !== wasMono) { wasMono = isMono; if (!document.getElementById('app').hidden && ['today', 'weekly'].includes(full)) { route(); return; } }
   if (full.includes('/')) return;
   const th = document.documentElement.dataset.theme;
   if (!main.querySelector(':scope > .hero')) {
@@ -112,7 +108,6 @@ new MutationObserver(() => {
   } else setHeroTheme(th, full);
 }).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
 // светлая/тёмная меняет цвета через style: обои стекла подстраиваются (applyGlass сама ничего не пишет, если всё уже верно)
-new MutationObserver(() => applyGlass()).observe(document.documentElement, { attributes: true, attributeFilter: ['style'] });
 
 // Смена страницы: старая уходит за ~170 мс, новая выходит из блюра каскадом. Повторный переход во время анимации отменяет предыдущий.
 let routeToken = 0;
@@ -161,9 +156,9 @@ function route() {
 }
 
 buildNav();
-initMonoNav({ nav, store });
-{ const edge = document.createElement('div'); edge.className = 'mono-edge'; edge.setAttribute('aria-hidden', 'true'); nav.before(edge); }
-document.getElementById('app').append(monoTools());
+initRail({ nav, store });
+{ const edge = document.createElement('div'); edge.className = 'hb-edge'; edge.setAttribute('aria-hidden', 'true'); nav.before(edge); }
+document.getElementById('app').append(hubTools());
 initMotionUi({ nav });
 initIsland();
 
@@ -172,18 +167,19 @@ const SUN = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-w
 const MOON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>';
 const themeBtns = [];
 function paintThemeBtns() {
-  const dark = effectiveColors(currentTheme()).dk;
+  const dark = effectiveColors().dk;
   themeBtns.forEach((b) => {
     const lbl = dark ? 'Сделать тему светлой' : 'Сделать тему тёмной';
     b.setAttribute('aria-label', lbl);
     b.title = lbl;
+    b.dataset.tip = dark ? 'Светлая тема' : 'Тёмная тема';
     b.querySelector('.themebtn__ic').innerHTML = dark ? MOON : SUN;
     const t = b.querySelector('.nav__label');
     if (t) t.textContent = dark ? 'Светлая тема' : 'Тёмная тема';
   });
 }
 function toggleTheme(btn) {
-  themeWipe(btn, () => { invertTheme(currentTheme()); setHeroTheme(currentTheme(), currentRoute()); paintThemeBtns(); });
+  themeWipe(btn, () => { invertTheme(); setHeroTheme(currentTheme(), currentRoute()); paintThemeBtns(); });
 }
 {
   const top = document.querySelector('.topbar__right');
@@ -200,8 +196,9 @@ function toggleTheme(btn) {
   if (gearSide) nav.insertBefore(b, gearSide); else nav.append(b);
   [a, b].forEach((x) => { themeBtns.push(x); x.addEventListener('click', () => toggleTheme(x)); });
   paintThemeBtns();
-  new MutationObserver(paintThemeBtns).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme', 'style'] });
+  new MutationObserver(paintThemeBtns).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme', 'data-mode'] });
 }
+{ const ss = document.getElementById('search-side'); if (ss) ss.dataset.tip = 'Поиск'; }
 document.getElementById('gear').innerHTML = ICONS.gear;
 document.getElementById('search-btn').innerHTML = ICONS.search;
 document.getElementById('fab').innerHTML = `${ICONS.plus}<span class="sr-only">Добавить запись</span>`;

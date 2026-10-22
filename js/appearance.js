@@ -2,10 +2,9 @@
 // Всё хранится на этом устройстве (настройки в localStorage, картинка обоев в IndexedDB) и не синхронизируется.
 import { load, save } from './storage.js';
 import { dbGet, dbSet, dbDelete } from './data/db.js';
-import { effectiveColors } from './theme.js';
 
 const KEY = 'hub.appearance';
-const DEFAULTS = { effects: true, live: 'auto', splash: true, hero: true, heroPos: 'side', sky: true, sounds: false, volume: 30, wpOn: true, wpDim: 40, glass: 'auto', wpGrad: -1, lite: 'auto', monoHome: 'grid', splashStyle: 'auto' };
+const DEFAULTS = { effects: true, live: 'auto', splash: true, hero: true, heroPos: 'side', sky: true, sounds: false, volume: 30, wpOn: true, wpDim: 40, lite: 'auto', splashStyle: 'auto' };
 export const LIVE_OPTIONS = [
   { id: 'auto', name: 'Как у темы' },
   { id: 'stars', name: 'Звёзды' },
@@ -33,12 +32,8 @@ export function getAppearance() {
     volume: Number.isFinite(s.volume) ? Math.min(100, Math.max(0, s.volume)) : DEFAULTS.volume,
     wpOn: s.wpOn !== false,
     wpDim: Number.isFinite(s.wpDim) ? Math.min(90, Math.max(0, s.wpDim)) : DEFAULTS.wpDim,
-    glass: ['auto', 'off', 'tinted', 'clear'].includes(s.glass) ? s.glass : DEFAULTS.glass,
     lite: ['auto', 'on', 'off'].includes(s.lite) ? s.lite : DEFAULTS.lite,
-    // «Монолит»: вид главной (сетка плиток или руки на весь экран) и навигация (меню по «Х» или значки внизу панели)
-    monoHome: ['grid', 'stage'].includes(s.monoHome) ? s.monoHome : DEFAULTS.monoHome,
     splashStyle: SPLASHES.some((x) => x[0] === s.splashStyle) ? s.splashStyle : DEFAULTS.splashStyle,
-    wpGrad: Number.isInteger(s.wpGrad) && s.wpGrad >= -1 && s.wpGrad < GLASS_WALLS.length ? s.wpGrad : DEFAULTS.wpGrad,
   };
 }
 export function setAppearance(patch) {
@@ -47,27 +42,6 @@ export function setAppearance(patch) {
   applyAppearance();
   listeners.forEach((fn) => fn(next));
   return next;
-}
-
-// Диагональные обои для стекла (из motion-kit): два цвета, ровная заливка без «свечений»
-export const GLASS_WALLS = [['Пепел', '#2a2f45', '#0a0b10'], ['Песок', '#d9a066', '#4a3322'], ['Шалфей', '#7fb08c', '#16251d'], ['Аврора', '#4f7cff', '#a855f7'], ['Дым', '#6b7280', '#1f2937'],
-  ['Прилив', '#0ea5e9', '#1e3a8a'], ['Цветение', '#f472b6', '#7c3aed'], ['Жар', '#fb923c', '#7f1d1d'], ['Роща', '#22c55e', '#064e3b'], ['Сумрак', '#6366f1', '#1e1b4b']];
-export const GLASS_ACCENTS = [['Синий', '#3b82f6'], ['Фиолетовый', '#8b5cf6'], ['Розовый', '#ec4899'], ['Оранжевый', '#f97316'], ['Зелёный', '#22c55e'], ['Серый', '#9ca3af']];
-export const wallGrad = (i, dark = true) => (GLASS_WALLS[i] ? `linear-gradient(155deg, ${GLASS_WALLS[i][1]}${dark ? '55' : '40'} 0%, ${GLASS_WALLS[i][2]}${dark ? 'aa' : '30'} 100%)` : '');
-
-// Стекло: «как у темы» включает его в «Бенто» и «Монолите»; вручную можно включить в любой теме.
-// Заливка обоев своя для тёмной и светлой темы (на светлой она бледнее), поэтому вызывается и при смене светлая/тёмная.
-export function applyGlass() {
-  const root = document.documentElement;
-  const a = getAppearance();
-  const theme = root.dataset.theme;
-  const mode = a.glass === 'auto' ? (theme === 'mythbento' || theme === 'mythmono' || theme === 'fusion' ? 'tinted' : '') : a.glass === 'off' ? '' : a.glass;
-  if (mode) { if (root.dataset.glass !== mode) root.dataset.glass = mode; } else if (root.dataset.glass) delete root.dataset.glass;
-  const idx = a.wpGrad >= 0 ? a.wpGrad : -1;
-  let dk = true;
-  try { dk = effectiveColors(theme).dk; } catch (_) { dk = true; }
-  const want = mode && idx >= 0 ? wallGrad(idx, dk) : '';
-  if (root.style.getPropertyValue('--wp-grad') !== want) { if (want) root.style.setProperty('--wp-grad', want); else root.style.removeProperty('--wp-grad'); }
 }
 
 export const reducedMotion = () => !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
@@ -102,9 +76,6 @@ export async function applyAppearance() {
   const a = getAppearance();
   root.style.setProperty('--wp-dim', `${a.wpDim}%`);
   root.dataset.effects = motionAllowed() ? 'on' : 'off';
-  root.dataset.heroPos = a.heroPos;
-  root.dataset.monoHome = a.monoHome;
-  applyGlass();
   let blob = null;
   try { blob = a.wpOn ? await dbGet('files', 'wallpaper') : null; } catch (_) { blob = null; }
   if (wpUrl) { URL.revokeObjectURL(wpUrl); wpUrl = null; }
@@ -123,13 +94,13 @@ function sessionStorageGet(k) { try { return sessionStorage.getItem(k); } catch 
 
 // Заставка темы «Мифы»: видео (звезда загорается, фон темнеет, открывается хаб). Показывается один раз за сеанс, по касанию пропускается.
 // Заставки: выбираются в настройках независимо от темы; «auto» — своя у текущей темы.
-export const SPLASHES = [['auto', 'Как у темы'], ['creation', 'Шум (Сотворение)'], ['myth', 'Руны и искра (Мифы)'], ['mythbento', 'Стеклянная капсула (Бенто)'], ['mythmono', 'Буква «X» с искрой (Монолит)'], ['type', 'Печатная машинка'], ['wave', 'Волна'], ['eclipse', 'Затмение'], ['orbit', 'Орбита']];
+export const SPLASHES = [['auto', 'Буква «X» с искрой (по умолчанию)'], ['creation', 'Буквы из шума'], ['myth', 'Руны и искра'], ['mythbento', 'Стеклянная капсула'], ['mythmono', 'Буква «X» с искрой'], ['type', 'Печатная машинка'], ['wave', 'Волна'], ['eclipse', 'Затмение'], ['orbit', 'Орбита']];
 export function showSplash(name = 'Хаб', force) {
   if (!force && (!getAppearance().splash || reducedMotion())) return Promise.resolve();
   // У каждой темы своя заставка: Сотворение — буквы из ASCII-шума, Мифы — руны превращаются в имя и вспыхивает искра,
   // Бенто — свечение и капсула, Монолит — «Х» с искрой, как на карточке с руками.
   const pick = force || getAppearance().splashStyle;
-  const th = pick && pick !== 'auto' ? pick : (document.documentElement.dataset.theme || 'creation');
+  const th = pick && pick !== 'auto' ? pick : 'mythmono';
   return new Promise((resolve) => {
     const d = document.createElement('div');
     d.className = `splash splash--${th}`;
@@ -146,11 +117,11 @@ export function showSplash(name = 'Хаб', force) {
     const MON = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
     const now = new Date();
     sub.textContent = `${WD[now.getDay()]} · ${now.getDate()} ${MON[now.getMonth()]}`;
-    const word = th === 'mythmono' || th === 'fusion' ? 'X' : name;
+    const word = th === 'mythmono' ? 'X' : name;
     d.append(spark, t, line, sub);
     document.body.append(d);
     // буквы проявляются из шума (символы своей темы)
-    const pool = th === 'myth' || th === 'fusion' ? 'ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗᛚᛜᛞᛟ' : th === 'creation' ? '@#%&*+=-:.' : '';
+    const pool = th === 'myth' ? 'ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗᛚᛜᛞᛟ' : th === 'creation' ? '@#%&*+=-:.' : '';
     if (pool) {
       const start = performance.now();
       const step = () => {

@@ -1,9 +1,7 @@
 /* Токены оформления. Все цвета и размеры приложения берутся только отсюда.
-   Темы: minimal («Минимализм») и creation («Сотворение»).
-   Исходные значения взяты из превью тем (previews/theme-previews.html). */
+   Эти значения только запасные: цвета и вид темы задаёт js/theme.js, а css/hub.css выводит из них остальное. */
 
-:root,
-[data-theme="minimal"] {
+:root {
   color-scheme: light;
 
   /* Цвета */
@@ -44,43 +42,6 @@
   --radius-pill: 0;
   --border: 1px;
   --border-style: solid;
-}
-
-[data-theme="creation"] {
-  color-scheme: dark;
-
-  --c-bg: #050505;
-  --c-surface: #101010;
-  --c-text: #d4d4d4;
-  --c-accent: #f2f2f2;
-  --c-on-accent: #050505;
-  --c-dim: #9a9a9a;
-  --c-line: #242424;
-  --c-fill: #181818;
-  --c-danger: #ff8a80;
-  --c-overlay: rgb(0 0 0 / 65%);
-  --c-ok: #30d158;
-  --c-warn: #ffd60a;
-  --lamp-green: #30d158;
-  --lamp-yellow: #ffd60a;
-  --lamp-red: #ff453a;
-  --lamp-off: #636366;
-  --chart-1: #ffb4a2;
-  --chart-2: #5e9cff;
-  --chart-3: #30d158;
-  --chart-4: #ffd60a;
-  --chart-5: #d8b4fe;
-  --chart-6: #ff9aa2;
-  --chart-7: #7fd7e8;
-
-  --font-head: Georgia, "PT Serif", serif;
-  --fw-head: 600;
-  --ls-head: -0.01em;
-
-  --radius-s: 0.5rem;
-  --radius-m: 0.9rem;
-  --radius-pill: 99px;
-  --border-style: dashed;
 }
 
 :root {

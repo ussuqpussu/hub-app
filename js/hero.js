@@ -58,6 +58,7 @@ function message(m) {
 window.addEventListener('message', (e) => {
   if (!box || !e.data || e.data.type !== 'hub-engine-ready' || e.source !== box.frame.contentWindow) return;
   box.ready = true;
+  box.frame.style.opacity = '1';
   if (projects.length) { sent = JSON.stringify(projects); message({ projects }); }
   if (box.pending) { const p = box.pending; box.pending = null; message(p); }
 });
@@ -81,7 +82,13 @@ export function sceneHero(themeId, route) {
   frame.className = 'hero__frame';
   frame.title = `Анимация темы «${name}»`;
   frame.setAttribute('loading', 'eager');
-  frame.src = `${ENGINE}#stage&t=${encodeURIComponent(name)}&pg=${pg}&dk=${dk}`;
+  // Движок тяжёлый (около 1,3 МБ): запускаем его после перехода между вкладками, чтобы сам переход не дёргался;
+  // сцена проявляется, когда готова.
+  frame.style.opacity = '0';
+  frame.style.transition = 'opacity .6s ease';
+  const src = `${ENGINE}#stage&t=${encodeURIComponent(name)}&pg=${pg}&dk=${dk}`;
+  const start = () => { if (box && box.frame === frame) frame.src = src; };
+  setTimeout(() => ('requestIdleCallback' in window ? requestIdleCallback(start, { timeout: 600 }) : start()), 750);
   const el = document.createElement('div');
   el.className = 'hero hero--stage';
   el.setAttribute('role', 'img');

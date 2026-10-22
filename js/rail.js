@@ -1,11 +1,11 @@
-// «Монолит»: панель как на макетах. Буква «Х» сверху, шесть значков (Сегодня, Расписание, Задачи, Проекты, Итоги, Заметки).
+// Остров-навигация. Буква «Х» сверху, шесть значков (Сегодня, Расписание, Задачи, Проекты, Итоги, Заметки).
 // Остальное (Знания, Подписки, Поиск, светлая/тёмная, Настройки) — маленькими значками внизу панели, как у других тем;
 // на телефоне капсула листается вбок.
 import { el } from './ui.js';
 
 const ico = (d) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
 // свои простые значки в духе макета
-export const MONO_ICONS = {
+export const RAIL_ICONS = {
   today: ico('<rect x="4.5" y="4.5" width="6" height="6" rx="1.6"/><rect x="13.5" y="4.5" width="6" height="6" rx="1.6"/><rect x="4.5" y="13.5" width="6" height="6" rx="1.6"/><rect x="13.5" y="13.5" width="6" height="6" rx="1.6"/>'),
   schedule: ico('<rect x="4" y="5.5" width="16" height="14" rx="2.5"/><path d="M4 10h16M8.5 3.5v4M15.5 3.5v4"/>'),
   tasks: ico('<circle cx="12" cy="12" r="8"/><path d="M8.5 12.2l2.4 2.4 4.7-4.9"/>'),
@@ -18,26 +18,20 @@ export const MONO_ICONS = {
   more: ico('<circle cx="6" cy="12" r="1.2"/><circle cx="12" cy="12" r="1.2"/><circle cx="18" cy="12" r="1.2"/>'),
 };
 
-const isMono = () => ['mythmono', 'fusion'].includes(document.documentElement.dataset.theme);
 
-export function initMonoNav({ nav, store }) {
+export function initRail({ nav, store }) {
   // «Х» — первым элементом панели
   const logo = el('button', { type: 'button', class: 'nav__logo', 'aria-label': 'Сегодня' }, [el('span', { text: 'X' })]);
   nav.prepend(logo);
 
   logo.addEventListener('click', () => { location.hash = '#/today'; });
 
-  // значки: в «Монолите» свои, в других темах прежние
-  const paint = () => {
-    const on = isMono();
-    nav.querySelectorAll('.nav__item[data-route]').forEach((a) => {
-      const svg = a.querySelector('svg');
-      if (!svg) return;
-      if (!a.dataset.icon0) a.dataset.icon0 = svg.outerHTML;
-      const want = on && MONO_ICONS[a.dataset.route] ? MONO_ICONS[a.dataset.route] : a.dataset.icon0;
-      if (svg.outerHTML !== want) svg.outerHTML = want;
-    });
-  };
-  paint();
-  new MutationObserver(paint).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+  // значки острова: свои, в одном стиле; у каждого подпись при наведении
+  nav.querySelectorAll('.nav__item[data-route]').forEach((a) => {
+    const svg = a.querySelector('svg');
+    if (svg && RAIL_ICONS[a.dataset.route]) svg.outerHTML = RAIL_ICONS[a.dataset.route];
+    const lbl = a.querySelector('.nav__label');
+    if (lbl) a.dataset.tip = lbl.textContent;
+  });
+  logo.dataset.tip = 'Сегодня';
 }

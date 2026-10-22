@@ -2,7 +2,6 @@
 //  - theme/engine.html: база (theme/src/base.html, взята из previews/theme-previews.html),
 //    затем ядро t00-core.js, регистрация тем из theme/src/themes-def.mjs, файлы сцен t01-*.js …,
 //    затем addon-hub.js. Всё дописывается перед последним </script>.
-//  - js/theme-data.js: те же темы в виде, который читают хаб и scripts/gen-themes.mjs.
 // Запуск: node scripts/build-engine.mjs && node scripts/gen-themes.mjs
 import { readFileSync, writeFileSync, readdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -20,6 +19,5 @@ const i = base.lastIndexOf('</script>');
 if (i < 0) throw new Error('в base.html нет </script>');
 writeFileSync(join(here, '..', 'theme', 'engine.html'), base.slice(0, i) + parts.join('\n') + '\n' + base.slice(i));
 
-const data = NEW_THEMES.map(({ id, name, group, note, dark, bg, surface, text, accent, onAccent, dim, font, card, btn, layout, pal }) => ({ id, name, group, note, dark, bg, surface, text, accent, onAccent, dim, font, card, btn, layout, pal }));
-writeFileSync(join(here, '..', 'js', 'theme-data.js'), `// Данные тем для css/themes.css (его собирает scripts/gen-themes.mjs) и для хаба.\n// Файл собирается скриптом scripts/build-engine.mjs из theme/src/themes-def.mjs, руками не правим.\n// «Сотворение» описано прямо в css/tokens.css.\nexport const THEME_DEFS = ${JSON.stringify(data, null, 1)};\n`);
+const data = NEW_THEMES;
 console.log('engine.html собран, частей:', parts.length, '; тем:', data.length);

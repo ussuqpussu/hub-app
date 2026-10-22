@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ru" data-theme="creation">
+<html lang="ru" data-theme="mosaic">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -11,20 +11,22 @@
   <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="icons/apple-touch-icon-180.png">
   <script>
-    // Тема до первой отрисовки: без белой вспышки на экране PIN
-    (function () { try {
-      var t = JSON.parse(localStorage.getItem('hub.theme') || 'null'); var r = document.documentElement;
-      r.setAttribute('data-theme', t || 'creation');
+    // Тема и режим до первой отрисовки: без белой вспышки на экране PIN
+    (function () { var r = document.documentElement; try {
+      var L = JSON.parse(localStorage.getItem('hub.look') || 'null') || {};
+      var t = L.theme || JSON.parse(localStorage.getItem('hub.theme') || 'null');
+      r.setAttribute('data-theme', t === 'sheet' ? 'sheet' : 'mosaic');
+      var m = JSON.parse(localStorage.getItem('hub.bootMode') || 'null');
+      if (m) { r.setAttribute('data-mode', m); r.style.colorScheme = m; }
       var bg = JSON.parse(localStorage.getItem('hub.bootBg') || 'null');
-      if (bg) { r.style.background = bg; var m = document.querySelector('meta[name="theme-color"]'); if (m) m.setAttribute('content', bg); }
-    } catch (e) { document.documentElement.setAttribute('data-theme', 'creation'); } })();
+      if (bg) { r.style.background = bg; var mt = document.querySelector('meta[name="theme-color"]'); if (mt) mt.setAttribute('content', bg); }
+    } catch (e) { r.setAttribute('data-theme', 'mosaic'); } })();
   </script>
   <link rel="stylesheet" href="css/tokens.css">
-  <link rel="stylesheet" href="css/themes.css">
   <link rel="stylesheet" href="css/base.css">
   <link rel="stylesheet" href="css/layout.css">
   <link rel="stylesheet" href="css/motion.css">
-  <link rel="stylesheet" href="css/mono.css">
+  <link rel="stylesheet" href="css/hub.css">
 </head>
 <body>
   <div class="lock" id="lock" role="dialog" aria-modal="true" aria-labelledby="lock-title">

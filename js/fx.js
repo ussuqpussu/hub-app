@@ -2,10 +2,9 @@
 // стоит, когда вкладка скрыта, эффекты выключены или в системе включено «уменьшение движения».
 import { getAppearance, onAppearance, motionAllowed } from './appearance.js';
 import { frameGap } from './perf.js';
-import { THEME_DEFS } from './theme-data.js';
 
 // Какая анимация подходит каждой теме по умолчанию.
-export const THEME_FX = { creation: 'stars' };
+export const THEME_FX = {};
 
 const rnd = (a, b) => a + Math.random() * (b - a);
 const cssVar = (n) => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
@@ -57,8 +56,7 @@ function frame(ts) {
   lastFrame = ts;
   const c = cv.getContext('2d');
   c.clearRect(0, 0, cv.width, cv.height);
-  const def = THEME_DEFS.find((t) => t.id === document.documentElement.dataset.theme);
-  const col = { text: cssVar('--c-text') || '#888', accent: cssVar('--c-accent') || '#888', pal: (def && def.pal) || [cssVar('--c-accent') || '#888'] };
+  const col = { text: cssVar('--c-text') || '#888', accent: cssVar('--c-accent') || '#888', pal: [cssVar('--c-accent') || '#888'] };
   c.save();
   draw(c, ts / 1000, col);
   c.restore();
