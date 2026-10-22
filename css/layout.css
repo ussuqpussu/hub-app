@@ -83,7 +83,7 @@
 .nav__sep { display: none; }
 .nav__gear-side { display: none; }
 
-/* Кнопка «+» и над ней кнопка быстрой записи в дневник */
+/* Кнопка «+» */
 :root { --fab-bottom: calc(var(--nav-h) + var(--sp-4) + env(safe-area-inset-bottom)); }
 
 .fab {
@@ -102,7 +102,6 @@
 }
 
 .fab svg { width: var(--icon); height: var(--icon); }
-.fab--diary { bottom: calc(var(--fab-bottom) + var(--fab) + var(--sp-3)); background: var(--c-fill); color: var(--c-text); border-color: var(--c-line); }
 
 .link-list { display: grid; gap: var(--sp-2); }
 

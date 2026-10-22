@@ -13,7 +13,6 @@ export const ICONS = {
   home: ico('<path d="M4 11l8-7 8 7v9H4z"/><path d="M10 20v-5h4v5"/>'),
   subs: ico('<path d="M4 12a8 8 0 1 0 3-6.2M4 4v4h4"/>'),
   notes: ico('<path d="M6 4h9l3 3v13H6z"/><path d="M9 11h6M9 15h6"/>'),
-  mood: ico('<circle cx="12" cy="12" r="8"/><path d="M9 10h.01M15 10h.01"/><path d="M8.8 14.2c.8 1.2 1.9 1.8 3.2 1.8s2.4-.6 3.2-1.8"/>'),
   knowledge: ico('<path d="M5 5h6a2 2 0 0 1 2 2v12a2 2 0 0 0-2-2H5zM19 5h-6"/><path d="M19 5v12h-6"/>'),
   gear: ico('<path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/>'),
   plus: ico('<path d="M12 5v14M5 12h14"/>'),

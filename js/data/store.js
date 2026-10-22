@@ -4,7 +4,7 @@ import { encryptJSON, decryptJSON } from './crypto.js';
 import { dbGet, dbSet, dbDelete, dbAll, dbClear } from './db.js';
 import { createGithub, GhError } from './github.js';
 
-export const MODULES = ['inbox', 'tasks', 'goals', 'subs', 'projects', 'questions', 'rupor', 'rposts', 'weekly', 'notes', 'diary'];
+export const MODULES = ['inbox', 'tasks', 'goals', 'subs', 'projects', 'questions', 'rupor', 'rposts', 'weekly', 'notes'];
 export const TOMBSTONE_TTL = 30 * 24 * 3600 * 1000;
 const path = (m) => `data/${m}.json`;
 
@@ -28,7 +28,6 @@ const VALID = {
   projects: (it) => isStr(it.name) && isStr(it.status),
   questions: (it) => isStr(it.text) && isStr(it.status) && isStr(it.who),
   notes: (it) => isStr(it.kind) && isStr(it.title) && isStr(it.text),
-  diary: (it) => /^\d{4}-\d{2}-\d{2}$/.test(it.date || '') && Number.isInteger(it.mood) && it.mood >= -3 && it.mood <= 3 && (it.kind === 'day' || it.kind === 'moment'),
   weekly: (it) => isStr(it.week) && it.summary && typeof it.summary === 'object',
   rposts: (it) => isStr(it.pid) && isStr(it.title) && isStr(it.date),
   rupor: (it) => isStr(it.postId) && it.status && typeof it.status === 'object',

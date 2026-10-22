@@ -221,14 +221,14 @@ html:is([data-theme="mythmono"],[data-theme="fusion"]) .main[data-page="today"]:
   html:is([data-theme="mythmono"],[data-theme="fusion"]) .nav > .nav__logo { order: 0; }
   html:is([data-theme="mythmono"],[data-theme="fusion"]) .nav > .nav__sep { order: 7; display: block; flex: 1; }
   /* внизу панели, как у остальных тем: Знания (хроника, скиллы, промпты), Подписки, Поиск, светлая/тёмная, Настройки */
-  html:is([data-theme="mythmono"],[data-theme="fusion"]) .nav > :is([data-route="diary"], [data-route="knowledge"], [data-route="subscriptions"], #search-side, .themebtn, [data-route="settings"]) { order: 8; display: flex; width: 1.9rem; height: 1.9rem; min-height: 1.9rem; color: #7d7e85; }
-  html:is([data-theme="mythmono"],[data-theme="fusion"]) .nav > :is([data-route="diary"], [data-route="knowledge"], [data-route="subscriptions"], #search-side, .themebtn, [data-route="settings"]) svg { width: .9rem; height: .9rem; }
-  html:is([data-theme="mythmono"],[data-theme="fusion"]) .nav > [data-route="diary"] { order: 8; } html:is([data-theme="mythmono"],[data-theme="fusion"]) .nav > [data-route="knowledge"] { order: 9; } html:is([data-theme="mythmono"],[data-theme="fusion"]) .nav > [data-route="subscriptions"] { order: 9; }
+  html:is([data-theme="mythmono"],[data-theme="fusion"]) .nav > :is([data-route="knowledge"], [data-route="subscriptions"], #search-side, .themebtn, [data-route="settings"]) { order: 8; display: flex; width: 1.9rem; height: 1.9rem; min-height: 1.9rem; color: #7d7e85; }
+  html:is([data-theme="mythmono"],[data-theme="fusion"]) .nav > :is([data-route="knowledge"], [data-route="subscriptions"], #search-side, .themebtn, [data-route="settings"]) svg { width: .9rem; height: .9rem; }
+  html:is([data-theme="mythmono"],[data-theme="fusion"]) .nav > [data-route="knowledge"] { order: 9; } html:is([data-theme="mythmono"],[data-theme="fusion"]) .nav > [data-route="subscriptions"] { order: 9; }
   html:is([data-theme="mythmono"],[data-theme="fusion"]) .nav > #search-side { order: 10; } html:is([data-theme="mythmono"],[data-theme="fusion"]) .nav > .themebtn { order: 11; } html:is([data-theme="mythmono"],[data-theme="fusion"]) .nav > [data-route="settings"] { order: 12; }
   html:is([data-theme="mythmono"],[data-theme="fusion"]) .main, html:is([data-theme="mythmono"],[data-theme="fusion"])[data-hero-pos] .main[data-page] { grid-column: 2; grid-row: 1; max-width: none; margin: 0; padding: var(--mono-top) var(--mono-side) var(--mono-bottom) 0; }
   /* на больших мониторах содержимое стоит по центру, а не прижато влево */
   html:is([data-theme="mythmono"],[data-theme="fusion"])[data-hero-pos] .main > :not(.hero), html:is([data-theme="mythmono"],[data-theme="fusion"]) .main > :not(.hero) { max-width: 118rem; margin-inline: auto; width: 100%; grid-column: auto; }
-  html:is([data-theme="mythmono"],[data-theme="fusion"]) .fab, html:is([data-theme="mythmono"],[data-theme="fusion"]) .fab--diary { display: none; }
+  html:is([data-theme="mythmono"],[data-theme="fusion"]) .fab { display: none; }
 }
 .nav__logo { display: none; }
 .mono-edge { display: none; }
@@ -314,7 +314,7 @@ html:is([data-theme="mythmono"],[data-theme="fusion"]) .mw-board .kan__col[data-
   html:is([data-theme="mythmono"],[data-theme="fusion"]) .topbar { display: none; }
   html:is([data-theme="mythmono"],[data-theme="fusion"]) .app { grid-template-rows: 1fr; }
   html:is([data-theme="mythmono"],[data-theme="fusion"]) .main { padding: calc(3.7rem + env(safe-area-inset-top)) 1.1rem calc(var(--nav-h) + 2.2rem + env(safe-area-inset-bottom)); }
-  html:is([data-theme="mythmono"],[data-theme="fusion"]) .fab, html:is([data-theme="mythmono"],[data-theme="fusion"]) .fab--diary { display: none; }
+  html:is([data-theme="mythmono"],[data-theme="fusion"]) .fab { display: none; }
   html:is([data-theme="mythmono"],[data-theme="fusion"]) .mt-grid--phone { display: grid; gap: var(--mono-gap); grid-template-columns: 1fr 1fr; grid-template-rows: 9rem 6.9rem 7rem minmax(17rem, 1fr); min-height: calc(100dvh - 3.7rem - var(--nav-h) - 2.2rem - env(safe-area-inset-top) - env(safe-area-inset-bottom)); }
   html:is([data-theme="mythmono"],[data-theme="fusion"]) .mt-grid--phone > .mt-hero, html:is([data-theme="mythmono"],[data-theme="fusion"]) .mt-grid--phone > .mt-closed, html:is([data-theme="mythmono"],[data-theme="fusion"]) .mt-grid--phone > .mt-todo { grid-column: 1 / -1; }
   html:is([data-theme="mythmono"],[data-theme="fusion"]) .mt-grid--phone .mt-hero { padding: 1rem 1.1rem; }
@@ -358,7 +358,7 @@ html:is([data-theme="mythmono"],[data-theme="fusion"]) .mw-board .kan__col[data-
   html:is([data-theme="mythmono"],[data-theme="fusion"]) .nav > .sync-chip, html:is([data-theme="mythmono"],[data-theme="fusion"]) .nav > .nav__sep { display: none !important; }
   /* капсула листается: за пятью значками — остальные разделы; «Ещё» не нужна */
   html:is([data-theme="mythmono"],[data-theme="fusion"]) .nav > [data-route="more"] { display: none; }
-  html:is([data-theme="mythmono"],[data-theme="fusion"]) .nav > :is([data-route="notes"], [data-route="subscriptions"], [data-route="knowledge"], [data-route="diary"], #search-side, [data-route="settings"]) { display: grid; order: 7; }
+  html:is([data-theme="mythmono"],[data-theme="fusion"]) .nav > :is([data-route="notes"], [data-route="subscriptions"], [data-route="knowledge"], #search-side, [data-route="settings"]) { display: grid; order: 7; }
   html:is([data-theme="mythmono"],[data-theme="fusion"]) .nav > .themebtn { display: none; }
   html:is([data-theme="mythmono"],[data-theme="fusion"]) .mono-tools { top: calc(.9rem + env(safe-area-inset-top)); right: 1.1rem; }
   html:is([data-theme="mythmono"],[data-theme="fusion"]) .mono-search { width: 2.4rem; height: 2.4rem; padding: 0; justify-content: center; }
