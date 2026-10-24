@@ -13,7 +13,7 @@ import { knowledgeView } from './knowledge-view.js';
 
 export { ICONS, fmtTime };
 
-export const VERSION = '0.52.0 (плавные переходы: вкладки и смена темы)';
+export const VERSION = '0.53.0 (ровные цифры, тёмные руки на светлой теме, больше воздуха по бокам)';
 
 // Вкладки. group: main (в нижней панели телефона), more (внутри «Ещё»).
 export const TABS = [

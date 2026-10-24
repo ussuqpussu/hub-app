@@ -4469,6 +4469,17 @@ MYART[3]=["Мьёльнир","mjolnir","ᛗᛃᛟᛚᚾᛁᚱ","Молот То�
   document.documentElement.classList.add('hub-' + MODE);
 
   loadOvr();
+  // Цвета сцены берутся из палитры «Мифов» (по умолчанию тёмной). Светлому режиму хаба соответствует «Олимп»:
+  // подставляем в него цвета хаба из настроек, иначе руки остаются светло-серыми на светлом фоне.
+  var dkNow = dk;
+  function syncMyth() {
+    if (MODE !== 'stage' || typeof MYPALS === 'undefined') return;
+    var o = OVR['Монолит'] || {};
+    if (dkNow) { MYPAL = 'base'; return; }
+    MYPAL = 'oly';
+    if (o.t && o.b) MYPALS.oly = Object.assign({}, MYPALS.oly, { b: o.b, s: o.s || MYPALS.oly.s, t: o.t, a: o.a || MYPALS.oly.a, ba: o.ba || MYPALS.oly.ba, asc: o.t });
+  }
+  syncMyth();
   // Пока хаб не прислал настоящие проекты, вместо учебных названий из превью показываем созвездия (ничего не выдумываем про проекты).
   if (typeof PROJECTS !== 'undefined') {
     PROJECTS.length = 0;
@@ -4494,7 +4505,7 @@ MYART[3]=["Мьёльнир","mjolnir","ᛗᛃᛟᛚᚾᛁᚱ","Молот То�
   if (typeof z33Sync === 'function') z33Sync();
   renderBig();
 
-  function rerender() { if (typeof z33Sync === 'function') z33Sync(); renderBig(); }
+  function rerender() { syncMyth(); if (typeof z33Sync === 'function') z33Sync(); renderBig(); }
   window.addEventListener('storage', function (e) { if (e.key === KEY && loadOvr()) rerender(); });
   window.addEventListener('message', function (e) {
     var d = e.data;
@@ -4502,6 +4513,9 @@ MYART[3]=["Мьёльнир","mjolnir","ᛗᛃᛟᛚᚾᛁᚱ","Молот То�
     var ch = false;
     if (d.t != null) { var i = themeIndex(d.t); if (i !== cur) { cur = i; ch = true; } }
     if (d.pg != null && +d.pg !== ADPG) { ADPG = +d.pg; ch = true; }
+    if (d.dk != null) { dkNow = !!d.dk; ch = true; }
+    if (loadOvr()) ch = true;
+    syncMyth();
     if (d.dk != null) { var s = (d.dk ? 'dark' : 'light'); if (document.documentElement.style.colorScheme !== s) document.documentElement.style.setProperty('color-scheme', s, 'important'); }
     if (Array.isArray(d.projects) && d.projects.length && typeof PROJECTS !== 'undefined') {
       PROJECTS.length = 0;
