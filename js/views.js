@@ -13,7 +13,7 @@ import { knowledgeView } from './knowledge-view.js';
 
 export { ICONS, fmtTime };
 
-export const VERSION = '0.55.0 (девять миров вместо палитр, мир дня, одна тема «Мозаика»)';
+export const VERSION = '0.56.0 (быстрый запуск без белого экрана, больше цитат, чистка стилей)';
 
 // Вкладки. group: main (в нижней панели телефона), more (внутри «Ещё»).
 export const TABS = [

@@ -5,7 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Хаб</title>
   <meta name="description" content="Личный хаб">
-  <meta name="theme-color" content="#fafafa">
+  <meta name="theme-color" content="#0b0b0d">
+  <meta name="color-scheme" content="dark light">
   <meta name="robots" content="noindex, nofollow">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
@@ -22,6 +23,83 @@
       if (bg) { r.style.background = bg; var mt = document.querySelector('meta[name="theme-color"]'); if (mt) mt.setAttribute('content', bg); }
     } catch (e) { r.setAttribute('data-theme', 'mosaic'); } })();
   </script>
+  <style>
+    /* Первый кадр: фон и экран PIN рисуются сразу, до загрузки основных стилей (без белой вспышки) */
+    html { background: #0b0b0d; color: #ececef; }
+    @media (prefers-color-scheme: light) { html:not([data-mode="dark"]) { background: #eceded; color: #16161a; } }
+    html[data-mode="light"] { background: #eceded; color: #16161a; }
+    body { margin: 0; background: inherit; }
+  </style>
+  <!-- preload:start -->
+  <link rel="modulepreload" href="js/appearance.js">
+  <link rel="modulepreload" href="js/arch-calc.js">
+  <link rel="modulepreload" href="js/arch-view.js">
+  <link rel="modulepreload" href="js/canvas-env.js">
+  <link rel="modulepreload" href="js/data/crypto.js">
+  <link rel="modulepreload" href="js/data/db.js">
+  <link rel="modulepreload" href="js/data/github.js">
+  <link rel="modulepreload" href="js/data/quotes-gow.js">
+  <link rel="modulepreload" href="js/data/quotes.js">
+  <link rel="modulepreload" href="js/data/skills-data.js">
+  <link rel="modulepreload" href="js/data/store.js">
+  <link rel="modulepreload" href="js/data/vault.js">
+  <link rel="modulepreload" href="js/dates.js">
+  <link rel="modulepreload" href="js/feed-calc.js">
+  <link rel="modulepreload" href="js/feed-view.js">
+  <link rel="modulepreload" href="js/fx.js">
+  <link rel="modulepreload" href="js/goals-view.js">
+  <link rel="modulepreload" href="js/hero.js">
+  <link rel="modulepreload" href="js/home-view.js">
+  <link rel="modulepreload" href="js/island.js">
+  <link rel="modulepreload" href="js/kanban.js">
+  <link rel="modulepreload" href="js/knowledge-calc.js">
+  <link rel="modulepreload" href="js/knowledge-data.js">
+  <link rel="modulepreload" href="js/knowledge-view.js">
+  <link rel="modulepreload" href="js/look-view.js">
+  <link rel="modulepreload" href="js/mk-widgets.js">
+  <link rel="modulepreload" href="js/motion-kit.js">
+  <link rel="modulepreload" href="js/motion-ui.js">
+  <link rel="modulepreload" href="js/notes-calc.js">
+  <link rel="modulepreload" href="js/notes-view.js">
+  <link rel="modulepreload" href="js/perf.js">
+  <link rel="modulepreload" href="js/pin.js">
+  <link rel="modulepreload" href="js/plus.js">
+  <link rel="modulepreload" href="js/project-page.js">
+  <link rel="modulepreload" href="js/projects-calc.js">
+  <link rel="modulepreload" href="js/projects-data.js">
+  <link rel="modulepreload" href="js/projects-parse.js">
+  <link rel="modulepreload" href="js/projects-view.js">
+  <link rel="modulepreload" href="js/questions-calc.js">
+  <link rel="modulepreload" href="js/questions-view.js">
+  <link rel="modulepreload" href="js/rail.js">
+  <link rel="modulepreload" href="js/rates.js">
+  <link rel="modulepreload" href="js/rupor-calc.js">
+  <link rel="modulepreload" href="js/rupor-import.js">
+  <link rel="modulepreload" href="js/rupor-parse.js">
+  <link rel="modulepreload" href="js/rupor-view.js">
+  <link rel="modulepreload" href="js/schedule-data.js">
+  <link rel="modulepreload" href="js/schedule-parse.js">
+  <link rel="modulepreload" href="js/schedule-view.js">
+  <link rel="modulepreload" href="js/search-calc.js">
+  <link rel="modulepreload" href="js/search-view.js">
+  <link rel="modulepreload" href="js/settings-view.js">
+  <link rel="modulepreload" href="js/sky.js">
+  <link rel="modulepreload" href="js/storage.js">
+  <link rel="modulepreload" href="js/subs-calc.js">
+  <link rel="modulepreload" href="js/subs-form.js">
+  <link rel="modulepreload" href="js/subs-parts.js">
+  <link rel="modulepreload" href="js/subs-view.js">
+  <link rel="modulepreload" href="js/tasks-board.js">
+  <link rel="modulepreload" href="js/tasks-view.js">
+  <link rel="modulepreload" href="js/theme.js">
+  <link rel="modulepreload" href="js/ui.js">
+  <link rel="modulepreload" href="js/views.js">
+  <link rel="modulepreload" href="js/weather-calc.js">
+  <link rel="modulepreload" href="js/weather-fetch.js">
+  <link rel="modulepreload" href="js/weather-sync.js">
+  <link rel="modulepreload" href="js/weekly-calc.js">
+  <link rel="modulepreload" href="js/weekly-view.js">
+  <!-- preload:end -->
   <link rel="stylesheet" href="css/tokens.css">
   <link rel="stylesheet" href="css/base.css">
   <link rel="stylesheet" href="css/layout.css">

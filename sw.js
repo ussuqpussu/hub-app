@@ -1,6 +1,6 @@
 // Service worker: оболочка открывается без сети.
 // При изменении любого файла оболочки увеличивай VERSION, чтобы кэш обновился.
-const VERSION = 'hub-shell-v94';
+const VERSION = 'hub-shell-v95';
 const SHELL = [
   './',
   './index.html',
@@ -104,7 +104,7 @@ const SHELL = [
 ];
 
 self.addEventListener('install', (event) => {
-  event.waitUntil(caches.open(VERSION).then((c) => c.addAll(SHELL)).then(() => self.skipWaiting()));
+  event.waitUntil(caches.open(VERSION).then((c) => c.addAll(SHELL.map((u) => new Request(u, { cache: 'reload' })))).then(() => self.skipWaiting()));
 });
 
 self.addEventListener('activate', (event) => {
@@ -122,18 +122,16 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(req.url);
   if (url.origin !== self.location.origin) return;
 
-  // Сначала сеть (свежая версия), при ошибке кэш. Для страниц — запасной index.html.
+  // Сначала кэш (мгновенный запуск без белого экрана), в фоне обновляем файл из сети: свежая версия подхватится
+  // при следующем открытии. Новая версия оболочки приходит ещё и через VERSION (установка заново). Нет в кэше: сеть.
+  const refresh = () => fetch(req, { cache: 'no-cache' }).then((res) => {
+    if (res.ok && res.status === 200) { const copy = res.clone(); caches.open(VERSION).then((c) => c.put(req, copy)); }
+    return res;
+  });
   event.respondWith(
-    fetch(req, { cache: 'no-cache' })
-      .then((res) => {
-        if (res.ok) {
-          const copy = res.clone();
-          caches.open(VERSION).then((c) => c.put(req, copy));
-        }
-        return res;
-      })
-      .catch(() =>
-        caches.match(req).then((hit) => hit || (req.mode === 'navigate' ? caches.match('./index.html') : Response.error())),
-      ),
+    caches.match(req, { ignoreSearch: false }).then((hit) => {
+      if (hit) { event.waitUntil(refresh().catch(() => {})); return hit; }
+      return refresh().catch(() => (req.mode === 'navigate' ? caches.match('./index.html') : Response.error()));
+    }),
   );
 });

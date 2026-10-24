@@ -88,7 +88,7 @@ export function sceneHero(themeId, route) {
   frame.style.transition = 'opacity .6s ease';
   const src = `${ENGINE}#stage&t=${encodeURIComponent(name)}&pg=${pg}&dk=${dk}`;
   const start = () => { if (box && box.frame === frame) frame.src = src; };
-  setTimeout(() => ('requestIdleCallback' in window ? requestIdleCallback(start, { timeout: 600 }) : start()), 750);
+  setTimeout(() => ('requestIdleCallback' in window ? requestIdleCallback(start, { timeout: 900 }) : start()), 1100);
   const el = document.createElement('div');
   el.className = 'hero hero--stage';
   el.setAttribute('role', 'img');
