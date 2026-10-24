@@ -27,7 +27,7 @@ export function enterView(view) {
   if (!view || !motionAllowed()) return;
   riseTargets(view).forEach((el, i) => { el.dataset.rise = ''; el.style.setProperty('--i', String(i)); });
   view.classList.add('is-entering');
-  const total = css('--mk-in', 0.7) * 1000 + 8 * css('--mk-step', 70) + 700;
+  const total = css('--mk-in', 0.7) * 1000 + 8 * css('--mk-step', 70) + 150;
   setTimeout(() => {
     view.classList.remove('is-entering');
     view.querySelectorAll('[data-rise]').forEach((el) => { delete el.dataset.rise; el.style.removeProperty('--i'); });
@@ -80,7 +80,7 @@ export function countIn(root) {
   root.querySelectorAll('[data-count]').forEach((el) => {
     const card = el.closest('[data-rise]');
     const i = card ? +card.style.getPropertyValue('--i') || 0 : 0;
-    countUp(el, { delay: 380 + Math.min(i, 8) * css('--mk-step', 70), dur: +el.dataset.count || 1200 });
+    countUp(el, { delay: 120 + Math.min(i, 8) * css('--mk-step', 70), dur: Math.min(+el.dataset.count || 1200, 700) });
   });
 }
 
@@ -113,13 +113,13 @@ export function blobFrames(cx, cy, W, H, steps = 30) {
   }
   return out;
 }
-export async function themeWipe(originEl, apply, dur = css('--mk-wipe', 750)) {
-  if (!document.startViewTransition || !motionAllowed() || !originEl) { apply(); return; }
+// Смена темы: мягкое перетекание снимка (только прозрачность, считается на видеокарте). Прежняя «клякса» из 72 точек
+// перерисовывала весь экран на каждом кадре и сильно лагала на больших мониторах; blobFrames оставлен для совместимости.
+export async function themeWipe(originEl, apply) {
+  if (!document.startViewTransition || !motionAllowed()) { apply(); return; }
   try {
-    const r = originEl.getBoundingClientRect();
     const vt = document.startViewTransition(apply);
-    await vt.ready;
-    document.documentElement.animate({ clipPath: blobFrames(r.left + r.width / 2, r.top + r.height / 2, innerWidth, innerHeight) }, { duration: dur, easing: 'linear', pseudoElement: '::view-transition-new(root)' });
+    await vt.finished;
   } catch (_) { /* без эффекта: тема уже применена */ }
 }
 
