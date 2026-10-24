@@ -157,7 +157,6 @@ function route() {
 
 buildNav();
 initRail({ nav, store });
-{ const edge = document.createElement('div'); edge.className = 'hb-edge'; edge.setAttribute('aria-hidden', 'true'); nav.before(edge); }
 document.getElementById('app').append(hubTools());
 initMotionUi({ nav });
 initIsland();

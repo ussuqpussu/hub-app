@@ -29,7 +29,7 @@ export const FONTS = [
 export const DEFAULT_LOOK = {
   theme: 'mosaic', mode: 'auto', palette: 'graphite', accent: '',
   radius: 'soft', border: 'thin', density: 'normal', btn: 'pill',
-  width: 'full', scale: 100, font: 'onest', head: 'serif',
+  width: 'wide', scale: 100, font: 'onest', head: 'serif',
   entry: 'rise',
 };
 
@@ -63,6 +63,7 @@ const pick = (list, v, d) => (list.some((o) => (Array.isArray(o) ? o[0] : o.id) 
 export function getLook() {
   const s = load(KEY, {}) || {};
   const d = DEFAULT_LOOK;
+  if (s.v !== 2) s.width = d.width; // 0.51: колонка по центру с полями; прежний выбор ширины сброшен один раз
   let theme = s.theme;
   if (!theme) { const old = load(KEY_THEME, null); theme = old; } // прежний ключ темы
   return {
@@ -86,7 +87,7 @@ const listeners = new Set();
 export const onLook = (fn) => { listeners.add(fn); return () => listeners.delete(fn); };
 
 export function setLook(patch) {
-  const next = { ...getLook(), ...patch };
+  const next = { ...getLook(), ...patch, v: 2 };
   save(KEY, next);
   save(KEY_THEME, next.theme);
   applyTheme();
@@ -94,7 +95,7 @@ export function setLook(patch) {
   return next;
 }
 export function resetLook() {
-  save(KEY, { ...DEFAULT_LOOK });
+  save(KEY, { ...DEFAULT_LOOK, v: 2 });
   save(KEY_THEME, DEFAULT_LOOK.theme);
   applyTheme();
   listeners.forEach((fn) => fn(getLook()));

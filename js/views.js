@@ -13,7 +13,7 @@ import { knowledgeView } from './knowledge-view.js';
 
 export { ICONS, fmtTime };
 
-export const VERSION = '0.50.0 (новое оформление: Мозаика и Лист)';
+export const VERSION = '0.51.0 (воздух, колонка по центру, лёгкое движение)';
 
 // Вкладки. group: main (в нижней панели телефона), more (внутри «Ещё»).
 export const TABS = [

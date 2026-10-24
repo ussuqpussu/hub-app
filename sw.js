@@ -1,6 +1,6 @@
 // Service worker: оболочка открывается без сети.
 // При изменении любого файла оболочки увеличивай VERSION, чтобы кэш обновился.
-const VERSION = 'hub-shell-v89';
+const VERSION = 'hub-shell-v90';
 const SHELL = [
   './',
   './index.html',
