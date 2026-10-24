@@ -1,18 +1,20 @@
 // Тема «Монолит»: свои страницы «Сегодня» и «Итоги недели» точь-в-точь по четырём макетам.
-//  - «Сегодня», вид «Сетка» (макет 1): карточка с руками и датой, «Закрыто сегодня», светлый «Фокус», «Подписки»,
-//    «На сегодня», «Расписание», «Неделя». Все плитки помещаются в один экран.
+//  - «Сегодня», вид «Сетка» (макет 1): карточка с руками и датой, «Закрыто сегодня», «Погода», «Подписки»,
+//    «На сегодня», «Ближайший платёж», «Расписание», «Неделя». Все плитки помещаются в один экран.
 //  - «Сегодня», вид «Руки на весь экран» (макет 3): сцена фоном, дата по центру, четыре карточки внизу.
-//  - Телефон (макет 4): карточка с руками, «День», «Фокус», «Закрыто», «На сегодня».
+//  - Телефон (макет 4): карточка с руками, «День», «Погода», «Закрыто», «На сегодня».
 //  - «Итоги недели» (макет 2): нарастающий итог, расходы в месяц, события проектов, «Рупор», цитата, цели, доска.
 // Все цифры берутся из данных хаба; чего нет, показывается честно («нет данных»), без выдуманных значений.
 import { el, ICONS } from './ui.js';
 import { todayYmd, fromYmd, addDays, dueLabel, weekType, weekStart } from './dates.js';
 import { save, load } from './storage.js';
 import { rings, bars, line, donut } from './mk-widgets.js';
-import { startFocus, focusActive, focusText, toast } from './island.js';
+import { toast } from './island.js';
+import { getWeather } from './weather-sync.js';
+import { weatherState, signed } from './weather-calc.js';
 import { groupTasks, MAIN_LIMIT } from './tasks-view.js';
 import { loadSchedule, onSchedule, getScheduleState, pairsOn, pairPhase } from './schedule-data.js';
-import { monthlyTotalRub, categoryShares } from './subs-calc.js';
+import { monthlyTotalRub, categoryShares, nextDue, daysUntil, CURRENCY_SYMBOL } from './subs-calc.js';
 import { cachedRates, ensureRates } from './rates.js';
 import { liveSummary, ensureSnapshot } from './weekly-view.js';
 import { summarizeWeek, prevWeekDay } from './weekly-calc.js';
@@ -121,32 +123,45 @@ function closedTile(store, today, mode) {
   ], { 'data-t': 'rings' });
 }
 
-function focusTile({ button = true } = {}) {
-  const time = el('p', { class: 'mt-num mt-focus__time', text: focusText() });
-  const kids = [kicker('Фокус'), time];
-  let go = null;
-  if (button) {
-    go = el('button', { type: 'button', class: 'mt-go', text: focusActive() ? 'Идёт' : 'Начать' });
-    go.disabled = focusActive();
-    go.addEventListener('click', () => startFocus());
-    kids.push(go);
+// Погода: берём то, что уже лежит в хабе (weather-sync). Нет данных: честная заглушка, ничего не выдумываем.
+function weatherTile() {
+  const st = weatherState(getWeather());
+  const kids = [kicker('Погода')];
+  if (!st) kids.push(el('p', { class: 'mt-empty', text: 'Нет данных' }));
+  else {
+    const c = st.cities[0];
+    kids.push(el('p', { class: 'mt-num mt-num--m mt-mid', text: signed(c.temp), 'aria-label': `Сейчас ${signed(c.temp)}` }));
+    kids.push(el('span', { class: 'mt-sub', text: `${c.text || ''}${st.stale ? ' · данные устарели' : ''}`.trim() }));
   }
-  const node = tile('mt-focus tile--focus', kids, { 'data-t': 'focus' });
-  if (!button) {
-    // на телефоне кнопки нет: нажатие на плитку запускает фокус
-    node.setAttribute('role', 'button'); node.tabIndex = 0; node.setAttribute('aria-label', 'Начать фокус на 25 минут');
-    const run = () => { if (!focusActive()) startFocus(); };
-    node.addEventListener('click', run);
-    node.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); run(); } });
+  return tile('mt-weather', kids, { 'data-t': 'weather' });
+}
+
+// Ближайший платёж по подпискам: из тех же данных, что и страница «Подписки».
+function payTile(store, today) {
+  const rows = store.list('subs').filter((x) => x.status === 'active').map((x) => ({ x, due: nextDue(x, today) })).filter((r) => r.due).sort((a, b) => a.due.localeCompare(b.due));
+  const kids = [kicker('Ближайший платёж')];
+  if (!rows.length) kids.push(el('p', { class: 'mt-empty', text: 'Активных подписок нет.' }));
+  else {
+    const { x, due } = rows[0];
+    const n = daysUntil(due, today);
+    const when = n < 0 ? 'просрочено' : n === 0 ? 'сегодня' : n === 1 ? 'завтра' : `через ${n} ${plural(n, ['день', 'дня', 'дней'])}`;
+    kids.push(el('p', { class: 'mt-num mt-num--m mt-mid', text: `${Math.round(Number(x.price) || 0).toLocaleString('ru-RU')} ${CURRENCY_SYMBOL[x.currency] || x.currency || '₽'}` }));
+    kids.push(el('span', { class: 'mt-sub', text: `${x.name || 'Подписка'} · ${when}` }));
   }
-  const sync = (e) => {
-    if (!node.isConnected) { document.removeEventListener('hub:focus', sync); return; }
-    const d = e.detail || {};
-    time.textContent = d.text;
-    if (go) { go.disabled = !!d.active; go.textContent = d.active ? (d.run ? 'Идёт' : 'Пауза') : 'Начать'; }
-  };
-  document.addEventListener('hub:focus', sync);
-  return node;
+  kids.push(el('a', { class: 'mt-link', href: '#/subscriptions', 'aria-label': 'Подписки: открыть' }));
+  return tile('mt-pay', kids, { 'data-t': 'pay' });
+}
+
+// Цели: открытые цели с полосой прогресса (данные из «Целей»).
+function goalsTile(store) {
+  const goals = store.list('goals').filter((x) => x.progress < 100).sort((a, b) => a.created - b.created).slice(0, 3);
+  const kids = [kicker('Цели')];
+  if (!goals.length) kids.push(el('p', { class: 'mt-empty', text: 'Целей пока нет.' }));
+  else kids.push(el('ul', { class: 'mw-goals mt-goals' }, goals.map((g) => el('li', {}, [
+    el('div', { class: 'mw-goal__row' }, [el('span', { text: g.title }), el('span', { class: 'mt-sub', text: `${g.progress}%` })]),
+    el('div', { class: 'mw-bar', role: 'progressbar', 'aria-valuenow': String(g.progress), 'aria-valuemin': '0', 'aria-valuemax': '100', 'aria-label': g.title }, [el('i', { style: `--w:${g.progress}%` })]),
+  ]))));
+  return tile('mt-goalst', kids, { 'data-t': 'goals' });
 }
 
 function subsTile(store) {
@@ -155,7 +170,7 @@ function subsTile(store) {
   const active = subs.filter((s) => s.status === 'active').length;
   const a = el('a', { class: 'card mt mt-subs', href: '#/subscriptions', 'data-t': 'subs', 'aria-label': 'Подписки: открыть' }, [
     kicker('Подписки'),
-    el('p', { class: 'mt-num mt-num--s', text: active ? rub(tot.amount) : '0 ₽' }),
+    el('p', { class: 'mt-num mt-num--s mt-mid', text: active ? rub(tot.amount) : '0 ₽' }),
   ]);
   if (tot.missing.length) a.append(el('span', { class: 'mt-sub', text: 'без части валют: нет курса' }));
   return a;
@@ -229,13 +244,7 @@ function heroTile(d, today, { short = false } = {}) {
 }
 
 
-// ---------- нижний ряд «Сегодня»: цитата, проекты, лента, заметки и ссылки ----------
-function quoteBigTile() {
-  const [text, who] = currentQuote(document.documentElement.dataset.theme);
-  const btn = el('button', { type: 'button', class: 'mt-qbtn', 'aria-label': 'Другая цитата', title: 'Другая цитата', text: '↻' });
-  btn.addEventListener('click', () => nextQuote());
-  return tile('mt-q2', [el('div', { class: 'mt-head' }, [kicker('Цитата'), btn]), el('p', { class: 'mt-q2__t', text: `«${text}»` }), el('span', { class: 'mt-sub', text: who })], { 'data-t': 'quote' });
-}
+// ---------- нижний ряд «Сегодня»: цели, проекты, лента, заметки и ссылки ----------
 function projectsTile(store) {
   const list = mergedProjects(store).filter((p) => p.status !== 'archive');
   const kids = [kicker('Проекты'), el('p', { class: 'mt-num mt-num--m', text: String(list.length) }), el('span', { class: 'mt-sub', text: list.length ? plural(list.length, ['проект в работе', 'проекта в работе', 'проектов в работе']) : 'проектов пока нет' })];
@@ -291,7 +300,7 @@ export function homeToday({ store, subscribe }) {
       root.replaceChildren(el('div', { class: 'mt-grid mt-grid--phone' }, [
         heroTile(d, today, { short: true }),
         dayTile(),
-        focusTile({ button: false }),
+        weatherTile(),
         closedTile(store, today, 'phone'),
         todoTile(store, today, { add: false, withDone: false, limit: 6 }),
       ]));
@@ -300,13 +309,11 @@ export function homeToday({ store, subscribe }) {
         el('div', { class: 'mt-grid mt-grid--home' }, [
           heroTile(d, today),
           closedTile(store, today, 'grid'),
-          focusTile(),
+          weatherTile(),
           subsTile(store),
-          todoTile(store, today),
-          schedTile(today),
-          weekTile(store, today, 'grid'),
+          el('div', { class: 'mt-row3' }, [todoTile(store, today), payTile(store, today), schedTile(today), weekTile(store, today, 'grid')]),
         ]),
-        el('div', { class: 'mt-grid mt-grid--more' }, [quoteBigTile(), projectsTile(store), feedTile(store), notesTile(store)]),
+        el('div', { class: 'mt-grid mt-grid--more' }, [goalsTile(store), projectsTile(store), feedTile(store), notesTile(store)]),
       );
     }
     requestAnimationFrame(syncHero);
@@ -404,7 +411,7 @@ export function homeWeekly({ store, subscribe }) {
 
     // события проектов (светлая плитка)
     const evN = ws.events.length;
-    const ev = el('a', { class: 'card mt mw-events tile--focus', href: '#/projects', 'aria-label': 'События проектов: открыть' }, [
+    const ev = el('a', { class: 'card mt mw-events tile--light', href: '#/projects', 'aria-label': 'События проектов: открыть' }, [
       kicker('События проектов'),
       el('p', { class: 'mt-num mt-num--xl', text: String(evN), 'data-count': '900' }),
       el('span', { class: 'mt-sub', text: `${plural(evN, ['событие', 'события', 'событий'])} в проектах за неделю` }),

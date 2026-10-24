@@ -15,7 +15,7 @@
     (function () { var r = document.documentElement; try {
       var L = JSON.parse(localStorage.getItem('hub.look') || 'null') || {};
       var t = L.theme || JSON.parse(localStorage.getItem('hub.theme') || 'null');
-      r.setAttribute('data-theme', t === 'sheet' ? 'sheet' : 'mosaic');
+      r.setAttribute('data-theme', 'mosaic');
       var m = JSON.parse(localStorage.getItem('hub.bootMode') || 'null');
       if (m) { r.setAttribute('data-mode', m); r.style.colorScheme = m; }
       var bg = JSON.parse(localStorage.getItem('hub.bootBg') || 'null');

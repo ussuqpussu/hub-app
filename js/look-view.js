@@ -31,19 +31,9 @@ export function themeTile() {
   const box = el('section', { class: 'card st-tile st-tile--theme' });
   function render() {
     const look = getLook();
-    const picks = THEMES.map((t) => {
-      const b = el('button', { type: 'button', class: `theme-pick theme-pick--${t.id}`, role: 'radio', 'aria-checked': String(look.theme === t.id), 'aria-label': `${t.name}. ${t.note}` }, [
-        el('span', { class: 'theme-pick__screen', 'aria-hidden': 'true' }, [el('i'), el('i'), el('i'), el('i'), el('i')]),
-        el('span', { class: 'theme-pick__name', text: t.name }),
-        el('span', { class: 'theme-pick__note', text: t.note }),
-      ]);
-      b.addEventListener('click', () => { if (look.theme !== t.id) { playSound('tap'); setLook({ theme: t.id }); } });
-      return b;
-    });
     const modeSeg = seg('Режим', OPTIONS.mode, look.mode, (v) => themeWipe(modeSeg, () => setLook({ mode: v })));
     box.replaceChildren(
-      el('h2', { text: 'Тема' }),
-      el('div', { class: 'theme-picks', role: 'radiogroup', 'aria-label': 'Тема оформления' }, picks),
+      el('h2', { text: 'Режим' }),
       field('Светлая или тёмная', modeSeg),
     );
   }

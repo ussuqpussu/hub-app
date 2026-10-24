@@ -23,7 +23,7 @@ function systemTile(store, subscribe) {
       el('dt', { text: 'Синхронизация' }), el('dd', { text: statusText(st) }),
       el('dt', { text: 'Репозиторий данных' }), el('dd', { text: sess.token && sess.repo ? sess.repo : 'не подключён' }),
       el('dt', { text: 'Расписание' }), el('dd', { text: sc.data ? sourceLine(sc) : 'нет данных' }),
-      el('dt', { text: 'Тема' }), el('dd', { text: `${root.dataset.theme === 'sheet' ? 'Лист' : 'Мозаика'}, ${root.dataset.mode === 'light' ? 'светлая' : 'тёмная'}` }),
+      el('dt', { text: 'Тема' }), el('dd', { text: `Мозаика, ${root.dataset.mode === 'light' ? 'светлая' : 'тёмная'}` }),
       el('dt', { text: 'Экран' }), el('dd', { text: `${window.innerWidth} × ${window.innerHeight}` }),
       el('dt', { text: 'Экономный режим' }), el('dd', { text: root.dataset.lite ? 'включён' : 'выключен' }),
     );

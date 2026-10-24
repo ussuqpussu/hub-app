@@ -10,7 +10,7 @@ const { THEMES, PALETTES, FONTS, OPTIONS, DEFAULT_LOOK, getLook, effectiveColors
 
 let n = 0;
 // две темы, у каждой есть сцена-имя для движка
-assert.deepEqual(THEMES.map((t) => t.id), ['mosaic', 'sheet']); n += 1;
+assert.deepEqual(THEMES.map((t) => t.id), ['mosaic']); n += 1;
 const engine = readFileSync(new URL('../theme/engine.html', import.meta.url), 'utf8');
 for (const t of THEMES) { assert.ok(engine.includes(`hubAddTheme({"n":"${t.engine}"`), `${t.id}: в движке нет сцены «${t.engine}»`); n += 1; }
 // палитры: читаемость в обоих режимах
@@ -44,5 +44,5 @@ assert.ok(bodyPos(13).y < 0.1); n += 1; // в полдень солнце нав
 // живые обои
 assert.equal(pickEngine('mosaic', 'auto'), null);
 assert.equal(pickEngine('mosaic', 'stars'), 'stars');
-assert.equal(pickEngine('sheet', 'off'), null); n += 3;
+n += 3;
 console.log(`${n} passed`);
