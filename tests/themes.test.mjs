@@ -6,7 +6,7 @@ import { pickEngine } from '../js/fx.js';
 // storage.js и theme.js работают с localStorage: подставляем простую замену
 const mem = new Map();
 globalThis.localStorage = { getItem: (k) => (mem.has(k) ? mem.get(k) : null), setItem: (k, v) => mem.set(k, String(v)), removeItem: (k) => mem.delete(k) };
-const { THEMES, PALETTES, FONTS, OPTIONS, DEFAULT_LOOK, getLook, effectiveColors, contrast } = await import('../js/theme.js');
+const { THEMES, PALETTES, worldOfDay, FONTS, OPTIONS, DEFAULT_LOOK, getLook, effectiveColors, contrast } = await import('../js/theme.js');
 
 let n = 0;
 // две темы, у каждой есть сцена-имя для движка
@@ -24,6 +24,10 @@ for (const p of PALETTES) {
     n += 4;
   }
 }
+// девять миров с уникальными именами; мир дня стабилен в течение суток и меняется на следующий
+assert.equal(PALETTES.length, 9); assert.equal(new Set(PALETTES.map((p) => p.name)).size, 9); n += 2;
+const w1 = worldOfDay(new Date(2026, 9, 24, 3)), w2 = worldOfDay(new Date(2026, 9, 24, 23)), w3 = worldOfDay(new Date(2026, 9, 25, 3));
+assert.equal(w1.id, w2.id); assert.notEqual(w1.id, w3.id); n += 2;
 // настройки по умолчанию и защита от мусора в хранилище
 assert.deepEqual(getLook(), { ...DEFAULT_LOOK }); n += 1;
 mem.set('hub.look', JSON.stringify({ theme: 'x', mode: 'zzz', palette: 'nope', accent: 'red', scale: 9999, font: 1, radius: 'weird' }));

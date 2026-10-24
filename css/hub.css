@@ -423,6 +423,7 @@ html .st-switch input:focus-visible + .st-switch__k { outline: 2px solid color-m
 /* палитры */
 html .pal-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(8rem, 1fr)); gap: .7rem; }
 html .pal { display: grid; gap: .45rem; padding: .55rem; text-align: left; border: 1px solid var(--hb-line); border-radius: var(--hb-r-s); background: var(--c-fill); }
+html .pal__note { font-size: .78rem; }
 html .pal[aria-checked="true"] { border-color: var(--c-accent); box-shadow: 0 0 0 1px var(--c-accent); }
 html .pal__sw { display: grid; grid-template-columns: 2fr 1fr 1fr; height: 2.2rem; border-radius: .5rem; overflow: hidden; border: 1px solid var(--hb-line); }
 html .pal__sw i:nth-child(1) { background: var(--pb); } html .pal__sw i:nth-child(2) { background: var(--ps); } html .pal__sw i:nth-child(3) { background: var(--pa); }

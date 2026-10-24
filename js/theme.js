@@ -9,15 +9,22 @@ export const THEMES = [
 
 // Палитры: тёмный и светлый вариант. b — фон, s — плитка, t — текст, d — приглушённый текст, a — акцент, o — текст на акценте.
 export const PALETTES = [
-  { id: 'graphite', name: 'Графит', dark: { b: '#0b0b0d', s: '#151518', t: '#ececef', d: '#92939b', a: '#f2f2f4', o: '#0b0b0d' }, light: { b: '#eceded', s: '#fafafa', t: '#16161a', d: '#62636b', a: '#16161a', o: '#fafafa' } },
-  { id: 'ink', name: 'Чернильный', dark: { b: '#080b14', s: '#10162a', t: '#e8ecfa', d: '#8b94b3', a: '#8fb0ff', o: '#08102a' }, light: { b: '#e9edf8', s: '#f8faff', t: '#10172e', d: '#5a6384', a: '#2f55d4', o: '#ffffff' } },
-  { id: 'emerald', name: 'Изумруд', dark: { b: '#07100d', s: '#0f1d18', t: '#e4f1ea', d: '#869a90', a: '#5fd6a0', o: '#04130c' }, light: { b: '#e6efe9', s: '#f7fbf8', t: '#0d1f17', d: '#53675c', a: '#13805a', o: '#ffffff' } },
-  { id: 'amber', name: 'Янтарь', dark: { b: '#100c06', s: '#1c1609', t: '#f3ead8', d: '#a39578', a: '#f5b94a', o: '#1a1203' }, light: { b: '#f1ebdd', s: '#fffaf0', t: '#231a08', d: '#6d5f40', a: '#a15f00', o: '#ffffff' } },
-  { id: 'rose', name: 'Роза', dark: { b: '#110809', s: '#1f1114', t: '#f6e6e8', d: '#a98a90', a: '#ff8fa3', o: '#240509' }, light: { b: '#f4e8ea', s: '#fff8f9', t: '#26090f', d: '#74545b', a: '#c0243f', o: '#ffffff' } },
-  { id: 'violet', name: 'Фиалка', dark: { b: '#0c0813', s: '#171024', t: '#eee8fa', d: '#9a8fb5', a: '#b79cff', o: '#140a2a' }, light: { b: '#ece8f6', s: '#faf8ff', t: '#1a1230', d: '#625878', a: '#6a3fd0', o: '#ffffff' } },
-  { id: 'ice', name: 'Лёд', dark: { b: '#06101a', s: '#0d1b2a', t: '#e3f0fa', d: '#84a0b8', a: '#6ad4f0', o: '#04141e' }, light: { b: '#e4eef5', s: '#f6fbff', t: '#0b1a26', d: '#4f677a', a: '#0a7ea8', o: '#ffffff' } },
-  { id: 'sand', name: 'Песок', dark: { b: '#0f0d0a', s: '#1a1712', t: '#efe9de', d: '#9c9585', a: '#e2cfa8', o: '#17120a' }, light: { b: '#eee9df', s: '#fbf8f1', t: '#1d1910', d: '#675f4d', a: '#6b5428', o: '#ffffff' } },
+  { id: 'graphite', name: 'Мидгард', note: 'мир людей', dark: { b: '#0b0b0d', s: '#151518', t: '#ececef', d: '#92939b', a: '#f2f2f4', o: '#0b0b0d' }, light: { b: '#eceded', s: '#fafafa', t: '#16161a', d: '#62636b', a: '#16161a', o: '#fafafa' } },
+  { id: 'ink', name: 'Свартальвхейм', note: 'кузни в глубине', dark: { b: '#080b14', s: '#10162a', t: '#e8ecfa', d: '#8b94b3', a: '#8fb0ff', o: '#08102a' }, light: { b: '#e9edf8', s: '#f8faff', t: '#10172e', d: '#5a6384', a: '#2f55d4', o: '#ffffff' } },
+  { id: 'emerald', name: 'Альвхейм', note: 'светлые леса', dark: { b: '#07100d', s: '#0f1d18', t: '#e4f1ea', d: '#869a90', a: '#5fd6a0', o: '#04130c' }, light: { b: '#e6efe9', s: '#f7fbf8', t: '#0d1f17', d: '#53675c', a: '#13805a', o: '#ffffff' } },
+  { id: 'amber', name: 'Асгард', note: 'золото богов', dark: { b: '#100c06', s: '#1c1609', t: '#f3ead8', d: '#a39578', a: '#f5b94a', o: '#1a1203' }, light: { b: '#f1ebdd', s: '#fffaf0', t: '#231a08', d: '#6d5f40', a: '#a15f00', o: '#ffffff' } },
+  { id: 'rose', name: 'Ванахейм', note: 'цветущие земли', dark: { b: '#110809', s: '#1f1114', t: '#f6e6e8', d: '#a98a90', a: '#ff8fa3', o: '#240509' }, light: { b: '#f4e8ea', s: '#fff8f9', t: '#26090f', d: '#74545b', a: '#c0243f', o: '#ffffff' } },
+  { id: 'violet', name: 'Хельхейм', note: 'туманный край', dark: { b: '#0c0813', s: '#171024', t: '#eee8fa', d: '#9a8fb5', a: '#b79cff', o: '#140a2a' }, light: { b: '#ece8f6', s: '#faf8ff', t: '#1a1230', d: '#625878', a: '#6a3fd0', o: '#ffffff' } },
+  { id: 'ice', name: 'Нифльхейм', note: 'мир льда', dark: { b: '#06101a', s: '#0d1b2a', t: '#e3f0fa', d: '#84a0b8', a: '#6ad4f0', o: '#04141e' }, light: { b: '#e4eef5', s: '#f6fbff', t: '#0b1a26', d: '#4f677a', a: '#0a7ea8', o: '#ffffff' } },
+  { id: 'sand', name: 'Йотунхейм', note: 'земля великанов', dark: { b: '#0f0d0a', s: '#1a1712', t: '#efe9de', d: '#9c9585', a: '#e2cfa8', o: '#17120a' }, light: { b: '#eee9df', s: '#fbf8f1', t: '#1d1910', d: '#675f4d', a: '#6b5428', o: '#ffffff' } },
+  { id: 'muspel', name: 'Муспельхейм', note: 'мир огня', dark: { b: '#110705', s: '#1f0e09', t: '#f6e4d8', d: '#b0917f', a: '#ff7a3d', o: '#210a02' }, light: { b: '#f3e7de', s: '#fff8f3', t: '#2a1007', d: '#7a5848', a: '#b8420a', o: '#ffffff' } },
 ];
+
+// Мир дня: один из девяти, меняется каждые сутки по порядку (по календарной дате, без случайности).
+export function worldOfDay(d = new Date()) {
+  const day = Math.floor(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) / 86400000);
+  return PALETTES[((day % PALETTES.length) + PALETTES.length) % PALETTES.length];
+}
 
 export const FONTS = [
   { id: 'onest', name: 'Onest', css: '"Onest", "Segoe UI Variable", "Segoe UI", system-ui, sans-serif' },

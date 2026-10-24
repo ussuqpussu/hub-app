@@ -1,7 +1,7 @@
 // Оформление в настройках: плитки выбора темы и каталог настроек (цвета, плитки и кнопки, макет и текст, анимации, сохранение).
 // Любое изменение применяется сразу и хранится на этом устройстве (ключ hub.look, плюс hub.appearance для эффектов).
 import { el } from './ui.js';
-import { THEMES, PALETTES, FONTS, OPTIONS, DEFAULT_LOOK, getLook, setLook, resetLook, effectiveColors, onLook } from './theme.js';
+import { THEMES, PALETTES, worldOfDay, FONTS, OPTIONS, DEFAULT_LOOK, getLook, setLook, resetLook, effectiveColors, onLook } from './theme.js';
 import { themeWipe } from './motion-kit.js';
 import { SPLASHES, showSplash, getAppearance, setAppearance, LIVE_OPTIONS, saveWallpaperFile, removeWallpaper, hasWallpaper, playSound, reducedMotion } from './appearance.js';
 import { save, load } from './storage.js';
@@ -66,6 +66,7 @@ export function lookCatalog() {
       const b = el('button', { type: 'button', class: 'pal', role: 'radio', 'aria-checked': String(look.palette === p.id), style: `--pb:${c.b};--ps:${c.s};--pt:${c.t};--pa:${c.a}` }, [
         el('span', { class: 'pal__sw', 'aria-hidden': 'true' }, [el('i'), el('i'), el('i')]),
         el('span', { class: 'pal__n', text: p.name }),
+        el('span', { class: 'pal__note muted', text: p.note }),
       ]);
       b.addEventListener('click', () => { playSound('tap'); setLook({ palette: p.id, accent: '' }); });
       return b;
@@ -80,8 +81,13 @@ export function lookCatalog() {
     custom.addEventListener('change', () => setLook({ accent: custom.value }));
     const clear = el('button', { type: 'button', class: 'btn btn--s btn--ghost', text: 'Акцент из палитры' });
     clear.addEventListener('click', () => setLook({ accent: '' }));
+    const wd = worldOfDay();
+    const wdBtn = el('button', { type: 'button', class: 'btn btn--s', text: look.palette === wd.id ? 'Уже выбран' : 'Применить' });
+    wdBtn.disabled = look.palette === wd.id;
+    wdBtn.addEventListener('click', () => { playSound('tap'); setLook({ palette: wd.id, accent: '' }); });
     return [
-      field('Готовые палитры', grid),
+      field('Мир дня', el('p', { class: 'muted', text: `Сегодня ${wd.name}: ${wd.note}. Завтра будет следующий мир.` }), el('div', { class: 'row' }, [wdBtn])),
+      field('Девять миров', grid),
       field('Свой акцент', el('div', { class: 'dots' }, [...dots, custom]), el('div', { class: 'row' }, [clear])),
       wallpaperBlock(),
     ];
